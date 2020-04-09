@@ -130,7 +130,6 @@ public class PlanSceneController implements Initializable {
         for (AttackerVillage a : attackers) {
             attackerCols.getChildren().add(a.toDisplayBox());
         }
-        System.out.println(attackers.size() + " attackers loaded");
     }
 
     /**
@@ -170,8 +169,6 @@ public class PlanSceneController implements Initializable {
      * @return hbox
      */
     private HBox targetRow(TargetVillage village) {
-
-        System.out.println(village.isCapital() + " " + village.isOffvillage());
 
         HBox row = new HBox();
         row.getChildren().add(new Label(village.getAllyName()));
