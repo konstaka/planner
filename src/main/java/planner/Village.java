@@ -10,37 +10,37 @@ import lombok.Getter;
 public abstract class Village {
 
     @Getter
-    protected int coordId;
+    private int coordId;
 
     @Getter
-    protected int xCoord;
+    private int xCoord;
 
     @Getter
-    protected int yCoord;
+    private int yCoord;
 
     @Getter
-    protected int tribe;
+    private int tribe;
 
     @Getter
-    protected int villageId;
+    private int villageId;
 
     @Getter
-    protected String villageName;
+    private String villageName;
 
     @Getter
-    protected int playerId;
+    private int playerId;
 
     @Getter
-    protected String playerName;
+    private String playerName;
 
     @Getter
-    protected int allyId;
+    private int allyId;
 
     @Getter
-    protected String allyName;
+    private String allyName;
 
     @Getter
-    protected int population;
+    private int population;
 
     public Village(int coordId) {
         this.coordId = coordId;
@@ -58,6 +58,7 @@ public abstract class Village {
             this.allyId = rs.getInt("allyId");
             this.allyName = rs.getString("allyName");
             this.population = rs.getInt("population");
+            conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
