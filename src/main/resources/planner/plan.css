@@ -22,6 +22,30 @@
     -fx-max-width: 55px;
 }
 .target-col-5 {
+    -fx-min-width: 45px;
+    -fx-max-width: 45px;
+}
+.target-col-6 {
     -fx-min-width: 55px;
     -fx-max-width: 55px;
+}
+.attacker-box {
+    -fx-min-width: 45px;
+    -fx-max-width: 45px;
+    -fx-min-height: 190px;
+    -fx-max-height: 190px;
+}
+.attacker-box-label {
+    -fx-min-width: 45px;
+    -fx-max-width: 45px;
+    -fx-alignment: CENTER;
+}
+.attacker-name {
+    -fx-min-height: 45px;
+    -fx-max-height: 45px;
+    -fx-min-width: 90px;
+    -fx-max-width: 90px;
+    -fx-rotate: -90;
+    -fx-translate-x: -22.5px;
+    -fx-alignment: LEFT CENTER;
 }

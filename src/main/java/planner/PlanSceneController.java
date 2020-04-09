@@ -29,6 +29,24 @@ public class PlanSceneController implements Initializable {
     VBox targetTickboxes;
 
     @FXML
+    CheckBox caps;
+
+    @FXML
+    CheckBox offs;
+
+    @FXML
+    CheckBox small_artes;
+
+    @FXML
+    CheckBox large_artes;
+
+    @FXML
+    CheckBox bps_wws;
+
+    @FXML
+    HBox attackerCols;
+
+    @FXML
     VBox targetRows;
 
     List<TargetVillage> villages;
@@ -109,6 +127,9 @@ public class PlanSceneController implements Initializable {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        for (AttackerVillage a : attackers) {
+            attackerCols.getChildren().add(a.toDisplayBox());
+        }
         System.out.println(attackers.size() + " attackers loaded");
     }
 
@@ -132,10 +153,12 @@ public class PlanSceneController implements Initializable {
 
         List<TargetVillage> shownVillages = new ArrayList<>();
         for (TargetVillage v : villages) {
-            if (enemyAlliances.contains(v.getAllyName())) {
+            if (enemyAlliances.contains(v.getAllyName())
+                    && ((v.isCapital() && this.caps.isSelected()) || (v.isOffvillage() && this.offs.isSelected()))) {
                 shownVillages.add(v);
             }
         }
+
         for (TargetVillage t : shownVillages) {
             targetRows.getChildren().add(this.targetRow(t));
         }
