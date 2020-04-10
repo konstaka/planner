@@ -1,33 +1,43 @@
 .target-col {
     -fx-padding: 1px;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-border-color: grey;
+    -fx-font-size: 0.8em;
+    -fx-min-height: 24px;
+    -fx-max-height: 24px;
 }
 .target-col-0 {
-    -fx-min-width: 60px;
-    -fx-max-width: 60px;
+    -fx-min-width: 50px;
+    -fx-max-width: 50px;
 }
 .target-col-1 {
-    -fx-min-width: 80px;
-    -fx-max-width: 80px;
-}
-.target-col-2 {
-    -fx-min-width: 55px;
-    -fx-max-width: 55px;
-}
-.target-col-3 {
     -fx-min-width: 70px;
     -fx-max-width: 70px;
 }
-.target-col-4 {
-    -fx-min-width: 55px;
-    -fx-max-width: 55px;
-}
-.target-col-5 {
+.target-col-2 {
     -fx-min-width: 45px;
     -fx-max-width: 45px;
 }
+.target-col-3 {
+    -fx-min-width: 55px;
+    -fx-max-width: 55px;
+}
+.target-col-4 {
+    -fx-min-width: 40px;
+    -fx-max-width: 40px;
+}
+.target-col-5 {
+    -fx-min-width: 35px;
+    -fx-max-width: 35px;
+}
 .target-col-6 {
-    -fx-min-width: 300px;
-    -fx-max-width: 300px;
+    -fx-min-width: 100px;
+    -fx-max-width: 100px;
+}
+.target-col-7 {
+    -fx-min-width: 110px;
+    -fx-max-width: 110px;
 }
 .attacker-box {
     -fx-min-width: 45px;
@@ -39,6 +49,7 @@
     -fx-min-width: 45px;
     -fx-max-width: 45px;
     -fx-alignment: center;
+    -fx-font-size: 0.7em;
 }
 .attacker-name {
     -fx-min-height: 45px;
@@ -48,4 +59,5 @@
     -fx-rotate: -90;
     -fx-translate-x: -22.5px;
     -fx-alignment: center-left;
+    -fx-font-size: 0.7em;
 }

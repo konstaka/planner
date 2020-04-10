@@ -9,11 +9,13 @@
 <AnchorPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="planner.PlanSceneController">
-    <VBox       fillWidth="true">
+    <VBox>
         <HBox   minWidth="1280"
                 maxWidth="1280">
             <VBox>
-                <Label      text="Pick enemies" />
+                <Label      text="Pick enemies"
+                            minHeight="20"
+                            maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
                             maxHeight="200"
@@ -22,7 +24,9 @@
                 </ScrollPane>
             </VBox>
             <VBox>
-                <Label      text="Pick targets" />
+                <Label      text="Pick targets"
+                            minHeight="20"
+                            maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
                             maxHeight="200"
@@ -42,7 +46,7 @@
         </HBox>
         <ScrollPane minWidth="1280"
                     fitToWidth="true"
-                    maxHeight="600" >
+                    maxHeight="580" >
             <VBox   fx:id="targetRows" />
         </ScrollPane>
     </VBox>

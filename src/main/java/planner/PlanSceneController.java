@@ -6,8 +6,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -81,17 +83,38 @@ public class PlanSceneController implements Initializable {
 
         // Add all alliances as checkboxes
         Set<String> enemies = new HashSet<>();
+        Map<String, Integer> enemyCounts = new HashMap<>();
         try {
             Connection conn = DriverManager.getConnection(App.getDB());
             ResultSet rs = conn.prepareStatement("SELECT allyName FROM x_world").executeQuery();
             while (rs.next()) {
-                enemies.add(rs.getString("allyName"));
+                String enemyAlly = rs.getString("allyName");
+                if (enemies.contains(enemyAlly)) {
+                    enemyCounts.put(enemyAlly, enemyCounts.get(enemyAlly)+1);
+                } else {
+                    enemyCounts.put(enemyAlly, 1);
+                }
+                enemies.add(enemyAlly);
             }
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        // Naïve sort, number of alliances is small
+        List<String> sortedAllys = new ArrayList<>();
         for (String e : enemies) {
+            int maxCount = 0;
+            String maxE = null;
+            for (String ec : enemyCounts.keySet()) {
+                if (enemyCounts.get(ec) > maxCount) {
+                    maxCount = enemyCounts.get(ec);
+                    maxE = ec;
+                }
+            }
+            sortedAllys.add(maxE);
+            enemyCounts.remove(maxE);
+        }
+        for (String e : sortedAllys) {
             CheckBox c = new CheckBox(e);
             c.setOnAction(this::refreshTargets);
             enemyTickboxes.getChildren().add(c);
@@ -190,16 +213,16 @@ public class PlanSceneController implements Initializable {
     private void assembleArteEffects() {
         for (TargetVillage t : villages) {
             if (t.getArtefact().contains("eyes") || scoutAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("e");
+                t.getArteEffects().add("scout effect");
             }
             if (t.getArtefact().contains("fool") || foolAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("f");
+                t.getArteEffects().add("fool effect");
             }
             if (t.getArtefact().contains("confuser") || confuserAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("c");
+                t.getArteEffects().add("confuser effect");
             }
             if (t.getArtefact().contains("architect") || architectAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("a️");
+                t.getArteEffects().add("architect effect");
             }
         }
     }
@@ -269,6 +292,7 @@ public class PlanSceneController implements Initializable {
                         || (v.isOffvillage() && this.offs.isSelected())
                         || (v.getArtefact().contains("small") && this.small_artes.isSelected())
                         || (v.getArtefact().contains("large") && this.large_artes.isSelected())
+                        || (v.getArtefact().contains("unique") && this.large_artes.isSelected())
                         || (v.isWwvillage() && this.bps_wws.isSelected())
                         || (v.getArtefact().contains("buildplan") && this.bps_wws.isSelected())
                     )
@@ -303,9 +327,11 @@ public class PlanSceneController implements Initializable {
         if (village.isOffvillage()) data += "off ";
         if (village.isWwvillage()) data += "WW";
         data += village.getArtefact();
+        row.getChildren().add(new Label(data));
+        data = "";
         for (String s : village.getArteEffects()) {
             if (data != "") data += ", ";
-            data += s;
+            data += s.substring(0, 3);
         }
         row.getChildren().add(new Label(data));
 
