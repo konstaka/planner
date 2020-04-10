@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -238,12 +240,26 @@ public class MainController implements Initializable {
         String[] villages = this.villageInfo.getText().split("\n");
         for (String v : villages) {
             String[] c = v.split("\\|");
+            int[] co = new int[c.length];
+            for (int i = 0; i < c.length; i++) {
+                if (c[i].contains("−")) {
+                    co[i] = -1;
+                    c[i] = c[i].substring(c[i].indexOf('−')+1);
+                } else {
+                    co[i] = 1;
+                }
+                String coordi = "";
+                Pattern p = Pattern.compile("\\d");
+                Matcher m = p.matcher(c[i]);
+                while (m.find()) coordi += m.group();
+                co[i] *= Integer.parseInt(coordi);
+            }
             try {
                 Connection conn = DriverManager.getConnection(App.getDB());
                 String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES (" +
                         "(SELECT coordId " +
                         "FROM x_world " +
-                        "WHERE xCoord=" + c[0] + " AND yCoord=" + c[1] + "), 1) " +
+                        "WHERE xCoord=" + co[0] + " AND yCoord=" + co[1] + "), 1) " +
                         "ON CONFLICT(coordId) DO UPDATE SET " + column + "=1";
                 conn.prepareStatement(sql).execute();
                 conn.close();
@@ -262,6 +278,38 @@ public class MainController implements Initializable {
 
     public void markOffs(ActionEvent actionEvent) {
         this.updateVillageData("offvillage");
+    }
+
+
+    public void markWWs(ActionEvent actionEvent) { this.updateVillageData("wwvillage");}
+
+
+    /**
+     * Updates artefacts in database.
+     * @param size which artefact page is being updated, small_arte/large_arte
+     * @param artefacts coordId -> artefact type map
+     * @param uniques coordId:s that have unique artefacts
+     */
+    private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            conn.prepareStatement("UPDATE artefacts SET " + size + "=0").execute();
+            if (size.equals("large_arte")) {
+                conn.prepareStatement("UPDATE artefacts SET unique_arte=0").execute();
+            }
+            for (int coordId : artefacts.keySet()) {
+                String col = size;
+                if (uniques.contains(coordId)) col = "unique_arte";
+                String sql = "INSERT INTO artefacts (coordId, " + col + ") " +
+                        "VALUES (" + coordId + ", " + artefacts.get(coordId) + ") " +
+                        "ON CONFLICT(coordId) DO UPDATE SET " + col + "=" + artefacts.get(coordId);
+                conn.prepareStatement(sql).execute();
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -368,35 +416,6 @@ public class MainController implements Initializable {
 
     public void parseLarge(ActionEvent actionEvent) {
         this.parseArtefacts("large_arte");
-    }
-
-
-    /**
-     * Updates artefacts in database.
-     * @param size which artefact page is being updated, small_arte/large_arte
-     * @param artefacts coordId -> artefact type map
-     * @param uniques coordId:s that have unique artefacts
-     */
-    private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
-        try {
-            Connection conn = DriverManager.getConnection(App.getDB());
-            conn.prepareStatement("UPDATE artefacts SET " + size + "=0").execute();
-            if (size.equals("large_arte")) {
-                conn.prepareStatement("UPDATE artefacts SET unique_arte=0").execute();
-            }
-            for (int coordId : artefacts.keySet()) {
-                String col = size;
-                if (uniques.contains(coordId)) col = "unique_arte";
-                String sql = "INSERT INTO artefacts (coordId, " + col + ") " +
-                        "VALUES (" + coordId + ", " + artefacts.get(coordId) + ") " +
-                        "ON CONFLICT(coordId) DO UPDATE SET " + col + "=" + artefacts.get(coordId);
-                conn.prepareStatement(sql).execute();
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
     }
 
 

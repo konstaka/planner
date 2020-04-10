@@ -53,6 +53,14 @@ public class PlanSceneController implements Initializable {
 
     List<AttackerVillage> attackers;
 
+    Set<Integer> scoutAccounts;
+
+    Set<Integer> foolAccounts;
+
+    Set<Integer> confuserAccounts;
+
+    Set<Integer> architectAccounts;
+
     /**
      * Called to initialize a controller after its root element has been
      * completely processed.
@@ -66,6 +74,10 @@ public class PlanSceneController implements Initializable {
 
         villages = new ArrayList<>();
         attackers = new ArrayList<>();
+        scoutAccounts = new HashSet<>();
+        foolAccounts = new HashSet<>();
+        confuserAccounts = new HashSet<>();
+        architectAccounts = new HashSet<>();
 
         // Add all alliances as checkboxes
         Set<String> enemies = new HashSet<>();
@@ -80,25 +92,64 @@ public class PlanSceneController implements Initializable {
             e.printStackTrace();
         }
         for (String e : enemies) {
-            enemyTickboxes.getChildren().add(new CheckBox(e));
+            CheckBox c = new CheckBox(e);
+            c.setOnAction(this::refreshTargets);
+            enemyTickboxes.getChildren().add(c);
+        }
+        // Add auto-updating listeners to other filters as well
+        for (Node n : targetTickboxes.getChildren()) {
+            if (n instanceof CheckBox) {
+                ((CheckBox) n).setOnAction(this::refreshTargets);
+            }
         }
 
         // Load village data from DB to memory
         // Join with cap/off/artefact/etc information
         try {
             Connection conn = DriverManager.getConnection(App.getDB());
-            String sql = "SELECT * FROM x_world LEFT JOIN village_data ON x_world.coordId=village_data.coordId";
+            String sql = "SELECT * FROM x_world " +
+                    "LEFT JOIN village_data ON x_world.coordId=village_data.coordId " +
+                    "LEFT JOIN artefacts on x_world.coordId = artefacts.coordId";
             ResultSet rs = conn.prepareStatement(sql).executeQuery();
             while (rs.next()) {
                 TargetVillage t = new TargetVillage(rs.getInt("coordId"));
                 if (rs.getInt("capital") == 1) t.setCapital(true);
                 if (rs.getInt("offvillage") == 1) t.setOffvillage(true);
+                if (rs.getInt("wwvillage") == 1) t.setWwvillage(true);
+                int small = rs.getInt("small_arte");
+                int large = rs.getInt("large_arte");
+                int unique = rs.getInt("unique_arte");
+                if (small != 0) {
+                    t.setArtefact(this.interpretArte(0, small));
+                }
+                if (large != 0) {
+                    t.setArtefact(this.interpretArte(1, large));
+                }
+                if (unique != 0) {
+                    t.setArtefact(this.interpretArte(2, unique));
+                }
+                // Note down account-wide effects
+                if (large == 5 || unique == 5) {
+                    scoutAccounts.add(rs.getInt("playerId"));
+                }
+                if (small == 11 || unique == 11) {
+                    foolAccounts.add(rs.getInt("playerId"));
+                }
+                if (large == 10 || unique == 10) {
+                    confuserAccounts.add(rs.getInt("playerId"));
+                }
+                if (large == 2 || unique == 2) {
+                    architectAccounts.add(rs.getInt("playerId"));
+                }
                 villages.add(t);
             }
             conn.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        // Assemble artefact effects on target villages
+        this.assembleArteEffects();
 
         // Assemble attacking villages
         try {
@@ -132,12 +183,71 @@ public class PlanSceneController implements Initializable {
         }
     }
 
+
+    /**
+     * Checks the village artefact and possible account-wide effects.
+     */
+    private void assembleArteEffects() {
+        for (TargetVillage t : villages) {
+            if (t.getArtefact().contains("eyes") || scoutAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("e");
+            }
+            if (t.getArtefact().contains("fool") || foolAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("f");
+            }
+            if (t.getArtefact().contains("confuser") || confuserAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("c");
+            }
+            if (t.getArtefact().contains("architect") || architectAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("a️");
+            }
+        }
+    }
+
+
+    /**
+     * Converts artefact size and type to a string representation.
+     * @param size 0, 1, 2
+     * @param type 1, 2, 4, 5, 6, 8, 9, 10, 11
+     * @return artefact string
+     */
+    private String interpretArte(int size, int type) {
+        String arte = "";
+        switch (size) {
+            case 0:
+                arte = "small ";
+                break;
+            case 1:
+                arte = "large ";
+                break;
+            case 2:
+                arte = "unique ";
+                break;
+            default:
+                return "invalid artefact";
+        }
+        switch (type) {
+            case 1: return "buildplan";
+            case 2: return arte + "architect";
+            case 4: return arte + "boots";
+            case 5: return arte + "eyes";
+            case 6: return arte + "diet";
+            case 8: return arte + "trainer";
+            case 9: return arte + "storage";
+            case 10: return arte + "confuser";
+            case 11: return arte + "fool";
+            default:
+                return "invalid artefact";
+        }
+    }
+
     /**
      * Refresh target list based on current filters
      * @param actionEvent event
      */
     public void refreshTargets(ActionEvent actionEvent) {
 
+        // Check which alliances to show
         targetRows.getChildren().clear();
         Set<String> enemyAlliances = new HashSet<>();
         for (Node n : enemyTickboxes.getChildren()) {
@@ -150,14 +260,24 @@ public class PlanSceneController implements Initializable {
         }
         if (enemyAlliances.size() == 0) return;
 
+        // For those alliances, check types of village to show
         List<TargetVillage> shownVillages = new ArrayList<>();
         for (TargetVillage v : villages) {
             if (enemyAlliances.contains(v.getAllyName())
-                    && ((v.isCapital() && this.caps.isSelected()) || (v.isOffvillage() && this.offs.isSelected()))) {
+                    && (
+                        (v.isCapital() && this.caps.isSelected())
+                        || (v.isOffvillage() && this.offs.isSelected())
+                        || (v.getArtefact().contains("small") && this.small_artes.isSelected())
+                        || (v.getArtefact().contains("large") && this.large_artes.isSelected())
+                        || (v.isWwvillage() && this.bps_wws.isSelected())
+                        || (v.getArtefact().contains("buildplan") && this.bps_wws.isSelected())
+                    )
+            ) {
                 shownVillages.add(v);
             }
         }
 
+        // Create rows
         for (TargetVillage t : shownVillages) {
             targetRows.getChildren().add(this.targetRow(t));
         }
@@ -181,6 +301,12 @@ public class PlanSceneController implements Initializable {
         String data = "";
         if (village.isCapital()) data += "cap ";
         if (village.isOffvillage()) data += "off ";
+        if (village.isWwvillage()) data += "WW";
+        data += village.getArtefact();
+        for (String s : village.getArteEffects()) {
+            if (data != "") data += ", ";
+            data += s;
+        }
         row.getChildren().add(new Label(data));
 
         // Assign column id:s for styling
