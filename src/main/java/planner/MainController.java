@@ -10,7 +10,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -21,6 +25,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 public class MainController implements Initializable {
 
@@ -35,6 +40,9 @@ public class MainController implements Initializable {
 
     @FXML
     TextArea villageInfo;
+
+    @FXML
+    TextArea artefactInfo;
 
     Scene scene;
 
@@ -229,6 +237,8 @@ public class MainController implements Initializable {
 
     /**
      * Updates the cap/off/etc data from the user input.
+     * TODO remove old capital if player has more than one after this.
+     * TODO clear/remove button(s)
      * @param column column to be updated
      */
     private void updateVillageData(String column) {
@@ -237,12 +247,13 @@ public class MainController implements Initializable {
             String[] c = v.split("\\|");
             try {
                 Connection conn = DriverManager.getConnection(App.getDB());
-                String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES(" +
+                String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES (" +
                         "(SELECT coordId " +
                         "FROM x_world " +
                         "WHERE xCoord=" + c[0] + " AND yCoord=" + c[1] + "), 1) " +
                         "ON CONFLICT(coordId) DO UPDATE SET " + column + "=1";
                 conn.prepareStatement(sql).execute();
+                conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -256,5 +267,131 @@ public class MainController implements Initializable {
 
     public void markOffs(ActionEvent actionEvent) {
         this.updateVillageData("offvillage");
+    }
+
+    private void parseArtefacts(String size) {
+        Map<Integer, Integer> artefacts = new HashMap<>();
+        Set<Integer> uniques = new HashSet<>();
+        String html = this.artefactInfo.getText();
+        int trimmer = html.indexOf("show_artefacts");
+        html = html.substring(trimmer);
+        // Read bp's if they are in the game
+        if (size.equals("small_arte") && html.contains("type1\"")) {
+            for (int i = 1; i <= 13; i++) {
+                html = html.substring(html.indexOf("karte.php")+1);
+                int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+                artefacts.put(coordId, 1);
+            }
+        }
+        // Read architects
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 2);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read boots
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 4);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read eyes
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 5);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read diets
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 6);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read trainers
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 8);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read storages
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 9);
+            if (size.equals("large_arte") && i == 4) break;
+        }
+        // Read confusers
+        for (int i = 1; i <= 6; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 10);
+            if (size.equals("large_arte") && i == 5) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Read fools
+        for (int i = 1; i <= 10; i++) {
+            html = html.substring(html.indexOf("karte.php")+1);
+            int coordId = Integer.parseInt(html.substring(html.indexOf('=')+1, html.indexOf('"')));
+            artefacts.put(coordId, 11);
+            if (size.equals("large_arte")) {
+                uniques.add(coordId);
+                break;
+            }
+        }
+        // Update database
+        this.updateArtefacts(size, artefacts, uniques);
+    }
+
+    public void parseSmall(ActionEvent actionEvent) {
+        this.parseArtefacts("small_arte");
+    }
+
+    public void parseLarge(ActionEvent actionEvent) {
+        this.parseArtefacts("large_arte");
+    }
+
+    private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            conn.prepareStatement("UPDATE artefacts SET " + size + "=0").execute();
+            if (size.equals("large_arte")) {
+                conn.prepareStatement("UPDATE artefacts SET unique_arte=0").execute();
+            }
+            for (int coordId : artefacts.keySet()) {
+                String col = size;
+                if (uniques.contains(coordId)) col = "unique_arte";
+                String sql = "INSERT INTO artefacts (coordId, " + col + ") " +
+                        "VALUES (" + coordId + ", " + artefacts.get(coordId) + ") " +
+                        "ON CONFLICT(coordId) DO UPDATE SET " + col + "=" + artefacts.get(coordId);
+                System.out.println(sql);
+                conn.prepareStatement(sql).execute();
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
     }
 }
