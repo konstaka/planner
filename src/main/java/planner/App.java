@@ -5,6 +5,7 @@ package planner;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lombok.Getter;
@@ -18,20 +19,64 @@ public class App extends Application {
     @Getter
     private static final String DB = "jdbc:sqlite:mapsql.db";
 
+    private Stage stage;
+
+    private MainController mainController;
+
+    private Scene mainScene;
+
+    private PlanSceneController planSceneController;
+
+    private Scene planScene;
+
     @Override
     public void start(Stage stage) throws Exception {
 
-        Scene scene = new Scene(FXMLLoader.load(getClass().getResource("main.fxml")));
-        scene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
-        scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
+        this.stage = stage;
+
+        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
+        Parent mainRoot = mainLoader.load();
+        mainController = mainLoader.getController();
+        mainScene = new Scene(mainRoot);
+        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
+        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                mainController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+
+        FXMLLoader planLoader = new FXMLLoader(getClass().getResource("plan.fxml"));
+        Parent planRoot = planLoader.load();
+        planSceneController = planLoader.getController();
+        planScene = new Scene(planRoot);
+        planScene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
+        planSceneController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                planSceneController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
 
         stage.setTitle("Planner 0.1");
-        stage.setScene(scene);
+        stage.setScene(mainScene);
         stage.show();
     }
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private void switchTo(String scene) {
+        switch (scene) {
+            case "updating":
+                stage.setScene(mainScene);
+                break;
+            case "planning":
+                stage.setScene(planScene);
+                break;
+        }
+        stage.show();
     }
 
 }

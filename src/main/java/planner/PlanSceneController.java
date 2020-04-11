@@ -1,10 +1,15 @@
 package planner;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,16 +18,27 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class PlanSceneController implements Initializable {
+
+    StringProperty toScene = new SimpleStringProperty("");
 
     @FXML
     VBox enemyTickboxes;
@@ -46,14 +62,39 @@ public class PlanSceneController implements Initializable {
     CheckBox bps_wws;
 
     @FXML
+    TextField landingTime;
+
+    @FXML
+    TextField flexMinutes;
+
+    @FXML
+    RadioButton fakes;
+
+    @FXML
+    RadioButton reals;
+
+    @FXML
+    TextField wavesBox;
+
+    @FXML
     HBox attackerCols;
 
     @FXML
     VBox targetRows;
 
+    LocalDateTime defaultLandingTime;
+
+    IntegerProperty flexSeconds;
+
+    int waves;
+
     List<TargetVillage> villages;
 
     List<AttackerVillage> attackers;
+
+    Map<Integer, Map<Integer, Attack>> attacks;
+
+    Map<Integer, LocalDateTime> landTimes;
 
     Set<Integer> scoutAccounts;
 
@@ -74,8 +115,12 @@ public class PlanSceneController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
+        flexSeconds = new SimpleIntegerProperty();
+        waves = 4;
         villages = new ArrayList<>();
         attackers = new ArrayList<>();
+        attacks = new HashMap<>();
+        landTimes = new HashMap<>();
         scoutAccounts = new HashSet<>();
         foolAccounts = new HashSet<>();
         confuserAccounts = new HashSet<>();
@@ -208,6 +253,120 @@ public class PlanSceneController implements Initializable {
             VBox attackerBox = a.toDisplayBox();
             attackerCols.getChildren().add(attackerBox);
         }
+
+        // Set default timing to overmorrow morning
+        defaultLandingTime = LocalDateTime.of(
+                LocalDate.now().plusDays(2),
+                LocalTime.of(8, 0));
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+        landingTime.setText(defaultLandingTime.format(f));
+        // Make it editable
+        landingTime.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                try {
+                    defaultLandingTime = LocalDateTime.parse(landingTime.getText(), f);
+                    this.updateLandingTimes();
+                    for (Map<Integer, Attack> attackMap : attacks.values()) {
+                        for (Attack a : attackMap.values()) {
+                            a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
+                        }
+                    }
+                    this.updateTargets();
+                } catch (Exception ex) {
+                    landingTime.setText(defaultLandingTime.format(f));
+                }
+            }
+        });
+        // Set flex default to 0
+        flexMinutes.setText("0");
+        // Make it editable
+        flexMinutes.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                try {
+                    flexSeconds.set(Math.abs(Integer.parseInt(flexMinutes.getText()) * 60));
+                    flexMinutes.setText(""+flexSeconds.get() / 60);
+                } catch (NumberFormatException ex) {
+                    flexMinutes.setText("0");
+                }
+            }
+        });
+        // Update attacks
+        flexSeconds.addListener(observable -> {
+            this.updateLandingTimes();
+            for (Map<Integer, Attack> attackMap : attacks.values()) {
+                for (Attack a : attackMap.values()) {
+                    a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
+                }
+            }
+            this.updateTargets();
+        });
+
+        // Group fake/real radio buttons
+        ToggleGroup attackType = new ToggleGroup();
+        fakes.setToggleGroup(attackType);
+        reals.setToggleGroup(attackType);
+
+        // Set default waves to 4
+        wavesBox.setText("4");
+        // Make it editable
+        wavesBox.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue) {
+                try {
+                    waves = Integer.parseInt(wavesBox.getText());
+                    if (waves < 1 || waves > 8) {
+                        waves = 4;
+                        wavesBox.setText("4");
+                    }
+                } catch (NumberFormatException ex) {
+                    wavesBox.setText("4");
+                }
+            }
+        });
+
+
+        // Update landing times
+        this.updateLandingTimes();
+        // Create the attack matrix
+        for (AttackerVillage attacker : attackers) {
+            Map<Integer, Attack> toAdd = new HashMap<>();
+            for (TargetVillage target : villages) {
+                // TODO make all magic numbers editable.
+                // Currently: unit speed, server speed, server size
+                // Waves needs to be 0 at this point to mark that the attack is not planned for now
+                Attack a = new Attack(
+                        target,
+                        attacker,
+                        new SimpleIntegerProperty(0),
+                        new SimpleBooleanProperty(false),
+                        3,
+                        landTimes.get(target.getCoordId()),
+                        1,
+                        200);
+                // Listen to changes that mark planned fake/real attacks
+                a.getWaves().addListener(observable -> this.updateTargets());
+                a.getReal().addListener(observable -> this.updateTargets());
+                toAdd.put(target.getCoordId(), a);
+            }
+            attacks.put(attacker.getCoordId(), toAdd);
+        }
+
+
+
+    }
+
+
+    /**
+     * Refreshes the landing times map based on baseline hit time and flex seconds.
+     * TODO add individual attacker shifts like -1s, +1s etc
+     */
+    private void updateLandingTimes() {
+        for (TargetVillage target : villages) {
+            // Randomise landing times:
+            long flexSec = Math.round(flexSeconds.get() * (Math.random() * 2 - 1));
+            LocalDateTime thisHit = defaultLandingTime.plusSeconds(flexSec);
+            // Save some lookup time by storing these in a map
+            landTimes.put(target.getCoordId(), thisHit);
+        }
     }
 
 
@@ -216,17 +375,17 @@ public class PlanSceneController implements Initializable {
      */
     private void assembleArteEffects() {
         for (TargetVillage t : villages) {
-            if (t.getArtefact().contains("eyes") || scoutAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("scout effect");
+            if (t.getArtefact().contains("Eyes") || scoutAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("Scout effect");
             }
-            if (t.getArtefact().contains("fool") || foolAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("fool effect");
+            if (t.getArtefact().contains("Fool") || foolAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("Fool effect");
             }
-            if (t.getArtefact().contains("confuser") || confuserAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("confuser effect");
+            if (t.getArtefact().contains("Confuser") || confuserAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("Confuser effect");
             }
-            if (t.getArtefact().contains("architect") || architectAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("architect effect");
+            if (t.getArtefact().contains("Architect") || architectAccounts.contains(t.getPlayerId())) {
+                t.getArteEffects().add("Architect effect");
             }
         }
     }
@@ -242,29 +401,29 @@ public class PlanSceneController implements Initializable {
         String arte = "";
         switch (size) {
             case 0:
-                arte = "small ";
+                arte = "Small ";
                 break;
             case 1:
-                arte = "large ";
+                arte = "Large ";
                 break;
             case 2:
-                arte = "unique ";
+                arte = "Unique ";
                 break;
             default:
-                return "invalid artefact";
+                return "Invalid Artefact";
         }
         switch (type) {
-            case 1: return "buildplan";
-            case 2: return arte + "architect";
-            case 4: return arte + "boots";
-            case 5: return arte + "eyes";
-            case 6: return arte + "diet";
-            case 8: return arte + "trainer";
-            case 9: return arte + "storage";
-            case 10: return arte + "confuser";
-            case 11: return arte + "fool";
+            case 1: return "Buildplan";
+            case 2: return arte + "Architect";
+            case 4: return arte + "Boots";
+            case 5: return arte + "Eyes";
+            case 6: return arte + "Diet";
+            case 8: return arte + "Trainer";
+            case 9: return arte + "Storage";
+            case 10: return arte + "Confuser";
+            case 11: return arte + "Fool";
             default:
-                return "invalid artefact";
+                return "Invalid Artefact";
         }
     }
 
@@ -293,11 +452,11 @@ public class PlanSceneController implements Initializable {
                     && (
                     (v.isCapital() && this.caps.isSelected())
                             || (v.isOffvillage() && this.offs.isSelected())
-                            || (v.getArtefact().contains("small") && this.small_artes.isSelected())
-                            || (v.getArtefact().contains("large") && this.large_artes.isSelected())
-                            || (v.getArtefact().contains("unique") && this.large_artes.isSelected())
+                            || (v.getArtefact().contains("Small") && this.small_artes.isSelected())
+                            || (v.getArtefact().contains("Large") && this.large_artes.isSelected())
+                            || (v.getArtefact().contains("Unique") && this.large_artes.isSelected())
                             || (v.isWwvillage() && this.bps_wws.isSelected())
-                            || (v.getArtefact().contains("buildplan") && this.bps_wws.isSelected())
+                            || (v.getArtefact().contains("Buildplan") && this.bps_wws.isSelected())
             )
             ) {
                 shownVillages.add(v);
@@ -310,9 +469,11 @@ public class PlanSceneController implements Initializable {
         }
     }
 
+
     public void refreshTargets(ActionEvent actionEvent) {
         this.updateTargets();
     }
+
 
     /**
      * Crafts a target row from the village identifier.
@@ -342,6 +503,28 @@ public class PlanSceneController implements Initializable {
         }
         row.getChildren().add(new Label(data));
 
+        // Get landing time
+        row.getChildren().add(new Label(
+                landTimes
+                        .get(village.getCoordId())
+                        .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+        ));
+
+        // Dropdown for adding an attack
+        ComboBox<AttackerVillage> attackerPicker = new ComboBox<>();
+        attackerPicker.getItems().addAll(attackers);
+        attackerPicker.setPromptText("Add attacker...");
+        attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
+            AttackerVillage a = attackerPicker.getSelectionModel().getSelectedItem();
+            if (a != null) {
+                attacks.get(a.getCoordId()).get(village.getCoordId()).getWaves().set(waves);
+                if (reals.isSelected()) attacks.get(a.getCoordId()).get(village.getCoordId()).getReal().set(true);
+                attackerPicker.getSelectionModel().clearSelection();
+                attackerPicker.setPromptText("Add attacker...");
+            }
+        });
+        row.getChildren().add(attackerPicker);
+
         // Assign column id:s for styling
         for (int i = 0; i < row.getChildren().size(); i++) {
             Node n = row.getChildren().get(i);
@@ -349,8 +532,28 @@ public class PlanSceneController implements Initializable {
             n.getStyleClass().add("target-col");
         }
 
+        // List attacks in landing order
+        List<Attack> rowAttacks = new ArrayList<>();
+        for (Map<Integer, Attack> attackMap: attacks.values()) {
+            Attack a = attackMap.get(village.getCoordId());
+            if (a.getWaves().getValue() > 0) rowAttacks.add(a);
+        }
+        rowAttacks.sort((o1, o2) -> {
+            if (o1.getLandingTime().equals(o2.getLandingTime())) {
+                return o1.getSendingTime().compareTo(o2.getSendingTime());
+            } else {
+                return o1.getLandingTime().compareTo(o2.getLandingTime());
+            }
+        });
+        for (Attack a : rowAttacks) {
+            row.getChildren().add(new Label(a.getAttacker().getPlayerName()));
+        }
+
+
+
         return row;
     }
+
 
     /**
      * Tribe ID to tribe converter.
@@ -364,5 +567,14 @@ public class PlanSceneController implements Initializable {
             case 3: return "Gaul";
         }
         return "Unknown";
+    }
+
+
+    /**
+     * Changes to the updating view.
+     * @throws IOException if the fxml file is not found
+     */
+    public void toUpdating(ActionEvent actionEvent) throws IOException {
+        this.toScene.set("updating");
     }
 }

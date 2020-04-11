@@ -18,17 +18,22 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class MainController implements Initializable {
+
+    StringProperty toScene = new SimpleStringProperty("");
 
     @FXML
     Label lastUpdated;
@@ -44,6 +49,9 @@ public class MainController implements Initializable {
 
     @FXML
     TextArea artefactInfo;
+
+    @FXML
+    Button planButton;
 
     Scene scene;
 
@@ -424,10 +432,8 @@ public class MainController implements Initializable {
      * @throws IOException if the fxml file is not found
      */
     public void toPlanning() throws IOException {
-        scene = lastUpdated.getScene();
-        stage = (Stage) lastUpdated.getScene().getWindow();
-        scene.setRoot(FXMLLoader.load(getClass().getResource("plan.fxml")));
-        scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
-        stage.show();
+        // TODO display a loading text
+        //new Thread(() -> planButton.setText("Loading...")).start();
+        this.toScene.set("planning");
     }
 }

@@ -2,6 +2,8 @@ package planner;
 
 import java.time.LocalDateTime;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +21,11 @@ public class Attack {
 
     @Getter
     @Setter
-    private int waves;
+    private IntegerProperty waves;
+
+    @Getter
+    @Setter
+    private BooleanProperty real;
 
     @Getter
     @Setter
