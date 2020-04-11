@@ -176,7 +176,7 @@ public class MainController implements Initializable {
                             + Double.parseDouble(off[5].replace(',', '.')) + ","
                             + this.tribeNumber(off[6]) + ","
                             + "'" + off[7] + "',"
-                            + offSize(this.tribeNumber(off[6]), off[7]) + ","
+                            + this.offSize(this.tribeNumber(off[6]), off[7]) + ","
                             + Integer.parseInt(off[8]) + ","
                             + Integer.parseInt(off[9]) + ","
                             + "'" + (off.length > 10 ? off[10] : null) + "',"

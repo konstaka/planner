@@ -1,10 +1,14 @@
 package planner;
 
-import java.util.Arrays;
-
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.event.ActionEvent;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -18,7 +22,7 @@ public class AttackerVillage extends Village {
 
     @Getter
     @Setter
-    private int ts;
+    private IntegerProperty ts = new SimpleIntegerProperty();
 
     @Getter
     @Setter
@@ -52,9 +56,11 @@ public class AttackerVillage extends Village {
     @Setter
     private String comment;
 
+
     public AttackerVillage(int coordId) {
         super(coordId);
     }
+
 
     public VBox toDisplayBox() {
         Image image = null;
@@ -120,13 +126,34 @@ public class AttackerVillage extends Village {
         offRow.getChildren().add(off2);
         box.getChildren().add(offRow);
         box.getChildren().add(new Label(this.offSizeRounded()));
-        // TS
+        // Spacer
+        Region r4 = new Region();
+        r4.setMaxHeight(4);
+        r4.setMinHeight(4);
+        box.getChildren().add(r4);
+        // TS img
         HBox tsRow = new HBox();
-        ImageView tsImg = new ImageView("images/ts.gif");
+        ImageView tsImg = new ImageView(String.valueOf(getClass().getResource("images/ts.gif")));
         tsImg.setPreserveRatio(true);
         tsImg.setFitHeight(11);
         tsRow.getChildren().add(tsImg);
-
+        // Spacer
+        Region r5 = new Region();
+        r5.setMaxWidth(2);
+        r5.setMinWidth(2);
+        tsRow.getChildren().add(r5);
+        // TS level selector
+        TextField tsLvl = new TextField();
+        tsLvl.setText(""+this.getTs().getValue());
+        tsLvl.setPrefWidth(22);
+        tsLvl.setAlignment(Pos.BASELINE_CENTER);
+        tsLvl.setPadding(new Insets(0, 1, 0, 1));
+        tsLvl.setOnAction(this::updateTs);
+        tsLvl.focusedProperty().addListener((ov, oldV, newV) -> {
+            if (!newV) tsLvl.fireEvent(new ActionEvent()); // Update on focus change
+        });
+        tsRow.getChildren().add(tsLvl);
+        box.getChildren().add(tsRow);
 
         for (Node n : box.getChildren()) {
             n.getStyleClass().add("attacker-box-label");
@@ -139,6 +166,30 @@ public class AttackerVillage extends Village {
         box.getChildren().add(name);
         return box;
     }
+
+
+    /**
+     * Updates the attacks associated with this attacker.
+     */
+    private void updateTs(ActionEvent e) {
+        if (e.getSource() instanceof TextField) {
+            TextField f = (TextField) e.getSource();
+            try {
+                int lvl = Integer.parseInt(f.getText());
+                if (lvl < 0) {
+                    f.setText("0");
+                    this.getTs().set(0);
+                } else if (lvl > 20) {
+                    f.setText("20");
+                    this.getTs().set(20);
+                }
+                this.getTs().set(lvl);
+            } catch (NumberFormatException ex) {
+                f.setText("0");
+            }
+        }
+    }
+
 
     /**
      * Looks into the off units and determines which two types are the largest.
@@ -185,6 +236,7 @@ public class AttackerVillage extends Village {
         }
         return ret;
     }
+
 
     private String offSizeRounded() {
         return Math.round(this.offSize / 1000.0) + "k";
