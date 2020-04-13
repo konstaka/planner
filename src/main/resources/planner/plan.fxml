@@ -76,6 +76,10 @@
                             minWidth="110"
                             maxWidth="110"
                             onAction="#toUpdating" />
+                <Button     text="Save"
+                            minWidth="110"
+                            maxWidth="110"
+                            onAction="#save" />
             </VBox>
             <VBox>
                 <Label          text="Add:"

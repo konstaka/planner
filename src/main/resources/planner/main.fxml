@@ -52,6 +52,9 @@
                     onAction="#loadParticipants" />
             <Label  fx:id="noParticipants" />
         </HBox>
+        <Label      text="Load the last saved operation from database:" />
+        <Button     text="Load operation"
+                    onAction="#load" />
         <Button     fx:id="planButton"
                     text="Plan!"
                     prefWidth="150"

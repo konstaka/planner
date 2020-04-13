@@ -24,12 +24,11 @@ public class App extends Application {
     private Stage stage;
 
     private MainController mainController;
-
     private Scene mainScene;
 
     private PlanSceneController planSceneController;
-
     private Scene planScene;
+
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -51,6 +50,12 @@ public class App extends Application {
             if (observable.getValue()) {
                 mainController.newOp.set(false);
                 this.newPlan();
+            }
+        });
+        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.loadOp.set(false);
+                planSceneController.load();
             }
         });
 

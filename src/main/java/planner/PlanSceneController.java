@@ -84,6 +84,8 @@ public class PlanSceneController implements Initializable {
     @FXML
     VBox targetRows;
 
+    DateTimeFormatter f = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+
     LocalDateTime defaultLandingTime;
 
     IntegerProperty flexSeconds;
@@ -260,7 +262,6 @@ public class PlanSceneController implements Initializable {
         defaultLandingTime = LocalDateTime.of(
                 LocalDate.now().plusDays(2),
                 LocalTime.of(8, 0));
-        DateTimeFormatter f = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
         landingTime.setText(defaultLandingTime.format(f));
         // Make it editable
         landingTime.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -287,21 +288,17 @@ public class PlanSceneController implements Initializable {
                 try {
                     flexSeconds.set(Math.abs(Integer.parseInt(flexMinutes.getText()) * 60));
                     flexMinutes.setText(""+flexSeconds.get() / 60);
+                    this.updateLandingTimes();
+                    for (Map<Integer, Attack> attackMap : attacks.values()) {
+                        for (Attack a : attackMap.values()) {
+                            a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
+                        }
+                    }
+                    this.updateTargets();
                 } catch (NumberFormatException ex) {
                     flexMinutes.setText("0");
                 }
             }
-        });
-        // Update attacks
-        flexSeconds.addListener(observable -> {
-            this.updateLandingTimes();
-            for (Map<Integer, Attack> attackMap : attacks.values()) {
-                for (Attack a : attackMap.values()) {
-                    a.setLandingTime(landTimes.get(a.getTarget().getCoordId())
-                            .plusSeconds(a.getLandingTimeShift().get()));
-                }
-            }
-            this.updateTargets();
         });
 
         // Group fake/real radio buttons
@@ -636,6 +633,77 @@ public class PlanSceneController implements Initializable {
             case 3: return "Gaul";
         }
         return "Unknown";
+    }
+
+
+    /**
+     * Saves the current plan to database. Overwrites anything that was there.
+     */
+    public void save() {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            conn.prepareStatement("DELETE FROM operation_meta").execute();
+            String sql = "INSERT INTO operation_meta VALUES ("
+                    + flexSeconds.get() + ",'"
+                    + landingTime.getText() + "')";
+            conn.prepareStatement(sql).execute();
+            conn.prepareStatement("DELETE FROM attacks").execute();
+            for (AttackerVillage attacker : attackers) {
+                for (Attack a : attacker.getPlannedAttacks()) {
+                    System.out.println("saving attack " + a.getAttacker().getCoordId() + " " + a.getTarget().getCoordId());
+                    conn.prepareStatement("INSERT INTO attacks VALUES ("
+                            + a.getAttacker().getCoordId() + ","
+                            + a.getTarget().getCoordId() + ",'"
+                            + landTimes.get(a.getTarget().getCoordId()).format(f) + "',"
+                            + a.getWaves().get() + ","
+                            + (a.getReal().get() ? 1 : 0) + ","
+                            + (a.getConq().get() ? 1 : 0) + ","
+                            + a.getLandingTimeShift().get() + ","
+                            + a.getUnitSpeed() + ","
+                            + a.getServerSpeed() + ","
+                            + a.getServerSize() + ")"
+                    )
+                            .execute();
+                }
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Loads saved operation from database. Overwrites anything that is now planned.
+     */
+    public void load() {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
+            String time = rs1.getString("defaultLandingTime");
+            landingTime.setText(time);
+            defaultLandingTime = LocalDateTime.parse(time, f);
+            int seconds = rs1.getInt("flex_seconds");
+            flexMinutes.setText(""+seconds / 60);
+            flexSeconds.set(seconds);
+            ResultSet rs3 = conn.prepareStatement("SELECT * FROM attacks").executeQuery();
+            while (rs3.next()) {
+                int a_coordId = rs3.getInt("a_coordId");
+                int t_coordId = rs3.getInt("t_coordId");
+                Attack a = attacks.get(a_coordId).get(t_coordId);
+                a.setLandingTime(LocalDateTime.parse(rs3.getString("landing_time"), f));
+                a.getWaves().set(rs3.getInt("waves"));
+                a.getReal().set(rs3.getInt("realTgt") == 1);
+                a.getConq().set(rs3.getInt("conq") == 1);
+                a.getLandingTimeShift().set(rs3.getInt("time_shift"));
+                a.setUnitSpeed(rs3.getInt("unit_speed"));
+                a.setServerSpeed(rs3.getInt("server_speed"));
+                a.setServerSize(rs3.getInt("server_size"));
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

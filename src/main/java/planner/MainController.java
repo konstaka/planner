@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,6 +36,8 @@ public class MainController implements Initializable {
     StringProperty toScene = new SimpleStringProperty("");
 
     BooleanProperty newOp = new SimpleBooleanProperty(false);
+
+    BooleanProperty loadOp = new SimpleBooleanProperty(false);
 
     @FXML
     Label lastUpdated;
@@ -120,7 +123,8 @@ public class MainController implements Initializable {
 
                 // Update last updated field
                 conn.prepareStatement("DELETE FROM updated").execute();
-                String updateInfo = LocalDateTime.now().toString();
+                DateTimeFormatter frm = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+                String updateInfo = LocalDateTime.now().format(frm);
                 conn.prepareStatement("INSERT INTO updated VALUES ("
                         + "'" + updateInfo + "'"
                         + ")").execute();
@@ -434,5 +438,10 @@ public class MainController implements Initializable {
         // TODO display a loading text
         //new Thread(() -> planButton.setText("Loading...")).start();
         this.toScene.set("planning");
+    }
+
+
+    public void load(ActionEvent actionEvent) {
+        loadOp.set(true);
     }
 }
