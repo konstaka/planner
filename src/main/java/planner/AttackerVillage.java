@@ -3,6 +3,8 @@ package planner;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.tools.Tool;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -14,12 +16,14 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -123,8 +127,15 @@ public class AttackerVillage extends Village {
         r3.setMinHeight(4);
         box.getChildren().add(r3);
         // Offs
-        box.getChildren().add(this.toOffRow());
-        box.getChildren().add(new Label(this.offSizeRounded()));
+        Tooltip t1 = new Tooltip(offString);
+        t1.setShowDelay(Duration.millis(0));
+        t1.setHideDelay(Duration.millis(500));
+        HBox offRow = this.toOffRow();
+        Tooltip.install(offRow, t1);
+        box.getChildren().add(offRow);
+        Label l = new Label(this.offSizeRounded());
+        l.setTooltip(t1);
+        box.getChildren().add(l);
         // Spacer
         Region r4 = new Region();
         r4.setMaxHeight(4);
@@ -162,6 +173,13 @@ public class AttackerVillage extends Village {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         Label name = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
         name.getStyleClass().add("attacker-name");
+        Tooltip t2 = new Tooltip(
+                "Earliest send: " + getSendMin() + "\n"
+                + "Latest send: " + getSendMax() + "\n"
+                + "Comment: " + getComment());
+        t2.setShowDelay(Duration.millis(0));
+        t2.setHideDelay(Duration.millis(500));
+        name.setTooltip(t2);
         if (alert.get()) name.getStyleClass().add("alert");
         box.getChildren().add(name);
         return box;

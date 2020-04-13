@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -12,6 +9,8 @@
     <VBox>
         <HBox   minWidth="1280"
                 maxWidth="1280">
+            <Region         minWidth="4"
+                            maxWidth="4" />
             <VBox>
                 <Label      text="Pick enemies"
                             minHeight="20"
@@ -23,6 +22,8 @@
                     <VBox   fx:id="enemyTickboxes" />
                 </ScrollPane>
             </VBox>
+            <Region         minWidth="8"
+                            maxWidth="8" />
             <VBox>
                 <Label      text="Pick targets"
                             minHeight="20"
@@ -40,6 +41,8 @@
                     </VBox>
                 </ScrollPane>
             </VBox>
+            <Region         minWidth="8"
+                            maxWidth="8" />
             <VBox>
                 <Label      text="Set landing times"
                             minHeight="20"
@@ -68,6 +71,8 @@
                                 alignment="TOP_RIGHT" />
                 </HBox>
             </VBox>
+            <Region         minWidth="8"
+                            maxWidth="8" />
             <VBox>
                 <Label      text="Tools"
                             minHeight="20"
@@ -76,11 +81,17 @@
                             minWidth="110"
                             maxWidth="110"
                             onAction="#toUpdating" />
+                <Button     text="Commands"
+                            minWidth="110"
+                            maxWidth="110"
+                            onAction="#toMessages" />
                 <Button     text="Save"
                             minWidth="110"
                             maxWidth="110"
                             onAction="#save" />
             </VBox>
+            <Region         minWidth="8"
+                            maxWidth="8" />
             <VBox>
                 <Label          text="Add:"
                                 minHeight="20"
