@@ -64,7 +64,7 @@ public class App extends Application {
 
         this.newPlan();
 
-        stage.setTitle("Planner 0.1");
+        stage.setTitle("Planner 1.0 by GoNu");
         stage.setScene(mainScene);
         stage.show();
     }
