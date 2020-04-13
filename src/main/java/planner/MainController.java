@@ -192,7 +192,7 @@ public class MainController implements Initializable {
                             + Integer.parseInt(off[9]) + ","
                             + "'" + (off.length > 10 ? off[10] : null) + "',"
                             + "'" + (off.length > 11 ? off[11] : null) + "',"
-                            + "'" + off[off.length - 1] + "'"
+                            + "'" + (off.length > 12 ? off[12] : null) + "'"
                             + ")";
                     conn.prepareStatement(sql).execute();
                 }
