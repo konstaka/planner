@@ -21,8 +21,8 @@
                     <Button     text="Save"
                                 onAction="#saveTemplates" />
                 </VBox>
-                <ScrollPane     minWidth="706" maxWidth="706" minHeight="620" maxHeight="620" hbarPolicy="NEVER" >
-                    <VBox       fx:id="commands" />
+                <ScrollPane     minWidth="706" maxWidth="706" minHeight="628" maxHeight="628" hbarPolicy="NEVER" >
+                    <VBox       fx:id="commands" spacing="4" />
                 </ScrollPane>
             </HBox>
         </VBox>

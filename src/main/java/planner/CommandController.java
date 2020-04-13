@@ -1,6 +1,11 @@
 package planner;
 
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -50,6 +55,17 @@ public class CommandController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            ResultSet rs = conn.prepareStatement("SELECT * FROM templates").executeQuery();
+            while (rs.next()) {
+                template1.setText(rs.getString("template1"));
+                template2.setText(rs.getString("template2"));
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -83,7 +99,7 @@ public class CommandController implements Initializable {
 
         TextArea attackerCommand = new TextArea();
         StringBuilder commandText = new StringBuilder();
-        commandText.append(template1);
+        commandText.append(template1.getText());
         commandText
                 .append("Attacks from village [b]")
                 .append(a.getVillageName())
@@ -101,7 +117,7 @@ public class CommandController implements Initializable {
         for (Attack attack : targets) {
             commandText.append(this.toAttackRow(attack));
         }
-        commandText.append(template2);
+        commandText.append(template2.getText());
         attackerCommand.setText(commandText.toString());
         attackerCommand.getStyleClass().add("attacker-command");
         attackerRow.getChildren().add(attackerCommand);
@@ -192,8 +208,19 @@ public class CommandController implements Initializable {
     }
 
 
-    // TODO
     public void saveTemplates(ActionEvent actionEvent) {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            conn.prepareStatement("DELETE FROM templates").execute();
+            PreparedStatement ps = conn.prepareStatement("INSERT INTO templates VALUES(?, ?)");
+            ps.setString(1, template1.getText());
+            ps.setString(2, template2.getText());
+            ps.execute();
+            conn.close();
+            updateCommands();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
