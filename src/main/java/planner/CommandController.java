@@ -148,8 +148,18 @@ public class CommandController implements Initializable {
                 .append("[/b] [x|y]")
                 .append(attack.getTarget().getCoords())
                 .append("[/x|y] ");
+        if (!attack.getTarget().getArtefact().isEmpty()) {
+            attackRow.append(attack.getTarget().getArtefact());
+            if (!attack.getTarget().getArteEffects().isEmpty()) {
+                attackRow.append(", ");
+            } else {
+                attackRow.append(" ");
+            }
+        }
         for (String effect : attack.getTarget().getArteEffects()) {
-            attackRow.append(effect).append(" ");
+            attackRow
+                    .append(effect)
+                    .append(" ");
         }
         attackRow
                 .append("[b]")
@@ -173,13 +183,17 @@ public class CommandController implements Initializable {
                 return o1.getLandingTime().compareTo(o2.getLandingTime());
             }
         });
-        for (int i = 0; i < targetAttacks.size(); i++) {
-            Attack a = targetAttacks.get(i);
-            attackRow
-                    .append(a.getAttacker().getPlayerName())
-                    .append(" ")
-                    .append(a.getAttacker().getCoords());
-            if (i < targetAttacks.size()-1) attackRow.append(", ");
+        if (targetAttacks.size() > 1) {
+            for (int i = 0; i < targetAttacks.size(); i++) {
+                Attack a = targetAttacks.get(i);
+                attackRow
+                        .append(a.getAttacker().getPlayerName())
+                        .append(" (")
+                        .append(a.getAttacker().getCoords())
+                        .append(") ")
+                        .append(a.getLandingTime().format(DateTimeFormatter.ofPattern(":ss")));
+                if (i < targetAttacks.size()-1) attackRow.append(", ");
+            }
         }
         attackRow.append("\n");
         return attackRow.toString();
