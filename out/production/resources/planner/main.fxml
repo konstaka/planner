@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
@@ -13,18 +16,27 @@
                     onAction="#loadMapsql" />
             <Label  fx:id="lastUpdated" />
         </HBox>
-        <Label      text="Paste here coordinates you want to mark as caps, offs, or WWs, and press the corresponding button." />
+        <Label      text="Paste participant rows from sheets, exactly in the following format:" />
+        <Label      text="timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment" />
+        <Label      text="Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			" />
+        <TextArea   maxWidth="300"
+                    maxHeight="100"
+                    fx:id="participants" />
+        <HBox>
+            <Button text="Update participants"
+                    onAction="#loadParticipants" />
+            <Label  fx:id="noParticipants" />
+        </HBox>
+        <Label      text="Paste here coordinates you want to mark as caps or offs and press the corresponding button." />
         <Label      text="One per line, format example: -74|99" />
         <TextArea   maxWidth="300"
                     maxHeight="100"
                     fx:id="villageInfo" />
         <HBox>
-            <Button text="Mark as caps"
+            <Button text="Mark as capitals"
                     onAction="#markCapitals" />
-            <Button text="Mark as offs"
+            <Button text="Mark as offvillages"
                     onAction="#markOffs" />
-            <Button text="Mark as WWs"
-                    onAction="#markWWs" />
         </HBox>
         <Label      text="Paste here the source code of your treasury page for small/large artefacts." />
         <Label      text="Press the corresponding button to import artefact data." />
@@ -37,25 +49,7 @@
             <Button text="Large artefacts"
                     onAction="#parseLarge" />
         </HBox>
-        <Label      text="Paste participant rows from sheets, exactly in the following format:" />
-        <Label      text="timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment" />
-        <Label      text="Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			" />
-        <Label      text="Warning! This will remove all existing participants and their planned attacks." />
-        <TextArea   maxWidth="300"
-                    maxHeight="100"
-                    fx:id="participants" />
-        <HBox>
-            <Button text="New operation"
-                    onAction="#loadParticipants" />
-            <Label  fx:id="noParticipants" />
-        </HBox>
-        <Label      text="Load the last saved operation from database:" />
-        <Button     text="Load operation"
-                    onAction="#load" />
-        <Button     fx:id="planButton"
-                    text="Plan!"
-                    prefWidth="150"
-                    prefHeight="100"
+        <Button     text="Plan!"
                     onAction="#toPlanning" />
     </VBox>
 </AnchorPane>

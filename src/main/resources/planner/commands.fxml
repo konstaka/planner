@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="planner.CommandController"
+            prefHeight="800.0" prefWidth="1280.0">
+    <HBox>
+        <Region     maxWidth="4" minWidth="4" />
+        <VBox       spacing="8" >
+            <Button     text="Back to planning"
+                        onAction="#toPlanning" />
+            <HBox       spacing="16" >
+                <VBox       spacing="4" >
+                    <TextArea   fx:id="template1" minWidth="550" maxWidth="550" minHeight="300" maxHeight="300" wrapText="true" />
+                    <Label      text="------ Targets ------"
+                                minWidth="550" maxWidth="550" minHeight="20" maxHeight="30" alignment="BASELINE_CENTER" />
+                    <TextArea   fx:id="template2" minWidth="550" maxWidth="550" minHeight="300" maxHeight="300" wrapText="true" />
+                    <Button     text="Save"
+                                onAction="#saveTemplates" />
+                </VBox>
+                <ScrollPane     minWidth="706" maxWidth="706" minHeight="628" maxHeight="628" hbarPolicy="NEVER" >
+                    <VBox       fx:id="commands" spacing="4" />
+                </ScrollPane>
+            </HBox>
+        </VBox>
+    </HBox>
+</AnchorPane>
