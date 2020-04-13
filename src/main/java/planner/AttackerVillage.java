@@ -1,6 +1,11 @@
 package planner;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -55,6 +60,14 @@ public class AttackerVillage extends Village {
     @Getter
     @Setter
     private String comment;
+
+    @Getter
+    @Setter
+    private BooleanProperty alert = new SimpleBooleanProperty(false);
+
+    @Getter
+    @Setter
+    private List<Attack> plannedAttacks = new ArrayList<>();
 
     private Image image = null;
 
@@ -147,8 +160,9 @@ public class AttackerVillage extends Village {
         Region spacer = new Region();
         box.getChildren().add(spacer);
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        Label name = new Label(this.getPlayerName());
+        Label name = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
         name.getStyleClass().add("attacker-name");
+        if (alert.get()) name.getStyleClass().add("alert");
         box.getChildren().add(name);
         return box;
     }

@@ -3,7 +3,6 @@ package planner;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -18,13 +17,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -34,6 +33,8 @@ import javafx.stage.Stage;
 public class MainController implements Initializable {
 
     StringProperty toScene = new SimpleStringProperty("");
+
+    BooleanProperty newOp = new SimpleBooleanProperty(false);
 
     @FXML
     Label lastUpdated;
@@ -52,8 +53,6 @@ public class MainController implements Initializable {
 
     @FXML
     Button planButton;
-
-    Scene scene;
 
     Stage stage;
 
@@ -194,6 +193,7 @@ public class MainController implements Initializable {
                     conn.prepareStatement(sql).execute();
                 }
                 noParticipants.setText("Current operation: " + offs.length + " participants");
+                newOp.set(true);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Database error");
@@ -429,9 +429,8 @@ public class MainController implements Initializable {
 
     /**
      * Changes to the planning view.
-     * @throws IOException if the fxml file is not found
      */
-    public void toPlanning() throws IOException {
+    public void toPlanning() {
         // TODO display a loading text
         //new Thread(() -> planButton.setText("Loading...")).start();
         this.toScene.set("planning");

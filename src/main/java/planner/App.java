@@ -3,6 +3,8 @@
  */
 package planner;
 
+import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -45,10 +47,30 @@ public class App extends Application {
                 this.switchTo(newValue);
             }
         });
+        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.newOp.set(false);
+                this.newPlan();
+            }
+        });
 
+        this.newPlan();
+
+        stage.setTitle("Planner 0.1");
+        stage.setScene(mainScene);
+        stage.show();
+    }
+
+    private void newPlan() {
         FXMLLoader planLoader = new FXMLLoader(getClass().getResource("plan.fxml"));
-        Parent planRoot = planLoader.load();
+        Parent planRoot = null;
+        try {
+            planRoot = planLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         planSceneController = planLoader.getController();
+        assert planRoot != null;
         planScene = new Scene(planRoot);
         planScene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
         planSceneController.toScene.addListener((observable, oldValue, newValue) -> {
@@ -57,10 +79,6 @@ public class App extends Application {
                 this.switchTo(newValue);
             }
         });
-
-        stage.setTitle("Planner 0.1");
-        stage.setScene(mainScene);
-        stage.show();
     }
 
     public static void main(String[] args) {
