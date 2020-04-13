@@ -435,8 +435,6 @@ public class MainController implements Initializable {
      * Changes to the planning view.
      */
     public void toPlanning() {
-        // TODO display a loading text
-        //new Thread(() -> planButton.setText("Loading...")).start();
         this.toScene.set("planning");
     }
 
