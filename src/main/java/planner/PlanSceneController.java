@@ -9,7 +9,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -98,6 +100,8 @@ public class PlanSceneController implements Initializable {
 
     Map<Integer, Map<Integer, Attack>> attacks;
 
+    Map<Integer, List<Attack>> attacksPerPlayer;
+
     Map<Integer, LocalDateTime> landTimes;
 
     Set<Integer> scoutAccounts;
@@ -124,6 +128,7 @@ public class PlanSceneController implements Initializable {
         villages = new ArrayList<>();
         attackers = new ArrayList<>();
         attacks = new HashMap<>();
+        attacksPerPlayer = new HashMap<>();
         landTimes = new HashMap<>();
         scoutAccounts = new HashSet<>();
         foolAccounts = new HashSet<>();
@@ -268,7 +273,7 @@ public class PlanSceneController implements Initializable {
             if (!newValue) {
                 try {
                     defaultLandingTime = LocalDateTime.parse(landingTime.getText(), f);
-                    this.updateLandingTimes();
+                    this.updateLandingTimes(false);
                     for (Map<Integer, Attack> attackMap : attacks.values()) {
                         for (Attack a : attackMap.values()) {
                             a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
@@ -283,21 +288,20 @@ public class PlanSceneController implements Initializable {
         // Set flex default to 0
         flexMinutes.setText("0");
         // Make it editable
-        flexMinutes.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                try {
-                    flexSeconds.set(Math.abs(Integer.parseInt(flexMinutes.getText()) * 60));
-                    flexMinutes.setText(""+flexSeconds.get() / 60);
-                    this.updateLandingTimes();
-                    for (Map<Integer, Attack> attackMap : attacks.values()) {
-                        for (Attack a : attackMap.values()) {
-                            a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
-                        }
+        flexMinutes.setOnAction(actionEvent -> {
+            try {
+                flexSeconds.set(Math.abs(Integer.parseInt(flexMinutes.getText()) * 60));
+                flexMinutes.setText(""+flexSeconds.get() / 60);
+                this.updateLandingTimes(true);
+                for (Map<Integer, Attack> attackMap : attacks.values()) {
+                    for (Attack a : attackMap.values()) {
+                        a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
                     }
-                    this.updateTargets();
-                } catch (NumberFormatException ex) {
-                    flexMinutes.setText("0");
                 }
+                this.updateTargets();
+                this.updateAttackers();
+            } catch (NumberFormatException ex) {
+                flexMinutes.setText("0");
             }
         });
 
@@ -324,7 +328,7 @@ public class PlanSceneController implements Initializable {
         });
 
         // Update landing times
-        this.updateLandingTimes();
+        this.updateLandingTimes(true);
         // Create the attack matrix
         for (AttackerVillage attacker : attackers) {
             Map<Integer, Attack> toAdd = new HashMap<>();
@@ -369,26 +373,38 @@ public class PlanSceneController implements Initializable {
 
 
     private void updateAttackers() {
-        // Reset alerts
+        // Reset alerts, clear planned attacks
         for (AttackerVillage a : attackers) {
+            a.getPlannedAttacks().removeIf(attack -> attack.getWaves().get() == 0);
             a.getAlert().set(false);
         }
-//        // Alert if there are sending times too close to each other
-//        // WARNING: Time complexity O(m * n^2) where m is #attackers and n is amount of villages on server.
-//        // TODO make this a background task
-//        // TODO set fastest possible send interval individually per attacker
-//        for (Map<Integer, Attack> attackMap : attacks.values()) {
-//            for (Attack a1 : attackMap.values()) {
-//                for (Attack a2 : attackMap.values()) {
-//                    if (!a1.equals(a2)
-//                            && a1.getWaves().get() > 0 && a2.getWaves().get() > 0
-//                            && ChronoUnit.SECONDS.between(a1.getSendingTime(), a2.getSendingTime()) < 60) {
-//                        a1.getAttacker().getAlert().set(true);
-//                        a2.getAttacker().getAlert().set(true);
-//                    }
-//                }
-//            }
-//        }
+
+        // Alert if there are sending times too close to each other
+        // WARNING: Time complexity O(m * n * log n) where m is # players and n is # planned attacks per player.
+        // TODO make this a background task
+        // TODO set fastest possible send interval individually per attacker
+        // TODO highlight problematic rows and make their landing times individually adjustable
+        // Init attacks per player
+        attacksPerPlayer = new HashMap<>();
+        for (AttackerVillage attackerVillage : attackers) {
+            if (!attacksPerPlayer.containsKey(attackerVillage.getPlayerId())) {
+                attacksPerPlayer.put(attackerVillage.getPlayerId(), new ArrayList<>());
+            }
+            attacksPerPlayer.get(attackerVillage.getPlayerId()).addAll(attackerVillage.getPlannedAttacks());
+        }
+        // Sort lists and see if there are too close sends
+        for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
+            attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
+            for (int i = 0; i < attacksForPlayer.size()-1; i++) {
+                LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
+                LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
+                if (ChronoUnit.SECONDS.between(send1, send2) < 50) {
+                    attacksForPlayer.get(i).getAttacker().getAlert().set(true);
+                    attacksForPlayer.get(i+1).getAttacker().getAlert().set(true);
+                }
+            }
+        }
+
         for (AttackerVillage a : attackers) {
 //            // Alert if two sending times are equal for the same target village (unlikely, but yeah)
 //            // TODO fix this, doesn't work for now. Sorting lambda probably doesn't even check all pairs.
@@ -402,12 +418,10 @@ public class PlanSceneController implements Initializable {
 //            }
         }
 
-        // Alert if too many sends
+        // Alert if too many sends in total
         for (AttackerVillage a : attackers) {
-            a.getPlannedAttacks().removeIf(attack -> attack.getWaves().get() == 0);
             if (a.getPlannedAttacks().size() > 14) {
                 a.getAlert().set(true);
-                // TODO add a tooltip
             }
         }
 
@@ -422,13 +436,18 @@ public class PlanSceneController implements Initializable {
 
     /**
      * Refreshes the landing times map based on baseline hit time and flex seconds.
+     * @param randomise if the times should be re-randomised or not
      */
-    private void updateLandingTimes() {
+    private void updateLandingTimes(boolean randomise) {
         for (TargetVillage target : villages) {
-            // Randomise landing times:
-            long flexSec = Math.round(flexSeconds.get() * (Math.random() * 2 - 1));
-            LocalDateTime thisHit = defaultLandingTime.plusSeconds(flexSec);
+            long flexSec = target.getFlexSec();
+            if (randomise) {
+                // Randomise landing times:
+                flexSec = Math.round(flexSeconds.get() * (Math.random() * 2 - 1));
+            }
+            target.setFlexSec(flexSec);
             // Save some lookup time by storing these in a map
+            LocalDateTime thisHit = defaultLandingTime.plusSeconds(flexSec);
             landTimes.put(target.getCoordId(), thisHit);
         }
     }

@@ -28,6 +28,10 @@ public class TargetVillage extends Village {
     @Setter
     private List<String> arteEffects = new ArrayList<>();
 
+    @Getter
+    @Setter
+    private long flexSec = 0L;
+
     public TargetVillage(int coordId) {
         super(coordId);
     }

@@ -74,10 +74,11 @@
 .attacker-name {
     -fx-min-height: 45px;
     -fx-max-height: 45px;
-    -fx-min-width: 90px;
-    -fx-max-width: 90px;
+    -fx-min-width: 130px;
+    -fx-max-width: 130px;
     -fx-rotate: -90;
-    -fx-translate-x: -22.5px;
+    -fx-translate-x: -43px;
+    -fx-translate-y: 30px;
     -fx-alignment: center-left;
     -fx-font-size: 0.8em;
 }
