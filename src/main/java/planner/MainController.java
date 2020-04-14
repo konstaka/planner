@@ -257,6 +257,9 @@ public class MainController implements Initializable {
                 if (c[i].contains("−")) {
                     co[i] = -1;
                     c[i] = c[i].substring(c[i].indexOf('−')+1);
+                } else if (c[i].contains("-")) {
+                    co[i] = -1;
+                    c[i] = c[i].substring(c[i].indexOf("-")+1);
                 } else {
                     co[i] = 1;
                 }
