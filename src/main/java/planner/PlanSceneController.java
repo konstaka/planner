@@ -139,7 +139,7 @@ public class PlanSceneController implements Initializable {
         Set<String> enemies = new HashSet<>();
         Map<String, Integer> enemyCounts = new HashMap<>();
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT allyName FROM x_world").executeQuery();
             while (rs.next()) {
                 String enemyAlly = rs.getString("allyName");
@@ -183,7 +183,7 @@ public class PlanSceneController implements Initializable {
         // Load village data from DB to memory
         // Join with cap/off/artefact/etc information
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             String sql = "SELECT * FROM x_world " +
                     "LEFT JOIN village_data ON x_world.coordId=village_data.coordId " +
                     "LEFT JOIN artefacts on x_world.coordId = artefacts.coordId";
@@ -230,7 +230,7 @@ public class PlanSceneController implements Initializable {
 
         // Assemble attacking villages
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM participants").executeQuery();
             while (rs.next()) {
                 for (Village v : villages) {
@@ -664,7 +664,7 @@ public class PlanSceneController implements Initializable {
      */
     public void save() {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("DELETE FROM operation_meta").execute();
             String sql = "INSERT INTO operation_meta VALUES ("
                     + flexSeconds.get() + ",'"
@@ -700,7 +700,7 @@ public class PlanSceneController implements Initializable {
      */
     public void load() {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
             String time = rs1.getString("defaultLandingTime");
             landingTime.setText(time);

@@ -1,11 +1,8 @@
 package planner;
 
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import javax.tools.Tool;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -75,7 +72,7 @@ public class AttackerVillage extends Village {
     @Setter
     private List<Attack> plannedAttacks = new ArrayList<>();
 
-    private Image image = null;
+    private Image tribeTroops = null;
 
 
     public AttackerVillage(int coordId) {
@@ -86,64 +83,71 @@ public class AttackerVillage extends Village {
     public VBox toDisplayBox() {
         switch(this.getTribe()) {
             case 1:
-                image = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
+                tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
                 break;
             case 2:
-                image = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
+                tribeTroops = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
                 break;
             case 3:
-                image = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
+                tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
                 break;
         }
 
         VBox box = new VBox();
         box.getStyleClass().add("attacker-box");
-        assert image != null;
+        assert tribeTroops != null;
 
         // Spacer
         Region r1 = new Region();
         r1.setMaxHeight(4);
         r1.setMinHeight(4);
         box.getChildren().add(r1);
+
         // Chiefs
-        ImageView chief = this.getChief();
-        chief.setTranslateX(17);
-        box.getChildren().add(chief);
+        ImageView chiefImage = this.getChief();
+        chiefImage.setTranslateX(17);
+        box.getChildren().add(chiefImage);
         box.getChildren().add(new Label(""+this.chiefs));
+
         // Spacer
         Region r2 = new Region();
         r2.setMaxHeight(2);
         r2.setMinHeight(2);
         box.getChildren().add(r2);
+
         // Catas
-        ImageView cata = new ImageView(image);
-        cata.setViewport(new Rectangle2D(132, 0, 18, 16));
-        cata.setPreserveRatio(true);
-        cata.setFitHeight(11);
-        cata.setTranslateX(17);
-        box.getChildren().add(cata);
+        ImageView cataImage = new ImageView(tribeTroops);
+        cataImage.setViewport(new Rectangle2D(132, 0, 18, 16));
+        cataImage.setPreserveRatio(true);
+        cataImage.setFitHeight(11);
+        cataImage.setTranslateX(17);
+        box.getChildren().add(cataImage);
         box.getChildren().add(new Label(""+this.catas));
+
         // Spacer
         Region r3 = new Region();
         r3.setMaxHeight(4);
         r3.setMinHeight(4);
         box.getChildren().add(r3);
+
         // Offs
-        Tooltip t1 = new Tooltip(offString);
-        t1.setShowDelay(Duration.millis(0));
-        t1.setHideDelay(Duration.millis(500));
-        t1.setShowDuration(Duration.INDEFINITE);
-        HBox offRow = this.toOffRow();
-        Tooltip.install(offRow, t1);
-        box.getChildren().add(offRow);
-        Label l = new Label(this.offSizeRounded());
-        l.setTooltip(t1);
-        box.getChildren().add(l);
+        HBox offIconRow = this.offIconRow();
+        Tooltip offStringTooltip = new Tooltip(offString);
+        offStringTooltip.setShowDelay(Duration.millis(0));
+        offStringTooltip.setHideDelay(Duration.millis(500));
+        offStringTooltip.setShowDuration(Duration.INDEFINITE);
+        Tooltip.install(offIconRow, offStringTooltip);
+        box.getChildren().add(offIconRow);
+        Label shortOffSizeString = new Label(this.offSizeRounded());
+        shortOffSizeString.setTooltip(offStringTooltip);
+        box.getChildren().add(shortOffSizeString);
+
         // Spacer
         Region r4 = new Region();
         r4.setMaxHeight(4);
         r4.setMinHeight(4);
         box.getChildren().add(r4);
+
         // TS img
         HBox tsRow = new HBox();
         ImageView tsImg = new ImageView(String.valueOf(getClass().getResource("images/ts.gif")));
@@ -161,53 +165,64 @@ public class AttackerVillage extends Village {
         tsLvl.setPrefWidth(22);
         tsLvl.setAlignment(Pos.BASELINE_CENTER);
         tsLvl.setPadding(new Insets(0, 1, 0, 1));
+        // Update TS level
         tsLvl.setOnAction(this::updateTs);
+        // Update also on focus change
         tsLvl.focusedProperty().addListener((ov, oldV, newV) -> {
-            if (!newV) tsLvl.fireEvent(new ActionEvent()); // Update on focus change
+            if (!newV) tsLvl.fireEvent(new ActionEvent());
         });
         tsRow.getChildren().add(tsLvl);
         box.getChildren().add(tsRow);
 
+        // Style class for elements this far
         for (Node n : box.getChildren()) {
             n.getStyleClass().add("attacker-box-label");
         }
+
+        // Automatic spacer
         Region spacer = new Region();
         box.getChildren().add(spacer);
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        Label name = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
-        name.getStyleClass().add("attacker-name");
-        StringBuilder tool2 = new StringBuilder("Earliest send: " + getSendMin() + "\n" +
+
+        // Player name and amount of sends from this village
+        Label playerNameVillageSends = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
+        // Tooltip contains relevant information of the attacker
+        StringBuilder attackerInfo = new StringBuilder("Earliest send: " + getSendMin() + "\n" +
                 "Latest send: " + getSendMax() + "\n" +
                 "Comment: " + getComment());
         if (!plannedAttacks.isEmpty()) {
             plannedAttacks.sort(Comparator.comparing(Attack::getSendingTime));
-            tool2.append("\nCurrent sends:");
+            attackerInfo.append("\nCurrent sends:");
         }
         for (Attack attack : plannedAttacks) {
-            tool2
-                    .append("\n")
-                    .append(attack.getSendingTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+            attackerInfo.append("\n")
+                    .append(attack.getSendingTime().format(App.TIME_ONLY))
+                    .append(" ")
+                    .append(attack.getTarget().getCoords());
         }
-        Tooltip t2 = new Tooltip(tool2.toString());
-        t2.setShowDelay(Duration.millis(0));
-        t2.setHideDelay(Duration.millis(500));
-        t2.setShowDuration(Duration.INDEFINITE);
-        name.setTooltip(t2);
-        if (alert.get()) name.getStyleClass().add("alert");
-        box.getChildren().add(name);
+        Tooltip attackerInfoTooltip = new Tooltip(attackerInfo.toString());
+        attackerInfoTooltip.setShowDelay(Duration.millis(0));
+        attackerInfoTooltip.setHideDelay(Duration.millis(500));
+        attackerInfoTooltip.setShowDuration(Duration.INDEFINITE);
+        attackerInfoTooltip.setMaxWidth(200);
+        attackerInfoTooltip.setWrapText(true);
+        playerNameVillageSends.setTooltip(attackerInfoTooltip);
+        playerNameVillageSends.getStyleClass().add("attacker-name");
+        if (alert.get()) playerNameVillageSends.getStyleClass().add("alert");
+        box.getChildren().add(playerNameVillageSends);
         return box;
     }
 
 
-    public HBox toOffRow() {
+    public HBox offIconRow() {
         HBox offRow = new HBox();
         int[] offUnitCoords = this.getOffUnitCoords();
-        ImageView off1 = new ImageView(image);
+        ImageView off1 = new ImageView(tribeTroops);
         off1.setViewport(new Rectangle2D(offUnitCoords[0], 0, 18, 16));
         off1.setPreserveRatio(true);
         off1.setFitHeight(11);
         offRow.getChildren().add(off1);
-        ImageView off2 = new ImageView(image);
+        ImageView off2 = new ImageView(tribeTroops);
         off2.setViewport(new Rectangle2D(offUnitCoords[1], 0, 18, 16));
         off2.setPreserveRatio(true);
         off2.setFitHeight(11);
@@ -217,7 +232,7 @@ public class AttackerVillage extends Village {
 
 
     public ImageView getChief() {
-        ImageView chief = new ImageView(image);
+        ImageView chief = new ImageView(tribeTroops);
         chief.setViewport(new Rectangle2D(152, 0, 18, 16));
         chief.setPreserveRatio(true);
         chief.setFitHeight(11);

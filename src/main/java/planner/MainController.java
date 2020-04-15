@@ -73,7 +73,7 @@ public class MainController implements Initializable {
 
         lastUpdated.setText("No map.sql found");
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
             if (rs != null && !rs.isClosed()) {
                 lastUpdated.setText("Last updated at " + rs.getString("last"));
@@ -85,7 +85,7 @@ public class MainController implements Initializable {
         }
         noParticipants.setText("No participants in database");
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
             if (rs != null && !rs.isClosed()) {
                 noParticipants.setText("Current operation: " + rs.getInt(1) + " participants");
@@ -111,7 +111,7 @@ public class MainController implements Initializable {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(f));
 
-                Connection conn = DriverManager.getConnection(App.getDB());
+                Connection conn = DriverManager.getConnection(App.DB);
                 conn.prepareStatement("DELETE FROM x_world").execute();
 
                 String line;
@@ -174,7 +174,7 @@ public class MainController implements Initializable {
         // Add participants to database
         if (!error) {
             try {
-                Connection conn = DriverManager.getConnection(App.getDB());
+                Connection conn = DriverManager.getConnection(App.DB);
                 conn.prepareStatement("DELETE FROM participants").execute();
                 for (String o : offs) {
                     String[] off = o.split("\t");
@@ -270,7 +270,7 @@ public class MainController implements Initializable {
                 co[i] *= Integer.parseInt(coordi);
             }
             try {
-                Connection conn = DriverManager.getConnection(App.getDB());
+                Connection conn = DriverManager.getConnection(App.DB);
                 String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES (" +
                         "(SELECT coordId " +
                         "FROM x_world " +
@@ -307,7 +307,7 @@ public class MainController implements Initializable {
      */
     private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("UPDATE artefacts SET " + size + "=0").execute();
             if (size.equals("large_arte")) {
                 conn.prepareStatement("UPDATE artefacts SET unique_arte=0").execute();
