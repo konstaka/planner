@@ -573,18 +573,18 @@ public class PlanSceneController implements Initializable {
         row.getChildren().add(new Label(this.toTribe(village.getTribe())));
         row.getChildren().add(new Label(""+village.getPopulation()));
 
-        String data = "";
-        if (village.isCapital()) data += "cap ";
-        if (village.isOffvillage()) data += "off ";
-        if (village.isWwvillage()) data += "WW";
-        data += village.getArtefact();
-        row.getChildren().add(new Label(data));
-        data = "";
+        String arteData = "";
+        if (village.isCapital()) arteData += "cap ";
+        if (village.isOffvillage()) arteData += "off ";
+        if (village.isWwvillage()) arteData += "WW";
+        arteData += village.getArtefact();
+        row.getChildren().add(new Label(arteData));
+        StringBuilder effectData = new StringBuilder();
         for (String s : village.getArteEffects()) {
-            if (data != "") data += ", ";
-            data += s.substring(0, 3);
+            if (!effectData.toString().equals("")) effectData.append(", ");
+            effectData.append(s, 0, 3);
         }
-        row.getChildren().add(new Label(data));
+        row.getChildren().add(new Label(effectData.toString()));
 
         // Get landing time
         row.getChildren().add(new Label(
