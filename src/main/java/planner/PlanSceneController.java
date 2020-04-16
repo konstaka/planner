@@ -5,9 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -19,9 +17,6 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
@@ -36,14 +31,20 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import lombok.Getter;
 import planner.entities.Attack;
 import planner.entities.AttackerVillage;
+import planner.entities.Operation;
 import planner.entities.TargetVillage;
-import planner.entities.Village;
+import planner.util.Converters;
 
 public class PlanSceneController implements Initializable {
 
-    StringProperty toScene = new SimpleStringProperty("");
+    @Getter
+    private StringProperty toScene = new SimpleStringProperty("");
+
+    @Getter
+    Operation operation;
 
     @FXML
     VBox enemyTickboxes;
@@ -90,31 +91,6 @@ public class PlanSceneController implements Initializable {
     @FXML
     VBox targetRows;
 
-    DateTimeFormatter f = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
-
-    LocalDateTime defaultLandingTime;
-
-    IntegerProperty flexSeconds;
-
-    int waves;
-
-    List<TargetVillage> villages;
-
-    List<AttackerVillage> attackers;
-
-    Map<Integer, Map<Integer, Attack>> attacks;
-
-    Map<Integer, List<Attack>> attacksPerPlayer;
-
-    Map<Integer, LocalDateTime> landTimes;
-
-    Set<Integer> scoutAccounts;
-
-    Set<Integer> foolAccounts;
-
-    Set<Integer> confuserAccounts;
-
-    Set<Integer> architectAccounts;
 
     /**
      * Called to initialize a controller after its root element has been
@@ -127,21 +103,10 @@ public class PlanSceneController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        flexSeconds = new SimpleIntegerProperty();
-        waves = 4;
-        villages = new ArrayList<>();
-        attackers = new ArrayList<>();
-        attacks = new HashMap<>();
-        attacksPerPlayer = new HashMap<>();
-        landTimes = new HashMap<>();
-        scoutAccounts = new HashSet<>();
-        foolAccounts = new HashSet<>();
-        confuserAccounts = new HashSet<>();
-        architectAccounts = new HashSet<>();
-
         // Add all alliances as checkboxes
         Set<String> enemies = new HashSet<>();
         Map<String, Integer> enemyCounts = new HashMap<>();
+        // TODO move DB operation to the Database class
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT allyName FROM x_world").executeQuery();
@@ -159,7 +124,7 @@ public class PlanSceneController implements Initializable {
             e.printStackTrace();
         }
         // Naïve sort, number of alliances is small
-        List<String> sortedAllys = new ArrayList<>();
+        List<String> sortedEnemies = new ArrayList<>();
         for (String e : enemies) {
             int maxCount = 0;
             String maxE = null;
@@ -169,349 +134,86 @@ public class PlanSceneController implements Initializable {
                     maxE = ec;
                 }
             }
-            sortedAllys.add(maxE);
+            sortedEnemies.add(maxE);
             enemyCounts.remove(maxE);
         }
-        for (String e : sortedAllys) {
+        for (String e : sortedEnemies) {
             CheckBox c = new CheckBox(e);
             c.setOnAction(this::refreshTargets);
             enemyTickboxes.getChildren().add(c);
         }
-        // Add auto-updating listeners to other filters as well
+
+        // Add auto-updating listeners to cap/off/arte/etc filters
         for (Node n : targetTickboxes.getChildren()) {
             if (n instanceof CheckBox) {
                 ((CheckBox) n).setOnAction(this::refreshTargets);
             }
         }
 
-        // Load village data from DB to memory
-        // Join with cap/off/artefact/etc information
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            String sql = "SELECT * FROM x_world " +
-                    "LEFT JOIN village_data ON x_world.coordId=village_data.coordId " +
-                    "LEFT JOIN artefacts on x_world.coordId = artefacts.coordId";
-            ResultSet rs = conn.prepareStatement(sql).executeQuery();
-            while (rs.next()) {
-                TargetVillage t = new TargetVillage(rs.getInt("coordId"));
-                if (rs.getInt("capital") == 1) t.setCapital(true);
-                if (rs.getInt("offvillage") == 1) t.setOffvillage(true);
-                if (rs.getInt("wwvillage") == 1) t.setWwvillage(true);
-                int small = rs.getInt("small_arte");
-                int large = rs.getInt("large_arte");
-                int unique = rs.getInt("unique_arte");
-                if (small != 0) {
-                    t.setArtefact(this.interpretArte(0, small));
-                }
-                if (large != 0) {
-                    t.setArtefact(this.interpretArte(1, large));
-                }
-                if (unique != 0) {
-                    t.setArtefact(this.interpretArte(2, unique));
-                }
-                // Note down account-wide effects
-                if (large == 5 || unique == 5) {
-                    scoutAccounts.add(rs.getInt("playerId"));
-                }
-                if (small == 11 || unique == 11) {
-                    foolAccounts.add(rs.getInt("playerId"));
-                }
-                if (large == 10 || unique == 10) {
-                    confuserAccounts.add(rs.getInt("playerId"));
-                }
-                if (large == 2 || unique == 2) {
-                    architectAccounts.add(rs.getInt("playerId"));
-                }
-                villages.add(t);
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        // Assemble artefact effects on target villages
-        this.assembleArteEffects();
-
-        // Assemble attacking villages
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs = conn.prepareStatement("SELECT * FROM participants").executeQuery();
-            while (rs.next()) {
-                for (Village v : villages) {
-                    if (v.getXCoord() == rs.getInt("xCoord")
-                            && v.getYCoord() == rs.getInt("yCoord")) {
-                        AttackerVillage attacker = new AttackerVillage(v.getCoordId());
-                        attacker.getTs().set(rs.getInt("ts"));
-                        attacker.setSpeed(rs.getDouble("speed"));
-                        attacker.setOffString(rs.getString("offstring"));
-                        attacker.setOffSize(rs.getInt("offsize"));
-                        attacker.setCatas(rs.getInt("catas"));
-                        attacker.setChiefs(rs.getInt("chiefs"));
-                        attacker.setSendMin(rs.getString("sendmin"));
-                        attacker.setSendMax(rs.getString("sendmax"));
-                        attacker.setComment(rs.getString("comment"));
-                        attacker.getTs().addListener((ov, oldV, newV) -> {
-                            this.updateTargets();
-                        });
-                        attackers.add(attacker);
-                        break;
-                    }
-                }
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        for (AttackerVillage a : attackers) {
-            VBox attackerBox = a.toDisplayBox();
-            attackerCols.getChildren().add(attackerBox);
-        }
-
-        // Set default timing to overmorrow morning
-        defaultLandingTime = LocalDateTime.of(
-                LocalDate.now().plusDays(2),
-                LocalTime.of(8, 0));
-        landingTime.setText(defaultLandingTime.format(f));
-        // Make it editable
-        landingTime.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                try {
-                    defaultLandingTime = LocalDateTime.parse(landingTime.getText(), f);
-                    this.updateLandingTimes(false);
-                    for (Map<Integer, Attack> attackMap : attacks.values()) {
-                        for (Attack a : attackMap.values()) {
-                            a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
-                        }
-                    }
-                    this.updateTargets();
-                } catch (Exception ex) {
-                    landingTime.setText(defaultLandingTime.format(f));
-                }
-            }
-        });
-        // Set flex default to 0
-        flexMinutes.setText("0");
-        // Make it editable
-        flexMinutes.setOnAction(actionEvent -> {
-            try {
-                flexSeconds.set(Math.abs(Integer.parseInt(flexMinutes.getText()) * 60));
-                flexMinutes.setText(""+flexSeconds.get() / 60);
-                this.updateLandingTimes(true);
-                for (Map<Integer, Attack> attackMap : attacks.values()) {
-                    for (Attack a : attackMap.values()) {
-                        a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
-                    }
-                }
-                this.updateTargets();
-                this.updateAttackers();
-            } catch (NumberFormatException ex) {
-                flexMinutes.setText("0");
-            }
-        });
-
         // Group fake/real radio buttons
         ToggleGroup attackType = new ToggleGroup();
         fakes.setToggleGroup(attackType);
         reals.setToggleGroup(attackType);
-
-        // Set default waves to 4
-        wavesBox.setText("4");
-        // Make it editable
-        wavesBox.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue) {
-                try {
-                    waves = Integer.parseInt(wavesBox.getText());
-                    if (waves < 1 || waves > 8) {
-                        waves = 4;
-                        wavesBox.setText("4");
-                    }
-                } catch (NumberFormatException ex) {
-                    wavesBox.setText("4");
-                }
-            }
-        });
-
-        // Update landing times
-        this.updateLandingTimes(true);
-        // Create the attack matrix
-        for (AttackerVillage attacker : attackers) {
-            Map<Integer, Attack> toAdd = new HashMap<>();
-            for (TargetVillage target : villages) {
-                // TODO make all magic numbers editable.
-                // Currently: unit speed, server speed, server size
-                // Waves needs to be 0 at this point to mark that the attack is not planned for now
-                Attack a = new Attack(
-                        target,
-                        attacker,
-                        new SimpleIntegerProperty(0),
-                        new SimpleBooleanProperty(false),
-                        new SimpleBooleanProperty(false),
-                        3,
-                        landTimes.get(target.getCoordId()),
-                        new SimpleIntegerProperty(0),
-                        1,
-                        200);
-                // Listen to changes that mark planned fake/real attacks
-                a.getWaves().addListener(observable -> {
-                    if (a.getWaves().get() == 0) attacker.getPlannedAttacks().remove(a);
-                    this.updateTargets();
-                    this.updateAttackers();
-                });
-                a.getReal().addListener(observable -> {
-                    this.updateTargets();
-                    this.updateAttackers();
-                });
-                a.getConq().addListener(observable -> {
-                    this.updateTargets();
-                    this.updateAttackers();
-                });
-                a.getLandingTimeShift().addListener(observable -> {
-                    this.updateTargets();
-                    this.updateAttackers();
-                });
-                toAdd.put(target.getCoordId(), a);
-            }
-            attacks.put(attacker.getCoordId(), toAdd);
-        }
     }
 
 
-    private void updateAttackers() {
-        // Reset alerts, clear planned attacks
-        for (AttackerVillage a : attackers) {
-            a.getPlannedAttacks().removeIf(attack -> attack.getWaves().get() == 0);
-            a.getAlert().set(false);
-        }
+    /**
+     * Sets up a new operation.
+     */
+    public void newOperation() {
 
-        // Alert if there are sending times too close to each other
-        // WARNING: Time complexity O(m * n * log n) where m is # players and n is # planned attacks per player.
-        // TODO make this a background task
-        // TODO set fastest possible send interval individually per attacker
-        // TODO highlight problematic rows and make their landing times individually adjustable
-        // Init attacks per player
-        attacksPerPlayer = new HashMap<>();
-        for (AttackerVillage attackerVillage : attackers) {
-            if (!attacksPerPlayer.containsKey(attackerVillage.getPlayerId())) {
-                attacksPerPlayer.put(attackerVillage.getPlayerId(), new ArrayList<>());
-            }
-            attacksPerPlayer.get(attackerVillage.getPlayerId()).addAll(attackerVillage.getPlannedAttacks());
-        }
-        // Sort lists and see if there are too close sends
-        for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
-            attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
-            for (int i = 0; i < attacksForPlayer.size()-1; i++) {
-                LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
-                LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
-                if (ChronoUnit.SECONDS.between(send1, send2) < 50) {
-                    attacksForPlayer.get(i).getAttacker().getAlert().set(true);
-                    attacksForPlayer.get(i+1).getAttacker().getAlert().set(true);
-                }
-            }
-        }
+        this.operation = new Operation();
+        initOperation();
+    }
 
-        for (AttackerVillage a : attackers) {
-//            // Alert if two sending times are equal for the same target village (unlikely, but yeah)
-//            // TODO fix this, doesn't work for now. Sorting lambda probably doesn't even check all pairs.
-//            System.out.println(o1.getSendingTime() + " " + o1.getAttacker().getCoords());
-//            System.out.println(o2.getSendingTime() + " " + o2.getAttacker().getCoords());
-//            if (o1.getSendingTime().format(DateTimeFormatter.ofPattern("dd HH:mm:ss"))
-//                    .equals(o2.getSendingTime().format(DateTimeFormatter.ofPattern("dd HH:mm:ss")))
-//                    && o1.getWaves().get() > 0 && o2.getWaves().get() > 0) {
-//                o1.getAttacker().getAlert().set(true);
-//                o2.getAttacker().getAlert().set(true);
-//            }
-        }
 
-        // Alert if too many sends in total
-        for (AttackerVillage a : attackers) {
-            if (a.getPlannedAttacks().size() > 14) {
-                a.getAlert().set(true);
-            }
-        }
+    /**
+     * Loads last saved operation from database.
+     */
+    public void loadOperation() {
 
-        // Redraw
-        attackerCols.getChildren().clear();
-        for (AttackerVillage a : attackers) {
+        this.operation = Operation.load();
+        initOperation();
+    }
+
+
+    /**
+     * After an operation has been initialised, sets up the view.
+     * Only called internally from newOperation and loadOperation.
+     */
+    private void initOperation() {
+
+        // Set landing time
+        landingTime.setText(operation.getDefaultLandingTime().format(App.FULL_DATE_TIME));
+
+        // Display participants
+        for (AttackerVillage a : operation.getAttackers()) {
             VBox attackerBox = a.toDisplayBox();
             attackerCols.getChildren().add(attackerBox);
         }
+
+        // Draw target rows
+        updateTargets();
     }
 
 
     /**
-     * Refreshes the landing times map based on baseline hit time and flex seconds.
-     * @param randomise if the times should be re-randomised or not
+     * Saves current operation to database.
      */
-    private void updateLandingTimes(boolean randomise) {
-        for (TargetVillage target : villages) {
-            long flexSec = target.getFlexSec();
-            if (randomise) {
-                // Randomise landing times:
-                flexSec = Math.round(flexSeconds.get() * (Math.random() * 2 - 1));
-            }
-            target.setFlexSec(flexSec);
-            // Save some lookup time by storing these in a map
-            LocalDateTime thisHit = defaultLandingTime.plusSeconds(flexSec);
-            landTimes.put(target.getCoordId(), thisHit);
-        }
+    private void saveOperation() {
+        boolean success = operation.save();
+        // TODO do something with the success information.
     }
 
 
     /**
-     * Checks the village artefact and possible account-wide effects.
+     * Master update method; first triggers the update in the Operation object and then redraws the screen.
      */
-    private void assembleArteEffects() {
-        for (TargetVillage t : villages) {
-            if (t.getArtefact().contains("Eyes") || scoutAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Scout effect");
-            }
-            if (t.getArtefact().contains("Fool") || foolAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Fool effect");
-            }
-            if (t.getArtefact().contains("Confuser") || confuserAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Confuser effect");
-            }
-            if (t.getArtefact().contains("Architect") || architectAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Architect effect");
-            }
-        }
-    }
+    private void updateCycle() {
 
-
-    /**
-     * Converts artefact size and type to a string representation.
-     * @param size 0, 1, 2
-     * @param type 1, 2, 4, 5, 6, 8, 9, 10, 11
-     * @return artefact string
-     */
-    private String interpretArte(int size, int type) {
-        String arte = "";
-        switch (size) {
-            case 0:
-                arte = "Small ";
-                break;
-            case 1:
-                arte = "Large ";
-                break;
-            case 2:
-                arte = "Unique ";
-                break;
-            default:
-                return "Invalid Artefact";
-        }
-        switch (type) {
-            case 1: return "Buildplan";
-            case 2: return arte + "Architect";
-            case 4: return arte + "Boots";
-            case 5: return arte + "Eyes";
-            case 6: return arte + "Diet";
-            case 8: return arte + "Trainer";
-            case 9: return arte + "Storage";
-            case 10: return arte + "Confuser";
-            case 11: return arte + "Fool";
-            default:
-                return "Invalid Artefact";
-        }
+        operation.update();
+        updateTargets();
+        updateAttackers();
     }
 
 
@@ -519,6 +221,7 @@ public class PlanSceneController implements Initializable {
      * Refresh target list based on current filters.
      */
     public void updateTargets() {
+
         // Check which alliances to show
         targetRows.getChildren().clear();
         Set<String> enemyAlliances = new HashSet<>();
@@ -530,11 +233,10 @@ public class PlanSceneController implements Initializable {
                 }
             }
         }
-        if (enemyAlliances.size() == 0) return;
 
         // For those alliances, check types of village to show
         List<TargetVillage> shownVillages = new ArrayList<>();
-        for (TargetVillage v : villages) {
+        for (TargetVillage v : operation.getTargets()) {
             if (enemyAlliances.contains(v.getAllyName())
                     && (
                     (v.isCapital() && this.caps.isSelected())
@@ -544,7 +246,7 @@ public class PlanSceneController implements Initializable {
                             || (v.getArtefact().contains("Unique") && this.large_artes.isSelected())
                             || (v.isWwvillage() && this.bps_wws.isSelected())
                             || (v.getArtefact().contains("Buildplan") && this.bps_wws.isSelected())
-            )
+                    )
             ) {
                 shownVillages.add(v);
             }
@@ -556,9 +258,22 @@ public class PlanSceneController implements Initializable {
         }
     }
 
-
     public void refreshTargets(ActionEvent actionEvent) {
         this.updateTargets();
+    }
+
+
+    /**
+     * Refresh participant list based on current info.
+     */
+    private void updateAttackers() {
+
+        // Redraw
+        attackerCols.getChildren().clear();
+        for (AttackerVillage a : operation.getAttackers()) {
+            VBox attackerBox = a.toDisplayBox();
+            attackerCols.getChildren().add(attackerBox);
+        }
     }
 
 
@@ -574,7 +289,7 @@ public class PlanSceneController implements Initializable {
         row.getChildren().add(new Label(village.getVillageName()));
         row.getChildren().add(new Label(village.getCoords()));
         row.getChildren().add(new Label(village.getPlayerName()));
-        row.getChildren().add(new Label(this.toTribe(village.getTribe())));
+        row.getChildren().add(new Label(Converters.toTribe(village.getTribe())));
         row.getChildren().add(new Label(""+village.getPopulation()));
 
         String arteData = "";
@@ -649,21 +364,6 @@ public class PlanSceneController implements Initializable {
 
 
     /**
-     * Tribe ID to tribe converter.
-     * @param tribeNumber 1 = Roman, 2 = Teuton, 3 = Gaul
-     * @return 1 = Roman, 2 = Teuton, 3 = Gaul
-     */
-    private String toTribe(int tribeNumber) {
-        switch (tribeNumber) {
-            case 1: return "Roman";
-            case 2: return "Teuton";
-            case 3: return "Gaul";
-        }
-        return "Unknown";
-    }
-
-
-    /**
      * Saves the current plan to database. Overwrites anything that was there.
      */
     public void save() {
@@ -680,7 +380,7 @@ public class PlanSceneController implements Initializable {
                     conn.prepareStatement("INSERT INTO attacks VALUES ("
                             + a.getAttacker().getCoordId() + ","
                             + a.getTarget().getCoordId() + ",'"
-                            + landTimes.get(a.getTarget().getCoordId()).format(f) + "',"
+                            + landTimes.get(a.getTarget().getCoordId()).format(App.FULL_DATE_TIME) + "',"
                             + a.getWaves().get() + ","
                             + (a.getReal().get() ? 1 : 0) + ","
                             + (a.getConq().get() ? 1 : 0) + ","
@@ -708,7 +408,7 @@ public class PlanSceneController implements Initializable {
             ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
             String time = rs1.getString("defaultLandingTime");
             landingTime.setText(time);
-            defaultLandingTime = LocalDateTime.parse(time, f);
+            defaultLandingTime = LocalDateTime.parse(time, App.FULL_DATE_TIME);
             int seconds = rs1.getInt("flex_seconds");
             flexMinutes.setText(""+seconds / 60);
             flexSeconds.set(seconds);
@@ -717,7 +417,7 @@ public class PlanSceneController implements Initializable {
                 int a_coordId = rs3.getInt("a_coordId");
                 int t_coordId = rs3.getInt("t_coordId");
                 Attack a = attacks.get(a_coordId).get(t_coordId);
-                a.setLandingTime(LocalDateTime.parse(rs3.getString("landing_time"), f));
+                a.setLandingTime(LocalDateTime.parse(rs3.getString("landing_time"), App.FULL_DATE_TIME));
                 a.getWaves().set(rs3.getInt("waves"));
                 a.getReal().set(rs3.getInt("realTgt") == 1);
                 a.getConq().set(rs3.getInt("conq") == 1);

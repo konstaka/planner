@@ -14,13 +14,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import lombok.Getter;
 
 
 public class App extends Application {
-
-    @Getter
-    private static final String GREETING = "Welcome";
 
     public static final String DB = "jdbc:sqlite:planner.db";
 
@@ -49,36 +45,15 @@ public class App extends Application {
 
         this.readyDb();
 
-        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
-        Parent mainRoot = mainLoader.load();
-        mainController = mainLoader.getController();
-        mainScene = new Scene(mainRoot);
-        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
-        mainController.toScene.addListener((observable, oldValue, newValue) -> {
-            if (!oldValue.equals(newValue)) {
-                mainController.toScene.set("");
-                this.switchTo(newValue);
-            }
-        });
-        mainController.newOp.addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue()) {
-                mainController.newOp.set(false);
-                this.newPlan();
-            }
-        });
-        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue()) {
-                mainController.loadOp.set(false);
-                planSceneController.load();
-            }
-        });
-
-        this.newPlan();
+        this.initMainController();
+        this.initPlanController();
+        this.initCommandController();
 
         stage.setTitle("Planner 1.0 by GoNu");
         stage.setScene(mainScene);
         stage.show();
     }
+
 
     private void readyDb() {
         try {
@@ -171,51 +146,68 @@ public class App extends Application {
         }
     }
 
-    private void newPlan() {
+
+    private void initMainController() throws IOException {
+        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
+        Parent mainRoot = mainLoader.load();
+        mainController = mainLoader.getController();
+        mainScene = new Scene(mainRoot);
+        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
+        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                mainController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.newOp.set(false);
+                planSceneController.newOperation();
+            }
+        });
+        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.loadOp.set(false);
+                planSceneController.loadOperation();
+            }
+        });
+    }
+
+    private void initPlanController() throws IOException {
         FXMLLoader planLoader = new FXMLLoader(getClass().getResource("plan.fxml"));
-        Parent planRoot = null;
-        try {
-            planRoot = planLoader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Parent planRoot = planLoader.load();
         planSceneController = planLoader.getController();
         assert planRoot != null;
         planScene = new Scene(planRoot);
         planScene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
-        planSceneController.toScene.addListener((observable, oldValue, newValue) -> {
+        planSceneController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.toScene.set("");
+                planSceneController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
     }
 
-    private void generateCommands() {
+    private void initCommandController() throws IOException {
         FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
-        Parent commandRoot = null;
-        try {
-            commandRoot = commandLoader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Parent commandRoot = commandLoader.load();
         commandController = commandLoader.getController();
         assert commandRoot != null;
         commandScene = new Scene(commandRoot);
         commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
-        commandController.toScene.addListener((observable, oldValue, newValue) -> {
+        commandController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.toScene.set("");
+                planSceneController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
-        commandController.attackers = planSceneController.attackers;
-        commandController.updateCommands();
     }
+
 
     public static void main(String[] args) {
         launch(args);
     }
+
 
     private void switchTo(String scene) {
         switch (scene) {
@@ -226,11 +218,11 @@ public class App extends Application {
                 stage.setScene(planScene);
                 break;
             case "commands":
-                this.generateCommands();
+                commandController.setAttackers(planSceneController.getOperation().getAttackers());
+                commandController.updateCommands();
                 stage.setScene(commandScene);
                 break;
         }
         stage.show();
     }
-
 }

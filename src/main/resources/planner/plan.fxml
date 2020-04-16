@@ -62,6 +62,7 @@
                                 maxHeight="30"
                                 alignment="TOP_RIGHT" />
                     <TextField  fx:id="flexMinutes"
+                                text="0"
                                 prefWidth="22"
                                 style="-fx-padding: 0 1 0 1"
                                 alignment="BASELINE_CENTER" />
@@ -105,6 +106,7 @@
                 </HBox>
                 <HBox>
                     <TextField  fx:id="wavesBox"
+                                text="4"
                                 prefWidth="22"
                                 style="-fx-padding: 0 1 0 1"
                                 alignment="BASELINE_CENTER" />

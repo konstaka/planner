@@ -24,12 +24,15 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import lombok.Getter;
+import lombok.Setter;
 import planner.entities.Attack;
 import planner.entities.AttackerVillage;
 
 public class CommandController implements Initializable {
 
-    StringProperty toScene = new SimpleStringProperty("");
+    @Getter
+    private StringProperty toScene = new SimpleStringProperty("");
 
     @FXML
     TextArea template1;
@@ -40,7 +43,8 @@ public class CommandController implements Initializable {
     @FXML
     VBox commands;
 
-    List<AttackerVillage> attackers;
+    @Setter
+    private List<AttackerVillage> attackers;
 
     DateTimeFormatter time = DateTimeFormatter.ofPattern("HH:mm:ss");
 
