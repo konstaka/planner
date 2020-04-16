@@ -14,6 +14,9 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import org.junit.Before;
 import org.junit.Test;
+import planner.entities.Attack;
+import planner.entities.AttackerVillage;
+import planner.entities.TargetVillage;
 
 public class AttackTest {
 

@@ -1,4 +1,4 @@
-package planner;
+package planner.entities;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import lombok.Getter;
 import lombok.Setter;
+import planner.App;
 
 public class AttackerVillage extends Village {
 
