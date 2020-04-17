@@ -6,6 +6,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -329,6 +331,7 @@ public class PlanSceneController implements Initializable {
         if (target.isWwvillage()) arteData += "WW";
         arteData += target.getArtefact();
         row.getChildren().add(new Label(arteData));
+
         StringBuilder effectData = new StringBuilder();
         for (String s : target.getArteEffects()) {
             if (!effectData.toString().equals("")) effectData.append(", ");
@@ -336,12 +339,65 @@ public class PlanSceneController implements Initializable {
         }
         row.getChildren().add(new Label(effectData.toString()));
 
-        // Get landing time
-        row.getChildren().add(new Label(
+        // Landing time as an editable field
+        TextField targetLandTime = new TextField();
+        targetLandTime.setText(
                 operation.getLandTimes()
                         .get(target.getCoordId())
                         .format(App.TIME_ONLY)
-        ));
+        );
+        targetLandTime.setOnAction(actionEvent -> {
+            LocalDateTime newLandingTime = LocalDateTime.of(
+                    operation.getLandTimes().get(target.getCoordId()).toLocalDate(),
+                    LocalTime.parse(targetLandTime.getText(), App.TIME_ONLY)
+            );
+            target.setRandomShiftSeconds(
+                    ChronoUnit.SECONDS.between(operation.getDefaultLandingTime(), newLandingTime)
+            );
+            operation.computeLandingTimes(false);
+            updateCycle();
+        });
+        targetLandTime.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) targetLandTime.fireEvent(new ActionEvent());
+        });
+        // UP and DOWN keys can also modify the value
+        targetLandTime.setOnKeyPressed(press -> {
+            LocalTime oldTime = LocalTime.parse(targetLandTime.getText(), App.TIME_ONLY);
+            if (press.getCode().toString().equals("UP")) {
+                // Plus one second
+                LocalTime newTime = oldTime.plusSeconds(1);
+                targetLandTime.setText(newTime.format(App.TIME_ONLY));
+                if (newTime.isBefore(oldTime)) {
+                    // Different date, update screen.
+                    LocalDateTime newLandingTime = LocalDateTime.of(
+                            operation.getLandTimes().get(target.getCoordId()).toLocalDate().plusDays(1),
+                            LocalTime.parse(targetLandTime.getText(), App.TIME_ONLY)
+                    );
+                    target.setRandomShiftSeconds(
+                            ChronoUnit.SECONDS.between(operation.getDefaultLandingTime(), newLandingTime)
+                    );
+                    operation.computeLandingTimes(false);
+                    updateCycle();
+                }
+            } else if (press.getCode().toString().equals("DOWN")) {
+                // Minus one second
+                LocalTime newTime = oldTime.minusSeconds(1);
+                targetLandTime.setText(newTime.format(App.TIME_ONLY));
+                if (newTime.isAfter(oldTime)) {
+                    // Different date, update screen.
+                    LocalDateTime newLandingTime = LocalDateTime.of(
+                            operation.getLandTimes().get(target.getCoordId()).toLocalDate().minusDays(1),
+                            LocalTime.parse(targetLandTime.getText(), App.TIME_ONLY)
+                    );
+                    target.setRandomShiftSeconds(
+                            ChronoUnit.SECONDS.between(operation.getDefaultLandingTime(), newLandingTime)
+                    );
+                    operation.computeLandingTimes(false);
+                    updateCycle();
+                }
+            }
+        });
+        row.getChildren().add(targetLandTime);
 
         // Dropdown for adding an attack
         ComboBox<Attack> attackerPicker = new ComboBox<>();
