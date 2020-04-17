@@ -1,10 +1,8 @@
 package planner.entities;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
@@ -18,51 +16,50 @@ import javafx.scene.layout.VBox;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import planner.App;
 
 @AllArgsConstructor
 public class Attack {
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private TargetVillage target;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private AttackerVillage attacker;
 
-    @Getter
-    @Setter
-    private IntegerProperty waves;
+    @Getter @Setter
+    private int waves;
 
-    @Getter
-    @Setter
-    private BooleanProperty real;
+    @Getter @Setter
+    private boolean real;
 
-    @Getter
-    @Setter
-    private BooleanProperty conq;
+    @Getter @Setter
+    private boolean conq;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int unitSpeed;
 
     @Setter
     private LocalDateTime landingTime;
 
-    @Getter
-    @Setter
-    private IntegerProperty landingTimeShift;
+    @Getter @Setter
+    private int landingTimeShift;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int serverSpeed;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int serverSize;
 
+    @Getter @Setter
+    private boolean conflicting;
+
+    @Getter
+    private BooleanProperty updated;
+
+
     public LocalDateTime getLandingTime() {
-        return landingTime.plusSeconds(landingTimeShift.get());
+        return landingTime.plusSeconds(landingTimeShift);
     }
 
 
@@ -92,13 +89,13 @@ public class Attack {
         // Baseline speed
         double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getSpeed() / 60 / 60;
         // Return if no TS
-        if (distance <= 20 || this.attacker.getTs().getValue() == 0) return Math.round(distance / squaresPerSecond);
+        if (distance <= 20 || this.attacker.getTs() == 0) return Math.round(distance / squaresPerSecond);
         // No-TS part of travel
         double travelTime = 20L / squaresPerSecond;
         // Reduce distance
         distance -= 20;
         // Calculate TS factor
-        double factor = 1.0 + this.attacker.getTs().getValue() * 0.2;
+        double factor = 1.0 + this.attacker.getTs() * 0.2;
         // Adjust speed
         squaresPerSecond *= factor;
         // Compute remaining time
@@ -123,7 +120,7 @@ public class Attack {
         for (Node n : offs.getChildren()) n.getStyleClass().add("attack-box-off-column");
         box.getChildren().add(offs);
 
-        if (conq.get()) {
+        if (conq) {
             VBox chiefs = new VBox();
             Region r5 = new Region();
             r5.setMaxHeight(2);
@@ -138,18 +135,23 @@ public class Attack {
         }
 
         VBox wavesBox = new VBox();
-        String wavesString = this.waves.get()+"x";
-        if (this.getLandingTimeShift().get() != 0) wavesString += " " + this.getLandingTimeShift().get() + "s";
+        String wavesString = this.waves+"x ";
+        if (this.getLandingTimeShift() != 0) {
+            if (this.getLandingTimeShift() > 0) wavesString += "+";
+            wavesString += this.getLandingTimeShift() + "s";
+        }
         Label wavesLabel = new Label(wavesString);
-        if (real.get()) wavesLabel.getStyleClass().add("real-target");
+        if (real) wavesLabel.getStyleClass().add("real-target");
         wavesBox.getChildren().add(wavesLabel);
         Button minus = new Button("-");
         Button plus = new Button("+");
         minus.setOnAction(a -> {
-            this.getLandingTimeShift().set(this.getLandingTimeShift().get() - 1);
+            this.setLandingTimeShift(landingTimeShift - 1);
+            this.getUpdated().set(true);
         });
         plus.setOnAction(a -> {
-            this.getLandingTimeShift().set(this.getLandingTimeShift().get() + 1);
+            this.setLandingTimeShift(landingTimeShift + 1);
+            this.getUpdated().set(true);
         });
         minus.getStyleClass().add("attack-box-button");
         plus.getStyleClass().add("attack-box-button");
@@ -162,10 +164,11 @@ public class Attack {
         ImageView del = new ImageView(new Image(String.valueOf(getClass().getResource("images/delete.gif"))));
         del.setViewport(new Rectangle2D(0, 0, 7, 7));
         del.setOnMouseClicked(actionEvent -> {
-            getWaves().set(0);
-            getReal().set(false);
-            getConq().set(false);
-            getLandingTimeShift().set(0);
+            this.setWaves(0);
+            this.setReal(false);
+            this.setConq(false);
+            this.setLandingTimeShift(0);
+            this.getUpdated().set(true);
         });
         box.getChildren().add(del);
 
@@ -175,6 +178,6 @@ public class Attack {
 
     @Override
     public String toString() {
-        return attacker.toString() + " " + getSendingTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        return attacker.toString() + " " + getSendingTime().format(App.TIME_ONLY);
     }
 }

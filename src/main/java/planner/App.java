@@ -218,6 +218,9 @@ public class App extends Application {
                 stage.setScene(planScene);
                 break;
             case "commands":
+                if (planSceneController.getOperation() == null) {
+                    break;
+                }
                 commandController.setAttackers(planSceneController.getOperation().getAttackers());
                 commandController.updateCommands();
                 stage.setScene(commandScene);
