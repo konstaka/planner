@@ -67,6 +67,9 @@ public class PlanSceneController implements Initializable {
     CheckBox bps_wws;
 
     @FXML
+    CheckBox planned_attacks;
+
+    @FXML
     TextField landingTime;
 
     @FXML
@@ -278,19 +281,31 @@ public class PlanSceneController implements Initializable {
 
         // For those alliances, check types of village to show
         List<TargetVillage> shownVillages = new ArrayList<>();
-        for (TargetVillage v : operation.getTargets()) {
-            if (enemyAlliances.contains(v.getAllyName())
+        for (TargetVillage target : operation.getTargets()) {
+            if (enemyAlliances.contains(target.getAllyName())
                     && (
-                    (v.isCapital() && this.caps.isSelected())
-                            || (v.isOffvillage() && this.offs.isSelected())
-                            || (v.getArtefact().contains("Small") && this.small_artes.isSelected())
-                            || (v.getArtefact().contains("Large") && this.large_artes.isSelected())
-                            || (v.getArtefact().contains("Unique") && this.large_artes.isSelected())
-                            || (v.isWwvillage() && this.bps_wws.isSelected())
-                            || (v.getArtefact().contains("Buildplan") && this.bps_wws.isSelected())
+                    (target.isCapital() && this.caps.isSelected())
+                            || (target.isOffvillage() && this.offs.isSelected())
+                            || (target.getArtefact().contains("Small") && this.small_artes.isSelected())
+                            || (target.getArtefact().contains("Large") && this.large_artes.isSelected())
+                            || (target.getArtefact().contains("Unique") && this.large_artes.isSelected())
+                            || (target.isWwvillage() && this.bps_wws.isSelected())
+                            || (target.getArtefact().contains("Buildplan") && this.bps_wws.isSelected())
                     )
             ) {
-                shownVillages.add(v);
+                shownVillages.add(target);
+            }
+        }
+
+        // Checkbox for planned attacks should show all planned attacks for selected alliances
+        if (planned_attacks.isSelected()) {
+            for (AttackerVillage attackerVillage : operation.getAttackers()) {
+                for (Attack attack : attackerVillage.getPlannedAttacks()) {
+                    if (!shownVillages.contains(attack.getTarget())
+                            && enemyAlliances.contains(attack.getTarget().getAllyName())) {
+                        shownVillages.add(attack.getTarget());
+                    }
+                }
             }
         }
 
@@ -536,8 +551,10 @@ public class PlanSceneController implements Initializable {
         boolean success = operation.save();
         if (success) {
             savedText.setText("Saved to DB");
+            savedText.setStyle("-fx-text-fill: green");
         } else {
             savedText.setText("ERROR");
+            savedText.setStyle("-fx-text-fill: red");
         }
     }
 
