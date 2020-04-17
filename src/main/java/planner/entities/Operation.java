@@ -333,9 +333,11 @@ public class Operation {
             Connection conn = DriverManager.getConnection(App.DB);
             // Get landing time and flex seconds
             ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
-            operation.defaultLandingTime = LocalDateTime.parse(
-                    rs1.getString("defaultLandingTime"), App.FULL_DATE_TIME);
-            operation.randomShiftWindow = rs1.getInt("flex_seconds");
+            while (rs1.next()) {
+                operation.defaultLandingTime = LocalDateTime.parse(
+                        rs1.getString("defaultLandingTime"), App.FULL_DATE_TIME);
+                operation.randomShiftWindow = rs1.getInt("flex_seconds");
+            }
             // Get attacker info
             ResultSet rs2 = conn.prepareStatement("SELECT * FROM attacker_info").executeQuery();
             while (rs2.next()) {
@@ -376,6 +378,9 @@ public class Operation {
                         rs4.getLong("randomShiftSeconds"));
             }
             for (TargetVillage targetVillage : operation.getTargets()) {
+                if (!landingTimeShifts.containsKey(targetVillage.getCoordId())) {
+                    landingTimeShifts.put(targetVillage.getCoordId(), 0L);
+                }
                 targetVillage.setRandomShiftSeconds(landingTimeShifts.get(targetVillage.getCoordId()));
             }
             // Compute landing times for all attacks
