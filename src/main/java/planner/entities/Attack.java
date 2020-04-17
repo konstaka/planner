@@ -54,6 +54,9 @@ public class Attack {
     @Getter @Setter
     private boolean conflicting;
 
+    @Getter @Setter
+    private boolean withHero;
+
     @Getter
     private BooleanProperty updated;
 
@@ -110,6 +113,23 @@ public class Attack {
     public HBox toDisplayBox() {
         HBox box = new HBox();
 
+        if (this.isWithHero()) {
+            VBox heroBox = new VBox();
+            Region r0 = new Region();
+            r0.setMinHeight(2);
+            r0.setMaxHeight(2);
+            heroBox.getChildren().add(r0);
+            ImageView heroImg = new ImageView(
+                    String.valueOf(getClass().getResource("images/specials.gif"))
+            );
+            heroImg.setViewport(new Rectangle2D(37, 0, 18, 16));
+            heroImg.setPreserveRatio(true);
+            heroImg.setFitHeight(11);
+            heroImg.setTranslateX(4);
+            heroBox.getChildren().add(heroImg);
+            box.getChildren().add(heroBox);
+        }
+
         VBox offs = new VBox();
         Region r4 = new Region();
         r4.setMaxHeight(2);
@@ -120,13 +140,13 @@ public class Attack {
         for (Node n : offs.getChildren()) n.getStyleClass().add("attack-box-off-column");
         box.getChildren().add(offs);
 
-        if (conq) {
+        if (this.isConq()) {
             VBox chiefs = new VBox();
             Region r5 = new Region();
             r5.setMaxHeight(2);
             r5.setMinHeight(2);
             chiefs.getChildren().add(r5);
-            chiefs.getChildren().add(attacker.getChief());
+            chiefs.getChildren().add(attacker.getChiefImg());
             Label chiefAmt = new Label(""+attacker.getChiefs());
             chiefAmt.setTranslateX(-4);
             chiefs.getChildren().add(chiefAmt);
@@ -141,7 +161,7 @@ public class Attack {
             wavesString += this.getLandingTimeShift() + "s";
         }
         Label wavesLabel = new Label(wavesString);
-        if (real) wavesLabel.getStyleClass().add("real-target");
+        if (this.isReal()) wavesLabel.getStyleClass().add("real-target");
         wavesBox.getChildren().add(wavesLabel);
         Button minus = new Button("-");
         Button plus = new Button("+");
@@ -161,12 +181,15 @@ public class Attack {
         wavesBox.getChildren().add(plusminus);
         box.getChildren().add(wavesBox);
 
-        ImageView del = new ImageView(new Image(String.valueOf(getClass().getResource("images/delete.gif"))));
+        ImageView del = new ImageView(
+                String.valueOf(getClass().getResource("images/delete.gif"))
+        );
         del.setViewport(new Rectangle2D(0, 0, 7, 7));
         del.setOnMouseClicked(actionEvent -> {
             this.setWaves(0);
             this.setReal(false);
             this.setConq(false);
+            this.setWithHero(false);
             this.setLandingTimeShift(0);
             this.getUpdated().set(true);
         });

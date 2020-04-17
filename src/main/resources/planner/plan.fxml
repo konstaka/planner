@@ -97,7 +97,7 @@
             </VBox>
             <Region         minWidth="8"
                             maxWidth="8" />
-            <VBox>
+            <VBox           spacing="4" >
                 <Label          text="Add:"
                                 minHeight="20"
                                 maxHeight="20" />
@@ -122,6 +122,8 @@
                 </HBox>
                 <CheckBox       fx:id="conquer"
                                 text="conquer" />
+                <CheckBox       fx:id="withHero"
+                                text="with hero" />
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
             <ScrollPane maxWidth="570"

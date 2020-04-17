@@ -81,12 +81,15 @@ public class PlanSceneController implements Initializable {
     RadioButton reals;
 
     @FXML
-    CheckBox conquer;
-
-    @FXML
     TextField wavesField;
 
     int waves = 4;
+
+    @FXML
+    CheckBox conquer;
+
+    @FXML
+    CheckBox withHero;
 
     @FXML
     HBox attackerCols;
@@ -160,6 +163,10 @@ public class PlanSceneController implements Initializable {
         ToggleGroup attackType = new ToggleGroup();
         fakes.setToggleGroup(attackType);
         reals.setToggleGroup(attackType);
+
+        // Listen to update the hero checkbox
+        fakes.setOnAction(this::updateHeroCheckBox);
+        reals.setOnAction(this::updateHeroCheckBox);
 
         // Listen to the waves field
         wavesField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -294,7 +301,7 @@ public class PlanSceneController implements Initializable {
     }
 
     public void refreshTargets(ActionEvent actionEvent) {
-        this.updateTargets();
+        if (operation != null) this.updateTargets();
     }
 
 
@@ -312,6 +319,7 @@ public class PlanSceneController implements Initializable {
 
     /**
      * Crafts a target row from the village identifier.
+     * TODO could use some refactoring
      * @param target village object
      * @return hbox the target row
      */
@@ -418,6 +426,8 @@ public class PlanSceneController implements Initializable {
                 else attack.setReal(false);
                 if (conquer.isSelected()) attack.setConq(true);
                 else attack.setConq(false);
+                if (withHero.isSelected()) attack.setWithHero(true);
+                else attack.setWithHero(false);
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
                 attack.getUpdated().set(true);
@@ -489,6 +499,15 @@ public class PlanSceneController implements Initializable {
             waves = 4;
         }
         wavesField.setText(""+waves);
+    }
+
+
+    /**
+     * Updates the default status of the hero checkbox based on if we're adding fakes or reals.
+     */
+    private void updateHeroCheckBox(ActionEvent actionEvent) {
+        if (reals.isSelected()) withHero.setSelected(true);
+        else withHero.setSelected(false);
     }
 
 

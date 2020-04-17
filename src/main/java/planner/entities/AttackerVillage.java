@@ -103,7 +103,7 @@ public class AttackerVillage extends Village {
         box.getChildren().add(r1);
 
         // Chiefs
-        ImageView chiefImage = this.getChief();
+        ImageView chiefImage = this.getChiefImg();
         chiefImage.setTranslateX(17);
         box.getChildren().add(chiefImage);
         box.getChildren().add(new Label(""+this.chiefs));
@@ -254,7 +254,7 @@ public class AttackerVillage extends Village {
     }
 
 
-    public ImageView getChief() {
+    public ImageView getChiefImg() {
         ImageView chief = new ImageView(tribeTroops);
         chief.setViewport(new Rectangle2D(152, 0, 18, 16));
         chief.setPreserveRatio(true);
