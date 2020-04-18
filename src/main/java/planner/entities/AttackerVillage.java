@@ -5,7 +5,9 @@ import java.util.Comparator;
 import java.util.List;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -32,7 +34,13 @@ public class AttackerVillage extends Village {
     private int ts;
 
     @Getter @Setter
-    private double speed;
+    private double arteSpeed;
+
+    @Getter @Setter
+    private int heroBoots = 0;
+
+    @Getter @Setter
+    private IntegerProperty unitSpeed = new SimpleIntegerProperty(3);
 
     @Getter @Setter
     private String offString;
@@ -202,13 +210,12 @@ public class AttackerVillage extends Village {
         r7.setMinHeight(2);
         box.getChildren().add(r7);
 
-
         // Artefact speed img
         HBox arteSpdRow = new HBox();
         ImageView arteSpdImg = new ImageView(
                 String.valueOf(getClass().getResource("images/artefacts@2x.png"))
         );
-        arteSpdImg.setViewport(new Rectangle2D(79, 0, 32, 32));
+        arteSpdImg.setViewport(new Rectangle2D(80, 0, 32, 32));
         arteSpdImg.setPreserveRatio(true);
         arteSpdImg.setFitWidth(11);
         arteSpdRow.getChildren().add(arteSpdImg);
@@ -219,7 +226,7 @@ public class AttackerVillage extends Village {
         arteSpdRow.getChildren().add(r6);
         // Artefact selector
         TextField arteSpd = new TextField();
-        arteSpd.setText(""+this.getSpeed());
+        arteSpd.setText(""+this.getArteSpeed());
         arteSpd.setPrefWidth(22);
         arteSpd.setAlignment(Pos.BASELINE_CENTER);
         arteSpd.setPadding(new Insets(0, 1, 0, 1));
@@ -228,15 +235,16 @@ public class AttackerVillage extends Village {
             try {
                 double newArteSpeed = Double.parseDouble(arteSpd.getText());
                 double eps = 0.01;
-                if (Math.abs(newArteSpeed - 2.0) < eps) this.setSpeed(2.0);
-                else if (Math.abs(newArteSpeed - 1.5) < eps) this.setSpeed(1.5);
-                else if (Math.abs(newArteSpeed - 1.0) < eps) this.setSpeed(1.0);
-                else if (Math.abs(newArteSpeed - 0.67) < eps) this.setSpeed(0.67);
-                else if (Math.abs(newArteSpeed - 0.5) < eps) this.setSpeed(0.5);
-                else if (Math.abs(newArteSpeed - 0.33) < eps) this.setSpeed(0.33);
+                if (Math.abs(newArteSpeed - 2.0) < eps) this.setArteSpeed(2.0);
+                else if (Math.abs(newArteSpeed - 1.5) < eps) this.setArteSpeed(1.5);
+                else if (Math.abs(newArteSpeed - 1.0) < eps) this.setArteSpeed(1.0);
+                else if (Math.abs(newArteSpeed - 0.67) < eps) this.setArteSpeed(0.67);
+                else if (Math.abs(newArteSpeed - 0.5) < eps) this.setArteSpeed(0.5);
+                else if (Math.abs(newArteSpeed - 0.33) < eps) this.setArteSpeed(0.33);
+                this.getUpdated().set(true);
             } catch (NumberFormatException e) {
             }
-            arteSpd.setText(""+this.getSpeed());
+            arteSpd.setText(""+this.getArteSpeed());
         });
         arteSpd.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue && oldValue) arteSpd.fireEvent(new ActionEvent());
@@ -244,19 +252,105 @@ public class AttackerVillage extends Village {
         arteSpdRow.getChildren().add(arteSpd);
         box.getChildren().add(arteSpdRow);
 
+        // Spacer
+        Region r9 = new Region();
+        r9.setMaxHeight(2);
+        r9.setMinHeight(2);
+        box.getChildren().add(r9);
 
+        // Hero boots img
+        HBox heroBootsRow = new HBox();
+        ImageView heroBootsImg = new ImageView(
+                String.valueOf(getClass().getResource("images/items@2x.png"))
+        );
+        heroBootsImg.setViewport(new Rectangle2D(81, 0, 32, 32));
+        heroBootsImg.setPreserveRatio(true);
+        heroBootsImg.setFitWidth(11);
+        heroBootsRow.getChildren().add(heroBootsImg);
+        // Spacer
+        Region r8 = new Region();
+        r8.setMaxWidth(2);
+        r8.setMinWidth(2);
+        heroBootsRow.getChildren().add(r8);
+        // Hero boots selector
+        TextField heroBootsField = new TextField();
+        heroBootsField.setText(""+this.getHeroBoots());
+        heroBootsField.setPrefWidth(22);
+        heroBootsField.setAlignment(Pos.BASELINE_CENTER);
+        heroBootsField.setPadding(new Insets(0, 1, 0, 1));
+        // Listen to changes
+        heroBootsField.setOnAction(actionEvent -> {
+            try {
+                int newHeroBoots = Integer.parseInt(heroBootsField.getText());
+                switch (newHeroBoots) {
+                    case 0:
+                    case 25:
+                    case 50:
+                    case 75:
+                        this.setHeroBoots(newHeroBoots);
+                        this.getUpdated().set(true);
+                        break;
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            heroBootsField.setText(""+this.getHeroBoots());
+        });
+        heroBootsField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) heroBootsField.fireEvent(new ActionEvent());
+        });
+        heroBootsRow.getChildren().add(heroBootsField);
+        box.getChildren().add(heroBootsRow);
 
+        // Spacer
+        Region r10 = new Region();
+        r10.setMaxHeight(2);
+        r10.setMinHeight(2);
+        box.getChildren().add(r10);
 
-
-
-
-
-
-
-
-
-
-
+        // Unit speed img
+        HBox unitSpeedRow = new HBox();
+        ImageView unitSpeedImg = new ImageView(tribeTroops);
+        int speedUnitCoord = 0;
+        switch (this.getUnitSpeed().get()) {
+            case 3:
+                speedUnitCoord = 132;
+                break;
+            case 4:
+                speedUnitCoord = 113;
+                break;
+        }
+        unitSpeedImg.setViewport(new Rectangle2D(speedUnitCoord, 0, 18, 16));
+        unitSpeedImg.setPreserveRatio(true);
+        unitSpeedImg.setFitWidth(11);
+        unitSpeedRow.getChildren().add(unitSpeedImg);
+        // Spacer
+        Region r11 = new Region();
+        r11.setMaxWidth(2);
+        r11.setMinWidth(2);
+        unitSpeedRow.getChildren().add(r11);
+        // Hero boots selector
+        TextField unitSpeedField = new TextField();
+        unitSpeedField.setText(""+this.getUnitSpeed().get());
+        unitSpeedField.setPrefWidth(22);
+        unitSpeedField.setAlignment(Pos.BASELINE_CENTER);
+        unitSpeedField.setPadding(new Insets(0, 1, 0, 1));
+        // Listen to changes
+        unitSpeedField.setOnAction(actionEvent -> {
+            try {
+                int newUnitSpeed = Integer.parseInt(unitSpeedField.getText());
+                if (newUnitSpeed >= 3 && newUnitSpeed <= 30) {
+                        this.getUnitSpeed().set(newUnitSpeed);
+                        this.getUpdated().set(true);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+            unitSpeedField.setText(""+this.getUnitSpeed().get());
+        });
+        unitSpeedField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) unitSpeedField.fireEvent(new ActionEvent());
+        });
+        unitSpeedRow.getChildren().add(unitSpeedField);
+        box.getChildren().add(unitSpeedRow);
 
         // Style class for elements this far
         for (Node n : box.getChildren()) {

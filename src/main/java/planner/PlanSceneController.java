@@ -435,11 +435,18 @@ public class PlanSceneController implements Initializable {
         row.getChildren().add(targetLandTime);
 
         // Dropdown for adding an attack
+        // TODO display times for different unit speeds and hero boots without affecting the Attack object
         ComboBox<Attack> attackerPicker = new ComboBox<>();
         for (AttackerVillage attackerVillage : operation.getAttackers()) {
+            Attack pickableAttack = operation
+                    .getAttacks()
+                    .get(attackerVillage.getCoordId())
+                    .get(target.getCoordId());
+            //pickableAttack.setWithHero(withHero.isSelected());
+            //pickableAttack.setUnitSpeed(unitSpeed);
             attackerPicker
                     .getItems()
-                    .add(operation.getAttacks().get(attackerVillage.getCoordId()).get(target.getCoordId()));
+                    .add(pickableAttack);
         }
         attackerPicker.setPromptText("Add attacker...");
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
@@ -534,6 +541,7 @@ public class PlanSceneController implements Initializable {
     private void updateHeroCheckBox(ActionEvent actionEvent) {
         if (reals.isSelected()) withHero.setSelected(true);
         else withHero.setSelected(false);
+        updateCycle();
     }
 
 
