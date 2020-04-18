@@ -17,7 +17,7 @@
                             maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
-                            maxHeight="250"
+                            maxHeight="280"
                             hbarPolicy="NEVER">
                     <VBox   fx:id="enemyTickboxes" />
                 </ScrollPane>
@@ -30,7 +30,7 @@
                             maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
-                            maxHeight="250"
+                            maxHeight="280"
                             hbarPolicy="NEVER">
                     <VBox   fx:id="targetTickboxes" >
                         <CheckBox   fx:id="caps" text="Capitals" />
@@ -139,8 +139,8 @@
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
             <ScrollPane maxWidth="570"
-                        minHeight="270"
-                        maxHeight="270"
+                        minHeight="300"
+                        maxHeight="300"
                         vbarPolicy="NEVER"
                         hbarPolicy="NEVER"
                         style="-fx-background-color: transparent" >
@@ -150,8 +150,8 @@
         </HBox>
         <ScrollPane minWidth="1280"
                     maxWidth="1280"
-                    minHeight="530"
-                    maxHeight="530" >
+                    minHeight="500"
+                    maxHeight="500" >
             <VBox   fx:id="targetRows" />
         </ScrollPane>
     </VBox>

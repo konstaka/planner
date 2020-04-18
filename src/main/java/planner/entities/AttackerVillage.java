@@ -131,10 +131,16 @@ public class AttackerVillage extends Village {
 
         // Offs
         HBox offIconRow = this.offIconRow();
-        Tooltip offStringTooltip = new Tooltip(offString);
+        Tooltip offStringTooltip = new Tooltip(
+                offString + "\n" +
+                        "Earliest send: " + getSendMin() + "\n" +
+                        "Latest send: " + getSendMax()+ "\n" +
+                        "Comment: " + getComment());
         offStringTooltip.setShowDelay(Duration.millis(0));
         offStringTooltip.setHideDelay(Duration.millis(500));
         offStringTooltip.setShowDuration(Duration.INDEFINITE);
+        offStringTooltip.setMaxWidth(200);
+        offStringTooltip.setWrapText(true);
         Tooltip.install(offIconRow, offStringTooltip);
         box.getChildren().add(offIconRow);
         Label shortOffSizeString = new Label(this.offSizeRounded());
@@ -149,9 +155,11 @@ public class AttackerVillage extends Village {
 
         // TS img
         HBox tsRow = new HBox();
-        ImageView tsImg = new ImageView(String.valueOf(getClass().getResource("images/ts.gif")));
+        ImageView tsImg = new ImageView(
+                String.valueOf(getClass().getResource("images/ts.gif"))
+        );
         tsImg.setPreserveRatio(true);
-        tsImg.setFitHeight(11);
+        tsImg.setFitWidth(11);
         tsRow.getChildren().add(tsImg);
         // Spacer
         Region r5 = new Region();
@@ -183,10 +191,72 @@ public class AttackerVillage extends Village {
         });
         // Update also on focus change
         tsLvl.focusedProperty().addListener((ov, oldV, newV) -> {
-            if (!newV) tsLvl.fireEvent(new ActionEvent());
+            if (!newV && oldV) tsLvl.fireEvent(new ActionEvent());
         });
         tsRow.getChildren().add(tsLvl);
         box.getChildren().add(tsRow);
+
+        // Spacer
+        Region r7 = new Region();
+        r7.setMaxHeight(2);
+        r7.setMinHeight(2);
+        box.getChildren().add(r7);
+
+
+        // Artefact speed img
+        HBox arteSpdRow = new HBox();
+        ImageView arteSpdImg = new ImageView(
+                String.valueOf(getClass().getResource("images/artefacts@2x.png"))
+        );
+        arteSpdImg.setViewport(new Rectangle2D(79, 0, 32, 32));
+        arteSpdImg.setPreserveRatio(true);
+        arteSpdImg.setFitWidth(11);
+        arteSpdRow.getChildren().add(arteSpdImg);
+        // Spacer
+        Region r6 = new Region();
+        r6.setMaxWidth(2);
+        r6.setMinWidth(2);
+        arteSpdRow.getChildren().add(r6);
+        // Artefact selector
+        TextField arteSpd = new TextField();
+        arteSpd.setText(""+this.getSpeed());
+        arteSpd.setPrefWidth(22);
+        arteSpd.setAlignment(Pos.BASELINE_CENTER);
+        arteSpd.setPadding(new Insets(0, 1, 0, 1));
+        // Listen to changes
+        arteSpd.setOnAction(actionEvent -> {
+            try {
+                double newArteSpeed = Double.parseDouble(arteSpd.getText());
+                double eps = 0.01;
+                if (Math.abs(newArteSpeed - 2.0) < eps) this.setSpeed(2.0);
+                else if (Math.abs(newArteSpeed - 1.5) < eps) this.setSpeed(1.5);
+                else if (Math.abs(newArteSpeed - 1.0) < eps) this.setSpeed(1.0);
+                else if (Math.abs(newArteSpeed - 0.67) < eps) this.setSpeed(0.67);
+                else if (Math.abs(newArteSpeed - 0.5) < eps) this.setSpeed(0.5);
+                else if (Math.abs(newArteSpeed - 0.33) < eps) this.setSpeed(0.33);
+            } catch (NumberFormatException e) {
+            }
+            arteSpd.setText(""+this.getSpeed());
+        });
+        arteSpd.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) arteSpd.fireEvent(new ActionEvent());
+        });
+        arteSpdRow.getChildren().add(arteSpd);
+        box.getChildren().add(arteSpdRow);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         // Style class for elements this far
         for (Node n : box.getChildren()) {
@@ -204,9 +274,6 @@ public class AttackerVillage extends Village {
         VBox attackerInfo = new VBox();
         attackerInfo.getChildren().add(new Label("Earliest send: " + getSendMin()));
         attackerInfo.getChildren().add(new Label("Latest send: " + getSendMax()));
-        Label comment = new Label("Comment: " + getComment());
-        comment.setWrapText(true);
-        attackerInfo.getChildren().add(comment);
         if (!plannedAttacks.isEmpty()) {
             plannedAttacks.sort(Comparator.comparing(Attack::getSendingTime));
             attackerInfo.getChildren().add(new Label("Current sends:"));
