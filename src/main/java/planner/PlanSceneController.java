@@ -120,46 +120,6 @@ public class PlanSceneController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        // Add all alliances as checkboxes
-        Set<String> enemies = new HashSet<>();
-        Map<String, Integer> enemyCounts = new HashMap<>();
-        // TODO move DB operation to the Database class
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs = conn.prepareStatement("SELECT allyName FROM x_world").executeQuery();
-            while (rs.next()) {
-                String enemyAlly = rs.getString("allyName");
-                if (enemies.contains(enemyAlly)) {
-                    enemyCounts.put(enemyAlly, enemyCounts.get(enemyAlly)+1);
-                } else {
-                    enemyCounts.put(enemyAlly, 1);
-                }
-                enemies.add(enemyAlly);
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        // Naïve sort, number of alliances is small
-        List<String> sortedEnemies = new ArrayList<>();
-        for (String e : enemies) {
-            int maxCount = 0;
-            String maxE = null;
-            for (String ec : enemyCounts.keySet()) {
-                if (enemyCounts.get(ec) > maxCount) {
-                    maxCount = enemyCounts.get(ec);
-                    maxE = ec;
-                }
-            }
-            sortedEnemies.add(maxE);
-            enemyCounts.remove(maxE);
-        }
-        for (String e : sortedEnemies) {
-            CheckBox c = new CheckBox(e);
-            c.setOnAction(this::refreshTargets);
-            enemyTickboxes.getChildren().add(c);
-        }
-
         // Add auto-updating listeners to cap/off/arte/etc filters
         for (Node n : targetTickboxes.getChildren()) {
             if (n instanceof CheckBox) {
@@ -218,6 +178,46 @@ public class PlanSceneController implements Initializable {
      */
     private void initOperation() {
 
+        // Add all alliances as checkboxes
+        Set<String> enemies = new HashSet<>();
+        Map<String, Integer> enemyCounts = new HashMap<>();
+        // TODO move DB operation to the Database class
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT allyName FROM x_world").executeQuery();
+            while (rs.next()) {
+                String enemyAlly = rs.getString("allyName");
+                if (enemies.contains(enemyAlly)) {
+                    enemyCounts.put(enemyAlly, enemyCounts.get(enemyAlly)+1);
+                } else {
+                    enemyCounts.put(enemyAlly, 1);
+                }
+                enemies.add(enemyAlly);
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        // Naïve sort, number of alliances is small
+        List<String> sortedEnemies = new ArrayList<>();
+        for (String e : enemies) {
+            int maxCount = 0;
+            String maxE = null;
+            for (String ec : enemyCounts.keySet()) {
+                if (enemyCounts.get(ec) > maxCount) {
+                    maxCount = enemyCounts.get(ec);
+                    maxE = ec;
+                }
+            }
+            sortedEnemies.add(maxE);
+            enemyCounts.remove(maxE);
+        }
+        for (String e : sortedEnemies) {
+            CheckBox c = new CheckBox(e);
+            c.setOnAction(this::refreshTargets);
+            enemyTickboxes.getChildren().add(c);
+        }
+
         // Update operation and view
         updateCycle();
 
@@ -267,10 +267,13 @@ public class PlanSceneController implements Initializable {
      */
     private void updateCycle() {
 
-        savedText.setText("");
-        operation.update();
-        updateTargets();
-        updateAttackers();
+        if (operation != null) {
+
+            savedText.setText("");
+            operation.update();
+            updateTargets();
+            updateAttackers();
+        }
     }
 
 
@@ -582,13 +585,15 @@ public class PlanSceneController implements Initializable {
      * Saves the current plan to database. Overwrites anything that was there.
      */
     public void save() {
-        boolean success = operation.save();
-        if (success) {
-            savedText.setText("Saved to DB");
-            savedText.setStyle("-fx-text-fill: green");
-        } else {
-            savedText.setText("ERROR");
-            savedText.setStyle("-fx-text-fill: red");
+        if (operation != null) {
+            boolean success = operation.save();
+            if (success) {
+                savedText.setText("Saved to DB");
+                savedText.setStyle("-fx-text-fill: green");
+            } else {
+                savedText.setText("ERROR");
+                savedText.setStyle("-fx-text-fill: red");
+            }
         }
     }
 

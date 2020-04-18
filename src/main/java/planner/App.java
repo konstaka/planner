@@ -67,6 +67,16 @@ public class App extends Application {
                     "    large_arte int default 0,\n" +
                     "    unique_arte int default 0\n" +
                     ")").execute();
+            conn.prepareStatement("create table if not exists attacker_info\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint attacker_info_pk\n" +
+                    "            primary key,\n" +
+                    "    tsLvl int default 0 not null,\n" +
+                    "    arteSpeed double default 1.0 not null,\n" +
+                    "    heroBoots int default 0 not null,\n" +
+                    "    unitSpeed int default 3 not null\n" +
+                    ")").execute();
             conn.prepareStatement("create table if not exists attacks\n" +
                     "(\n" +
                     "    a_coordId int not null,\n" +
@@ -78,7 +88,8 @@ public class App extends Application {
                     "    time_shift int not null,\n" +
                     "    unit_speed int not null,\n" +
                     "    server_speed int not null,\n" +
-                    "    server_size int not null\n" +
+                    "    server_size int not null,\n" +
+                    "    withHero int not null" +
                     ")").execute();
             conn.prepareStatement("create table if not exists operation_meta\n" +
                     "(\n" +
@@ -103,6 +114,13 @@ public class App extends Application {
                     "    sendmin String,\n" +
                     "    sendmax String,\n" +
                     "    comment String\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists target_info\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint target_info_pk\n" +
+                    "            primary key,\n" +
+                    "    randomShiftSeconds long not null\n" +
                     ")").execute();
             conn.prepareStatement("create table if not exists templates\n" +
                     "(\n" +
