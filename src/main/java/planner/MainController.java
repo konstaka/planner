@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -30,7 +31,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import planner.util.Converters;
 
+/**
+ * Handles data updates.
+ * TODO move DB operations to the Database class
+ */
 public class MainController implements Initializable {
 
     StringProperty toScene = new SimpleStringProperty("");
@@ -73,7 +79,7 @@ public class MainController implements Initializable {
 
         lastUpdated.setText("No map.sql found");
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
             if (rs != null && !rs.isClosed()) {
                 lastUpdated.setText("Last updated at " + rs.getString("last"));
@@ -85,10 +91,10 @@ public class MainController implements Initializable {
         }
         noParticipants.setText("No participants in database");
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                noParticipants.setText("Current operation: " + rs.getInt(1) + " participants");
+                noParticipants.setText("Current participants: " + rs.getInt(1));
             }
             conn.close();
         } catch (Exception e) {
@@ -111,7 +117,7 @@ public class MainController implements Initializable {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(f));
 
-                Connection conn = DriverManager.getConnection(App.getDB());
+                Connection conn = DriverManager.getConnection(App.DB);
                 conn.prepareStatement("DELETE FROM x_world").execute();
 
                 String line;
@@ -146,99 +152,65 @@ public class MainController implements Initializable {
      */
     public void loadParticipants(ActionEvent actionEvent) {
 
-        boolean error = false;
+        // New operation without new participants
+        if (participants.getText().isEmpty()) {
+            newOp.set(true);
+            return;
+        }
 
         String[] offs = participants.getText().split("\n");
 
-        OUTER:
         for (String o : offs) {
+
             String[] off = o.split("\t");
             // Input validation: only last 3 can be empty, off size should include '+'-signs
             // We do not care about the timestamp
             if (off.length < 10) {
                 noParticipants.setText("Error parsing participant data: insufficient length");
-                error = true;
-                break;
+                return;
             }
             for (int i = 1; i < off.length; i++) {
                 if (off[i] == null
                         || (i < 10 && off[i].equals(""))
                         || (i == 7 && !off[i].contains("+"))) {
                     noParticipants.setText("Error parsing participant data: syntax");
-                    error = true;
-                    break OUTER;
+                    return;
                 }
             }
         }
 
         // Add participants to database
-        if (!error) {
-            try {
-                Connection conn = DriverManager.getConnection(App.getDB());
-                conn.prepareStatement("DELETE FROM participants").execute();
-                for (String o : offs) {
-                    String[] off = o.split("\t");
-                    String sql = "INSERT INTO participants VALUES ("
-                            + null + ","
-                            + "'" + off[1] + "',"
-                            + Integer.parseInt(off[2]) + ","
-                            + Integer.parseInt(off[3]) + ","
-                            + Integer.parseInt(off[4]) + ","
-                            + Double.parseDouble(off[5].replace(',', '.')) + ","
-                            + this.tribeNumber(off[6]) + ","
-                            + "'" + off[7] + "',"
-                            + this.offSize(this.tribeNumber(off[6]), off[7]) + ","
-                            + Integer.parseInt(off[8]) + ","
-                            + Integer.parseInt(off[9]) + ","
-                            + "'" + (off.length > 10 ? off[10] : null) + "',"
-                            + "'" + (off.length > 11 ? off[11] : null) + "',"
-                            + "'" + (off.length > 12 ? off[12] : null) + "'"
-                            + ")";
-                    conn.prepareStatement(sql).execute();
-                }
-                noParticipants.setText("Current operation: " + offs.length + " participants");
-                newOp.set(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("Database error");
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            conn.prepareStatement("DELETE FROM participants").execute();
+            conn.prepareStatement("DELETE FROM attacker_info").execute();
+            conn.prepareStatement("DELETE FROM target_info").execute();
+            conn.prepareStatement("DELETE FROM attacks").execute();
+            for (String o : offs) {
+                String[] off = o.split("\t");
+                String sql = "INSERT INTO participants VALUES (null,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setString(1, off[1]);
+                ps.setInt(2, Integer.parseInt(off[2]));
+                ps.setInt(3, Integer.parseInt(off[3]));
+                ps.setInt(4, Integer.parseInt(off[4]));
+                ps.setDouble(5, Double.parseDouble(off[5].replace(',', '.')));
+                ps.setInt(6, Converters.tribeNumber(off[6]));
+                ps.setString(7, off[7]);
+                ps.setInt(8, Converters.offSize(Converters.tribeNumber(off[6]), off[7]));
+                ps.setInt(9, Integer.parseInt(off[8]));
+                ps.setInt(10, Integer.parseInt(off[9]));
+                ps.setString(11, (off.length > 10 ? off[10] : null));
+                ps.setString(12, (off.length > 11 ? off[11] : null));
+                ps.setString(13, (off.length > 12 ? off[12] : null));
+                ps.execute();
             }
+            noParticipants.setText(" Current participants: " + offs.length);
+            newOp.set(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Database error");
         }
-    }
-
-
-    /**
-     * Computes the size of this off from submitted tribe and off size string.
-     * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
-     * @param offString off size in the format (example) 1000+0+500+100+100
-     * @return off consumption (romans computed without drinking trough)
-     */
-    private int offSize(int tribe, String offString) {
-        String[] offs = offString.split("\\+");
-        int[] ints = new int[offs.length];
-        for (int i = 0; i < offs.length; i++) {
-            ints[i] = Integer.parseInt(offs[i].trim());
-        }
-        switch (tribe) {
-            case 1: return ints[0] + 3*ints[1] + 4*ints[2];
-            case 2: return ints[0] + ints[1] + 3*ints[2];
-            case 3: return ints[0] + 2*ints[1] + 3*ints[2];
-        }
-        return 0;
-    }
-
-
-    /**
-     * Converts tribe name to number.
-     * @param tribe tribe
-     * @return 1 = Roman, 2 = Teuton, 3 = Gaul
-     */
-    private int tribeNumber(String tribe) {
-        switch (tribe) {
-            case "Roman": return 1;
-            case "Teuton": return 2;
-            case "Gaul": return 3;
-        }
-        return -1;
     }
 
 
@@ -270,7 +242,7 @@ public class MainController implements Initializable {
                 co[i] *= Integer.parseInt(coordi);
             }
             try {
-                Connection conn = DriverManager.getConnection(App.getDB());
+                Connection conn = DriverManager.getConnection(App.DB);
                 String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES (" +
                         "(SELECT coordId " +
                         "FROM x_world " +
@@ -307,7 +279,7 @@ public class MainController implements Initializable {
      */
     private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("UPDATE artefacts SET " + size + "=0").execute();
             if (size.equals("large_arte")) {
                 conn.prepareStatement("UPDATE artefacts SET unique_arte=0").execute();
