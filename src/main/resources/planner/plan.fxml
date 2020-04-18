@@ -101,7 +101,7 @@
                 <Label          text="Add:"
                                 minHeight="20"
                                 maxHeight="20" />
-                <HBox>
+                <HBox           spacing="4" >
                     <RadioButton    fx:id="fakes"
                                     selected="true"
                                     text="fakes" />
@@ -118,12 +118,24 @@
                     <Label      text=" wave(s)"
                                 minHeight="30"
                                 maxHeight="30"
-                                alignment="TOP_RIGHT" />
+                                alignment="TOP_LEFT" />
                 </HBox>
                 <CheckBox       fx:id="conquer"
                                 text="conquer" />
                 <CheckBox       fx:id="withHero"
                                 text="with hero" />
+                <HBox           alignment="BOTTOM_LEFT">
+                    <Label      text="unit speed: "
+                                minHeight="30"
+                                maxHeight="30"
+                                alignment="BOTTOM_LEFT" />
+                    <TextField  fx:id="unitSpeedField"
+                                onAction="#updateUnitSpeed"
+                                text="3"
+                                prefWidth="22"
+                                style="-fx-padding: 0 1 0 1"
+                                alignment="BASELINE_CENTER" />
+                </HBox>
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
             <ScrollPane maxWidth="570"
