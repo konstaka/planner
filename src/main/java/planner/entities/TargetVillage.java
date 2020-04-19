@@ -101,7 +101,7 @@ public class TargetVillage extends Village {
      * @see Cloneable
      */
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         TargetVillage clone = (TargetVillage) super.clone();
         clone.setArteEffects(List.copyOf(arteEffects));
         return clone;

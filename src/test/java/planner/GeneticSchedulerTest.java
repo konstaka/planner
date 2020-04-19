@@ -71,16 +71,35 @@ public class GeneticSchedulerTest {
 
 
     @Before
-    public void setUp() {
+    public void setUp() throws CloneNotSupportedException {
+
+        when(spank_me_14.getPlayerId()).thenReturn(382);
+        when(spank_me_14.getXCoord()).thenReturn(-74);
+        when(spank_me_14.getYCoord()).thenReturn(99);
+        when(spank_me_14.getArteSpeed()).thenReturn(1.5);
+
+        when(spank_me_03.getPlayerId()).thenReturn(382);
+        when(spank_me_03.getXCoord()).thenReturn(-71);
+        when(spank_me_03.getYCoord()).thenReturn(99);
+        when(spank_me_03.getArteSpeed()).thenReturn(1.5);
+
+        when(spank_me_23.getPlayerId()).thenReturn(382);
+        when(spank_me_23.getXCoord()).thenReturn(-75);
+        when(spank_me_23.getYCoord()).thenReturn(99);
+        when(spank_me_23.getArteSpeed()).thenReturn(1.5);
+
+        when(donald_trump_01.getPlayerId()).thenReturn(181);
+        when(donald_trump_01.getXCoord()).thenReturn(-74);
+        when(donald_trump_01.getYCoord()).thenReturn(122);
+        when(donald_trump_01.getArteSpeed()).thenReturn(2.0);
+
         for (AttackerVillage attacker : attackers) {
             when(attacker.getUnitSpeed()).thenReturn(new SimpleIntegerProperty(3));
             when(attacker.getTs()).thenReturn(20);
             when(attacker.getHeroBoots()).thenReturn(0);
-        }
-        for (TargetVillage target : targets) {
-            targetsMap.put(target.getCoordId(), target);
-            for (AttackerVillage attacker : attackers) {
-                attacker.getPlannedAttacks().add(
+            List<Attack> plannedAttacks = new ArrayList<>();
+            for (TargetVillage target : targets) {
+                plannedAttacks.add(
                         new Attack(
                                 target,
                                 attacker,
@@ -98,11 +117,53 @@ public class GeneticSchedulerTest {
                         )
                 );
             }
+            when(attacker.getPlannedAttacks()).thenReturn(plannedAttacks);
+            when(attacker.clone()).thenReturn(attacker);
         }
+
+
+        when(iluvatar_cap.getCoordId()).thenReturn(76393);
+        when(iluvatar_cap.getXCoord()).thenReturn(2);
+        when(iluvatar_cap.getYCoord()).thenReturn(10);
+
+        when(gothmog_11.getCoordId()).thenReturn(77178);
+        when(gothmog_11.getXCoord()).thenReturn(-15);
+        when(gothmog_11.getYCoord()).thenReturn(8);
+
+        when(sauron_cap.getCoordId()).thenReturn(77989);
+        when(sauron_cap.getXCoord()).thenReturn(-6);
+        when(sauron_cap.getYCoord()).thenReturn(6);
+
+        when(treebeard_cap.getCoordId()).thenReturn(78376);
+        when(treebeard_cap.getXCoord()).thenReturn(-20);
+        when(treebeard_cap.getYCoord()).thenReturn(5);
+
+        when(gothmog_09.getCoordId()).thenReturn(78389);
+        when(gothmog_09.getXCoord()).thenReturn(-7);
+        when(gothmog_09.getYCoord()).thenReturn(5);
+
+        when(arPharazon_cap.getCoordId()).thenReturn(78400);
+        when(arPharazon_cap.getXCoord()).thenReturn(4);
+        when(arPharazon_cap.getYCoord()).thenReturn(5);
+
+        when(gothmog_05.getCoordId()).thenReturn(78791);
+        when(gothmog_05.getXCoord()).thenReturn(-6);
+        when(gothmog_05.getYCoord()).thenReturn(4);
+
+        when(gandalf_cap.getCoordId()).thenReturn(79996);
+        when(gandalf_cap.getXCoord()).thenReturn(-4);
+        when(gandalf_cap.getYCoord()).thenReturn(1);
+
+        for (TargetVillage target : targets) {
+            targetsMap.put(target.getCoordId(), target);
+            when(target.clone()).thenReturn(target);
+        }
+
 
         when(operation.getAttackers()).thenReturn(attackers);
         when(operation.getTargets()).thenReturn(targets);
         when(operation.getDefaultLandingTime()).thenReturn(landingTime);
+
         geneticScheduler = new GeneticScheduler(operation);
     }
 
@@ -110,8 +171,11 @@ public class GeneticSchedulerTest {
     @Test
     public void tenMinuteWindow() {
         when(operation.getRandomShiftWindow()).thenReturn(5);
-
-        this.printSolution(geneticScheduler.schedule());
+        try {
+            this.printSolution(geneticScheduler.schedule());
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -121,10 +185,12 @@ public class GeneticSchedulerTest {
      * @param solution output of the scheduler
      */
     private void printSolution(Map<Integer, Long> solution) {
-        System.out.println("*** SOLUTION:");
+        System.out.println("--- SOLUTION:");
         for (Integer t_coordId : solution.keySet()) {
             System.out.println(
-                    targetsMap.get(t_coordId).getCoords() +
+                    targetsMap.get(t_coordId).getXCoord() +
+                            "|" +
+                            targetsMap.get(t_coordId).getYCoord() +
                             " " +
                             landingTime.plusSeconds(solution.get(t_coordId)).format(App.TIME_ONLY)
             );

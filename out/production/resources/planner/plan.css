@@ -1,33 +1,51 @@
 .target-col {
     -fx-padding: 1px;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-border-color: grey;
+    -fx-font-size: 0.8em;
+    -fx-min-height: 30px;
+    -fx-max-height: 30px;
 }
 .target-col-0 {
-    -fx-min-width: 60px;
-    -fx-max-width: 60px;
+    -fx-min-width: 50px;
+    -fx-max-width: 50px;
 }
 .target-col-1 {
-    -fx-min-width: 80px;
-    -fx-max-width: 80px;
-}
-.target-col-2 {
-    -fx-min-width: 55px;
-    -fx-max-width: 55px;
-}
-.target-col-3 {
     -fx-min-width: 70px;
     -fx-max-width: 70px;
 }
-.target-col-4 {
-    -fx-min-width: 55px;
-    -fx-max-width: 55px;
-}
-.target-col-5 {
+.target-col-2 {
     -fx-min-width: 45px;
     -fx-max-width: 45px;
 }
-.target-col-6 {
+.target-col-3 {
     -fx-min-width: 55px;
     -fx-max-width: 55px;
+}
+.target-col-4 {
+    -fx-min-width: 40px;
+    -fx-max-width: 40px;
+}
+.target-col-5 {
+    -fx-min-width: 35px;
+    -fx-max-width: 35px;
+}
+.target-col-6 {
+    -fx-min-width: 100px;
+    -fx-max-width: 100px;
+}
+.target-col-7 {
+    -fx-min-width: 110px;
+    -fx-max-width: 110px;
+}
+.target-col-8 {
+    -fx-min-width: 55px;
+    -fx-max-width: 55px;
+}
+.target-col-9 {
+    -fx-min-width: 130px;
+    -fx-max-width: 130px;
 }
 .attacker-box {
     -fx-min-width: 45px;
@@ -39,13 +57,42 @@
     -fx-min-width: 45px;
     -fx-max-width: 45px;
     -fx-alignment: center;
+    -fx-font-size: 0.9em;
+}
+.attack-box-off-column {
+    -fx-min-width: 36px;
+    -fx-max-width: 36px;
+    -fx-alignment: center;
+    -fx-font-size: 0.9em;
+}
+.attack-box-chief-column {
+    -fx-min-width: 18px;
+    -fx-max-width: 18px;
+    -fx-alignment: center;
+    -fx-font-size: 0.9em;
 }
 .attacker-name {
     -fx-min-height: 45px;
     -fx-max-height: 45px;
-    -fx-min-width: 90px;
-    -fx-max-width: 90px;
+    -fx-min-width: 130px;
+    -fx-max-width: 130px;
     -fx-rotate: -90;
-    -fx-translate-x: -22.5px;
+    -fx-translate-x: -43px;
+    -fx-translate-y: 40px;
     -fx-alignment: center-left;
+    -fx-font-size: 0.8em;
+}
+.real-target, .alert {
+    -fx-text-fill: red;
+}
+.attack-box-button {
+    -fx-max-height: 5px;
+    -fx-pref-width: 15px;
+    -fx-alignment: center;
+    -fx-padding: 0;
+    -fx-font-size: 0.5em;
+}
+
+.green {
+    -fx-text-fill: green;
 }
