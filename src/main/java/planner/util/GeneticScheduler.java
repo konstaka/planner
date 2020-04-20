@@ -133,6 +133,13 @@ public class GeneticScheduler {
                 currentBestFitness = fitnessValues[bestInThisIdx];
             }
 
+            // If current best is zero, start with a new random population
+            if (currentBestFitness < 0.001) {
+                for (int j = 0; j < POPULATION_SIZE; j++) {
+                    population[j] = randomChromosome();
+                }
+            }
+
             // Reproduce
             @SuppressWarnings("unchecked")
             Map<Integer, Long>[] newPop = new HashMap[POPULATION_SIZE];
@@ -152,10 +159,8 @@ public class GeneticScheduler {
                     itemsWeights.add(new Pair<>(population[j], fitnessValues[j]));
                 }
                 EnumeratedDistribution<Map<Integer, Long>> dist = new EnumeratedDistribution<>(itemsWeights);
-                // Elitism: the current best solution is always included
-                newPop[0] = currentBest;
                 // Fill up new population by crossovers or old candidates
-                for (int j = 1; j < POPULATION_SIZE; j++) {
+                for (int j = 0; j < POPULATION_SIZE; j++) {
                     if (random.nextDouble() < PROB_CROSSOVER) {
                         @SuppressWarnings("unchecked")
                         Map<Integer, Long>[] parents = new HashMap[2];
