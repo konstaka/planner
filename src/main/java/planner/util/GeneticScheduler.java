@@ -84,7 +84,8 @@ public class GeneticScheduler {
 
     /**
      * Runs the algorithm on a given operation with the fixed parameters.
-     * @return map from target coordId to landing time shift.
+     * @return map from target coordId to landing time shift
+     * or null if the attacks could not be scheduled.
      * @throws IllegalStateException if the attacks could not be read
      * (for instance, if there are no attacks to schedule).
      */
@@ -133,20 +134,14 @@ public class GeneticScheduler {
                 currentBestFitness = fitnessValues[bestInThisIdx];
             }
 
-            // If current best is zero, start with a new random population
-            if (currentBestFitness < 0.001) {
-                for (int j = 0; j < POPULATION_SIZE; j++) {
-                    population[j] = randomChromosome();
-                }
-            }
-
             // Reproduce
             @SuppressWarnings("unchecked")
             Map<Integer, Long>[] newPop = new HashMap[POPULATION_SIZE];
-
-            // If total fitness is absolutely zero, crossover is not used, only mutation.
-            if (totalFitness == 0) {
-                newPop = population;
+            // If current best is zero, start with a new random population
+            if (currentBestFitness < 0.001) {
+                for (int j = 0; j < POPULATION_SIZE; j++) {
+                    newPop[j] = randomChromosome();
+                }
             } else {
                 // Compute fitness ratios
                 for (int j = 0; j < POPULATION_SIZE; j++) {
@@ -154,13 +149,16 @@ public class GeneticScheduler {
                 }
                 // Initialise the distribution
                 List<Pair<Map<Integer, Long>, Double>> itemsWeights = new ArrayList<>();
-                // If the fitness is zero, the chromosome is replaced with a random one.
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     itemsWeights.add(new Pair<>(population[j], fitnessValues[j]));
                 }
                 EnumeratedDistribution<Map<Integer, Long>> dist = new EnumeratedDistribution<>(itemsWeights);
+                // Spatial search: clone the best solution with slight variations
+                for (int j = 0; j < POPULATION_SIZE/10; j++) {
+                    newPop[j] = tweak(currentBest);
+                }
                 // Fill up new population by crossovers or old candidates
-                for (int j = 0; j < POPULATION_SIZE; j++) {
+                for (int j = POPULATION_SIZE/10; j < POPULATION_SIZE; j++) {
                     if (random.nextDouble() < PROB_CROSSOVER) {
                         @SuppressWarnings("unchecked")
                         Map<Integer, Long>[] parents = new HashMap[2];
@@ -184,6 +182,7 @@ public class GeneticScheduler {
             population = newPop;
         }
         System.out.println("--- Best in all generations: " + currentBestFitness);
+        if (currentBestFitness < 0.001) return null;
         return currentBest;
     }
 
@@ -283,10 +282,13 @@ public class GeneticScheduler {
      * @return value of this interval, between 0 and 1 (both inclusive)
      */
     public double value(long interval, int waves) {
-        if (interval <= 0) return 0.0;
+        // Cutoff
+        if (interval <= 30) return 0.0;
         long diff = interval - optimalInterval(waves);
-        if (diff < -4L) return 0.0;
+        // Quadratic discounting
+        if (diff < -4L) return bestValue / Math.pow(diff+4, 2);
         if (diff > 84L) return baseValueRatio * bestValue + (1-baseValueRatio) * bestValue / Math.pow(diff-84, 2);
+        // Flat peak; in a certain window around the optimal interval we do not care about the actual seconds
         return bestValue;
     }
 
@@ -334,5 +336,29 @@ public class GeneticScheduler {
             offspring.put(targetList.get(i), parent2.get(targetList.get(i)));
         }
         return offspring;
+    }
+
+
+    /**
+     * Introduces small random tweaks to a chromosome to discover possible nearby improvements.
+     */
+    private Map<Integer, Long> tweak(Map<Integer, Long> original) {
+        Map<Integer, Long> tweaked = new HashMap<>();
+        for (int i = 0; i < targetList.size(); i++) {
+            long randomShift = random.nextInt(operation.getRandomShiftWindow() / 10);
+            long shift = 0;
+            int die = random.nextInt(3);
+            if (die == 1) {
+                shift -= randomShift;
+            }
+            if (die == 2) {
+                shift += randomShift;
+            }
+            tweaked.put(
+                    targetList.get(i),
+                    original.get(targetList.get(i)) + shift
+            );
+        }
+        return tweaked;
     }
 }
