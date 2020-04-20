@@ -3,7 +3,7 @@ package planner.util;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.util.Pair;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
 
@@ -25,30 +26,59 @@ import planner.entities.Operation;
  * This is achieved by selecting the fitness function so that it gives
  * the best score for optimal attack intervals.
  */
+@RequiredArgsConstructor
 public class GeneticScheduler {
-
-    private static final int POPULATION_SIZE = 200;
-    private static final int GENERATIONS = 15;
-    private static final double PROB_CROSSOVER = 0.6;
-    private static final double PROB_MUTATION = 0.04;
 
     private Operation operation;
 
-    private Map<Integer, List<Attack>> attacksPerPlayer;
+    private int POPULATION_SIZE;
+    private int GENERATIONS;
+    private double PROB_CROSSOVER;
+    private double PROB_MUTATION;
 
-    private List<Integer> targetList;
+    private double bestValue;
+    private double baseValueRatio;
 
-    private Random random;
+    private Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
+
+    private List<Integer> targetList = new ArrayList<>();
+
+    private Random random = new Random();
 
 
     /**
-     * Instantiates a scheduler for a given operation.
-     * @param operation the operation to be scheduled
+     * Initialises a genetic attack scheduler.
+     * bestValue and baseValueRatio determine the fitness function
+     * and can be used to weight long send intervals to taste.
+     * The higher the bestValue, the slower the value of the interval
+     * drops when it gets longer.
+     * baseValueRatio of 0.0 means that long intervals are highly penalised,
+     * baseValueRatio of 1.0 means that long intervals are as good as the
+     * optimal ones.
+     * @param operation operation to be scheduled
+     * @param POPULATION_SIZE population size
+     * @param GENERATIONS #generations
+     * @param PROB_CROSSOVER crossover probability
+     * @param PROB_MUTATION mutation probability
+     * @param bestValue value for an optimal interval
+     * @param baseValueRatio proportion of the best value
      */
-    public GeneticScheduler(Operation operation) {
+    public GeneticScheduler(
+            Operation operation,
+            int POPULATION_SIZE,
+            int GENERATIONS,
+            double PROB_CROSSOVER,
+            double PROB_MUTATION,
+            double bestValue,
+            double baseValueRatio
+    ) {
         this.operation = operation;
-        attacksPerPlayer = new HashMap<>();
-        random = new Random();
+        this.POPULATION_SIZE = POPULATION_SIZE;
+        this.GENERATIONS = GENERATIONS;
+        this.PROB_CROSSOVER = PROB_CROSSOVER;
+        this.PROB_MUTATION = PROB_MUTATION;
+        this.bestValue = bestValue;
+        this.baseValueRatio = baseValueRatio;
     }
 
 
@@ -79,7 +109,6 @@ public class GeneticScheduler {
 
         for (int i = 0; i < GENERATIONS; i++) {
 
-            System.out.println("Compute fitnesses...");
             // Compute the fitness values of this generation
             double[] fitnessValues = new double[POPULATION_SIZE];
             double totalFitness = 0;
@@ -91,18 +120,18 @@ public class GeneticScheduler {
             // Find the best in generation
             int bestInThisIdx = findBest(fitnessValues);
             // Report scores
-            System.out.println("*** Generation " + i +
-                    ",\tbest score: " + fitnessValues[bestInThisIdx] +
-                    " (" + ((fitnessValues[bestInThisIdx] - currentBestFitness) >= 0 ? "+" : "") +
-                    Math.round((fitnessValues[bestInThisIdx] - currentBestFitness)*1000)/1000.0 + ")" +
-                    ",\taverage score: " + (totalFitness / POPULATION_SIZE));
+            System.out.println(
+                    "*** Generation " + i +
+                            ",\tbest score: " + Math.round(fitnessValues[bestInThisIdx]) +
+                            " (" + ((fitnessValues[bestInThisIdx] - currentBestFitness) >= 0 ? "+" : "") +
+                            Math.round(fitnessValues[bestInThisIdx] - currentBestFitness) + ")" +
+                            ",\taverage score: " + Math.round(totalFitness / POPULATION_SIZE)
+            );
             // Compare the best from this generation to the best of all chromosomes
             if (currentBest.isEmpty() || fitnessValues[bestInThisIdx] > currentBestFitness) {
                 currentBest = population[bestInThisIdx];
                 currentBestFitness = fitnessValues[bestInThisIdx];
             }
-
-
 
             // Reproduce
             @SuppressWarnings("unchecked")
@@ -112,20 +141,21 @@ public class GeneticScheduler {
             if (totalFitness == 0) {
                 newPop = population;
             } else {
-                System.out.println("Compute fitness ratios...");
                 // Compute fitness ratios
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     fitnessValues[j] = fitnessValues[j] / totalFitness * 100;
                 }
                 // Initialise the distribution
                 List<Pair<Map<Integer, Long>, Double>> itemsWeights = new ArrayList<>();
+                // If the fitness is zero, the chromosome is replaced with a random one.
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     itemsWeights.add(new Pair<>(population[j], fitnessValues[j]));
                 }
                 EnumeratedDistribution<Map<Integer, Long>> dist = new EnumeratedDistribution<>(itemsWeights);
-                System.out.println("Pick parents...");
+                // Elitism: the current best solution is always included
+                newPop[0] = currentBest;
                 // Fill up new population by crossovers or old candidates
-                for (int j = 0; j < POPULATION_SIZE; j++) {
+                for (int j = 1; j < POPULATION_SIZE; j++) {
                     if (random.nextDouble() < PROB_CROSSOVER) {
                         @SuppressWarnings("unchecked")
                         Map<Integer, Long>[] parents = new HashMap[2];
@@ -134,25 +164,21 @@ public class GeneticScheduler {
                     } else {
                         newPop[j] = dist.sample();
                     }
+                    // Mutation
+                    if (random.nextDouble() < PROB_MUTATION) {
+                        int randomIdx = random.nextInt(targetList.size());
+                        population[j].put(targetList.get(randomIdx),
+                                (long) random.nextInt(operation.getRandomShiftWindow() * 2)
+                                        - operation.getRandomShiftWindow()
+                        );
+                    }
                 }
-            }
-
-            System.out.println("Mutate...");
-            // Mutate
-            if (random.nextDouble() < PROB_MUTATION) {
-                int randomIdx = random.nextInt(POPULATION_SIZE);
-                Map<Integer, Long> chromosome = population[randomIdx];
-                randomIdx = random.nextInt(targetList.size());
-                chromosome.put(targetList.get(randomIdx),
-                        (long) random.nextInt(operation.getRandomShiftWindow() * 2)
-                                - operation.getRandomShiftWindow()
-                );
             }
 
             // Switch to the new generation
             population = newPop;
         }
-        System.out.println("*** Best in all generations: " + currentBestFitness);
+        System.out.println("--- Best in all generations: " + currentBestFitness);
         return currentBest;
     }
 
@@ -169,18 +195,13 @@ public class GeneticScheduler {
                 attacksPerPlayer.put(attackerVillage.getPlayerId(), new ArrayList<>());
             }
             for (Attack attack : attackerVillage.getPlannedAttacks()) {
-                try {
-                    attacksPerPlayer.get(attackerVillage.getPlayerId()).add(
-                            (Attack) attack.clone()
-                    );
-                    targetIds.add(attack.getTarget().getCoordId());
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                }
+                attacksPerPlayer.get(attackerVillage.getPlayerId()).add(attack);
+                targetIds.add(attack.getTarget().getCoordId());
             }
         }
         // Initialise target list for chromosome building
-        targetList = new ArrayList<>(targetIds);
+        targetList.clear();
+        targetList.addAll(targetIds);
         System.out.println("--- Genetic scheduler started with chromosomes of length " + targetList.size());
     }
 
@@ -193,7 +214,7 @@ public class GeneticScheduler {
         Map<Integer, Long> chromosome = new HashMap<>();
         for (Integer t_coordId : targetList) {
             chromosome.put(t_coordId,
-                    (long) random.nextInt(operation.getRandomShiftWindow() * 60 * 2)
+                    (long) random.nextInt(operation.getRandomShiftWindow() * 2)
                             - operation.getRandomShiftWindow()
             );
         }
@@ -208,27 +229,42 @@ public class GeneticScheduler {
      * @return fitness value
      */
     private double fitness(Map<Integer, Long> candidate) {
+
+        List<SortableAttack[]> attackArrays = new ArrayList<>();
+
         // Insert candidate values
         for (List<Attack> attackList : attacksPerPlayer.values()) {
-            for (Attack attack : attackList) {
-                attack.setLandingTime(
+            SortableAttack[] attackArray = new SortableAttack[attackList.size()];
+            for (int i = 0; i < attackList.size(); i++) {
+                attackList.get(i).setLandingTime(
                         operation.getDefaultLandingTime()
-                                .plusSeconds(candidate.get(attack.getTarget().getCoordId()))
+                                .plusSeconds(candidate.get(attackList.get(i).getTarget().getCoordId()))
+                );
+                attackArray[i] = new SortableAttack(
+                        attackList.get(i).getSendingTime(),
+                        attackList.get(i).getWaves()
                 );
             }
+            attackArrays.add(attackArray);
         }
         double candidateFitness = 0;
-        // Sort by new sending times and sum interval values
-        // TODO make sorting more efficient, this eats up all memory.
-        for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
-            System.out.println("Sorting list of size: " + attacksForPlayer.size());
-            attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
-            System.out.println("Maybe.");
-            for (int i = 0; i < attacksForPlayer.size()-1; i++) {
-                LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
-                LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
+
+        // Sort by new sending times
+        for (SortableAttack[] attackArray : attackArrays) {
+            Arrays.sort(attackArray);
+        }
+
+        // Sum interval values
+        // If any of the values is zero, the fitness of this chromosome is zero
+        // (discourages solutions with impossible send windows)
+        for (SortableAttack[] attackArray : attackArrays) {
+            for (int i = 0; i < attackArray.length-1; i++) {
+                LocalDateTime send1 = attackArray[i].sendingTime;
+                LocalDateTime send2 = attackArray[i+1].sendingTime;
                 long interval = ChronoUnit.SECONDS.between(send1, send2);
-                candidateFitness += value(interval, attacksForPlayer.get(i+1).getWaves());
+                double value = value(interval, attackArray[i+1].waves);
+                if (value < 0.001) return 0.0;
+                candidateFitness += value;
             }
         }
         return candidateFitness;
@@ -237,38 +273,36 @@ public class GeneticScheduler {
 
     /**
      * Computes the value of the sending time interval based on deviation from the optimum.
-     * The drop in value should be sharper on the shorter side; inverse quadratic is used here.
-     * On the longer side, inverse drop in value is used.
-     * Around the optimal interval threshold, the max value is returned for 30 consecutive seconds.
-     * If the interval is not positive, zero is returned (two sends on the exactly same second).
      * @param interval interval to be evaluated
      * @param waves waves to be set for the next send
      * @return value of this interval, between 0 and 1 (both inclusive)
      */
-    private static double value(long interval, int waves) {
+    public double value(long interval, int waves) {
         if (interval <= 0) return 0.0;
         long diff = interval - optimalInterval(waves);
-        if (diff < -4L) return 1.0 / Math.pow(diff+4, 2);
-        if (diff > 24L) return 1.0 / (diff-24);
-        return 1.0;
+        if (diff < -4L) return 0.0;
+        if (diff > 84L) return baseValueRatio * bestValue + (1-baseValueRatio) * bestValue / Math.pow(diff-84, 2);
+        return bestValue;
     }
 
 
     /**
+     * Optimal interval for sends is defined by a base value
+     * and the amount of waves the player needs to set for the next send.
      * 40s + 5s per wave is used as an optimal interval,
      * so 45s for a single attack, 60s for a 4-wave attack, and 1min20s for a 8-wave attack.
      * @param waves the amount of waves
      * @return the optimal sending interval
      */
     private static long optimalInterval(int waves) {
-        return 40L + 5*waves;
+        return 40L + 5 * waves;
     }
 
 
     /**
      * Simple argmax to find the fittest chromosome.
      */
-    private static int findBest(double[] fitnessValues) {
+    private int findBest(double[] fitnessValues) {
         int bestIdx = 0;
         for (int i = 1; i < POPULATION_SIZE; i++) {
             if (fitnessValues[i] > fitnessValues[bestIdx]) {
