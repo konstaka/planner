@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SortableAttack implements Comparable<SortableAttack> {
 
+    int t_coordId;
     LocalDateTime sendingTime;
     int waves;
 

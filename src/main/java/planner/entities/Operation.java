@@ -277,12 +277,13 @@ public class Operation {
             attacksPerPlayer.get(attackerVillage.getPlayerId()).addAll(attackerVillage.getPlannedAttacks());
         }
         // Sort lists and see if there are too close sends
+        // TODO make the shortest possible interval a changeable setting
         for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
             attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
             for (int i = 0; i < attacksForPlayer.size()-1; i++) {
                 LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
                 LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
-                if (ChronoUnit.SECONDS.between(send1, send2) < 50) {
+                if (ChronoUnit.SECONDS.between(send1, send2) < 30) {
                     attacksForPlayer.get(i).setConflicting(true);
                     attacksForPlayer.get(i+1).setConflicting(true);
                     attacksForPlayer.get(i).getAttacker().setAlert(true);

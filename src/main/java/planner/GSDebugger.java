@@ -31,17 +31,14 @@ public class GSDebugger {
 
         GeneticScheduler geneticScheduler = new GeneticScheduler(
                 operation,
-                100000,
-                100,
-                0.8,
-                0.2,
                 240.0,
-                0.4
+                0.8
         );
 
         Map<Integer, Long> solution = null;
         try {
             for (int i = operation.getRandomShiftWindow() / 60; i < 10; i++) {
+                operation.setRandomShiftWindow(i*60);
                 System.out.println("Scheduling for a flex window of " + i + " minute(s)");
                 solution = geneticScheduler.schedule();
                 if (solution != null) break;
@@ -88,6 +85,11 @@ public class GSDebugger {
                             landingTime.plusSeconds(solution.get(t_coordId)).format(App.TIME_ONLY)
             );
         }
+        System.out.println();
+        System.out.println(
+                "Fitness: " + geneticScheduler.fitness(solution) +
+                        ", smallest interval: " + geneticScheduler.smallestInterval(solution)
+        );
         System.out.println();
         System.out.println("Sending intervals:");
         Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
