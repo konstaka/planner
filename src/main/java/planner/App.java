@@ -171,21 +171,21 @@ public class App extends Application {
         mainController = mainLoader.getController();
         mainScene = new Scene(mainRoot);
         mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
-        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+        mainController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                mainController.toScene.set("");
+                mainController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
-        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+        mainController.getNewOp().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue()) {
-                mainController.newOp.set(false);
+                mainController.getNewOp().set(false);
                 planSceneController.newOperation();
             }
         });
-        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+        mainController.getLoadOp().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue()) {
-                mainController.loadOp.set(false);
+                mainController.getLoadOp().set(false);
                 planSceneController.loadOperation();
             }
         });
@@ -210,12 +210,11 @@ public class App extends Application {
         FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
         Parent commandRoot = commandLoader.load();
         commandController = commandLoader.getController();
-        assert commandRoot != null;
         commandScene = new Scene(commandRoot);
         commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
         commandController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.getToScene().set("");
+                commandController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });

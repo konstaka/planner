@@ -1,1 +1,3 @@
-# Ops planner by GoNu
+# Operation planner for the browsergame Travian (T4)
+
+

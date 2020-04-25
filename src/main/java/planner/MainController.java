@@ -31,6 +31,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import lombok.Getter;
 import planner.util.Converters;
 
 /**
@@ -39,11 +40,14 @@ import planner.util.Converters;
  */
 public class MainController implements Initializable {
 
-    StringProperty toScene = new SimpleStringProperty("");
+    @Getter
+    private StringProperty toScene = new SimpleStringProperty("");
 
-    BooleanProperty newOp = new SimpleBooleanProperty(false);
+    @Getter
+    private BooleanProperty newOp = new SimpleBooleanProperty(false);
 
-    BooleanProperty loadOp = new SimpleBooleanProperty(false);
+    @Getter
+    private BooleanProperty loadOp = new SimpleBooleanProperty(false);
 
     @FXML
     Label lastUpdated;
