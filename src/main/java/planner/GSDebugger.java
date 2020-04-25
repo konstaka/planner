@@ -69,7 +69,7 @@ public class GSDebugger {
      * @param attackers attacker list
      * @param landingTime default landing time
      */
-    private static void printSolution(GeneticScheduler geneticScheduler, Map<Integer, Long> solution,
+    public static void printSolution(GeneticScheduler geneticScheduler, Map<Integer, Long> solution,
                                       Map<Integer, TargetVillage> targetsMap, List<AttackerVillage> attackers,
                                       LocalDateTime landingTime) {
         System.out.println();

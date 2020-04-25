@@ -77,24 +77,24 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        lastUpdated.setText("No map.sql found");
+        lastUpdated.setText(" No map.sql found");
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                lastUpdated.setText("Last updated at " + rs.getString("last"));
+                lastUpdated.setText(" Last updated at " + rs.getString("last"));
             }
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Could not connect to database 1");
         }
-        noParticipants.setText("No participants in database");
+        noParticipants.setText(" No participants in database");
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                noParticipants.setText("Current participants: " + rs.getInt(1));
+                noParticipants.setText(" Current participants: " + rs.getInt(1));
             }
             conn.close();
         } catch (Exception e) {
@@ -111,7 +111,7 @@ public class MainController implements Initializable {
     public void loadMapsql(ActionEvent actionEvent) {
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Open Resource File");
+        fileChooser.setTitle("Open map.sql File");
         File f = fileChooser.showOpenDialog(stage);
         if (f != null) {
             try {
@@ -134,7 +134,7 @@ public class MainController implements Initializable {
                 conn.prepareStatement("INSERT INTO updated VALUES ("
                         + "'" + updateInfo + "'"
                         + ")").execute();
-                lastUpdated.setText("Last updated at " + updateInfo);
+                lastUpdated.setText(" Last updated at " + updateInfo);
 
                 conn.close();
             } catch (Exception e) {
@@ -166,14 +166,14 @@ public class MainController implements Initializable {
             // Input validation: only last 3 can be empty, off size should include '+'-signs
             // We do not care about the timestamp
             if (off.length < 10) {
-                noParticipants.setText("Error parsing participant data: insufficient length");
+                noParticipants.setText(" Error parsing participant data: insufficient length");
                 return;
             }
             for (int i = 1; i < off.length; i++) {
                 if (off[i] == null
                         || (i < 10 && off[i].equals(""))
                         || (i == 7 && !off[i].contains("+"))) {
-                    noParticipants.setText("Error parsing participant data: syntax");
+                    noParticipants.setText(" Error parsing participant data: syntax");
                     return;
                 }
             }
@@ -216,6 +216,8 @@ public class MainController implements Initializable {
 
     /**
      * Updates the cap/off/etc data from the user input.
+     * Format example:
+     * https://ts4.nordics.travian.com/position_details.php?x=-74&y=99
      * TODO remove old capital if player has more than one after this.
      * TODO clear/remove button(s)
      * @param column column to be updated
@@ -223,13 +225,10 @@ public class MainController implements Initializable {
     private void updateVillageData(String column) {
         String[] villages = this.villageInfo.getText().split("\n");
         for (String v : villages) {
-            String[] c = v.split("\\|");
+            String[] c = v.split("\\?")[1].split("&");
             int[] co = new int[c.length];
             for (int i = 0; i < c.length; i++) {
-                if (c[i].contains("−")) {
-                    co[i] = -1;
-                    c[i] = c[i].substring(c[i].indexOf('−')+1);
-                } else if (c[i].contains("-")) {
+                if (c[i].contains("-")) {
                     co[i] = -1;
                     c[i] = c[i].substring(c[i].indexOf("-")+1);
                 } else {
@@ -253,7 +252,6 @@ public class MainController implements Initializable {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-
         }
     }
 

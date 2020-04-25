@@ -47,7 +47,7 @@ public class Operation {
     @Getter
     Map<Integer, Map<Integer, Attack>> attacks = new HashMap<>();
 
-    @Getter
+    @Getter @Setter
     Map<Integer, LocalDateTime> landTimes = new HashMap<>();
 
     @Getter
