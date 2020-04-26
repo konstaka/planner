@@ -56,7 +56,7 @@ public class Attack {
     @Getter @Setter
     private boolean withHero;
 
-    @Getter
+    @Getter @Setter
     private BooleanProperty updated;
 
 
@@ -75,10 +75,6 @@ public class Attack {
      * @return travel time in seconds
      */
     public long travelSeconds() {
-        // Update unit speed if attacker has updated it
-        this.attacker.getUnitSpeed().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.equals(oldValue)) this.setUnitSpeed(newValue.intValue());
-        });
         // Distance on a torus surface
         double distance = Math.sqrt(
                 Math.pow(

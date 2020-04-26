@@ -47,10 +47,6 @@ public class CommandController implements Initializable {
     @Setter
     private List<AttackerVillage> attackers;
 
-    DateTimeFormatter time = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    DateTimeFormatter day = DateTimeFormatter.ofPattern("dd.MM");
-
 
     /**
      * Called to initialize a controller after its root element has been
@@ -97,9 +93,9 @@ public class CommandController implements Initializable {
         Label sendWindow = new Label("Send window: " + a.getSendMin() + " - " + a.getSendMax());
         Label comment = new Label("Comment: " + a.getComment());
         Label sendInfo = new Label("Sends between " +
-                targets.get(0).getSendingTime().format(time) +
+                targets.get(0).getSendingTime().format(App.TIME_ONLY) +
                 " - " +
-                targets.get(targets.size()-1).getSendingTime().format(time));
+                targets.get(targets.size()-1).getSendingTime().format(App.TIME_ONLY));
         attackerDetails.getChildren().addAll(name, village, sendWindow, comment, sendInfo);
         attackerDetails.getStyleClass().add("attacker-details");
         attackerRow.getChildren().add(attackerDetails);
@@ -140,19 +136,19 @@ public class CommandController implements Initializable {
      */
     private String toAttackRow(Attack attack) {
         String travelTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0))
-                .plusSeconds(attack.travelSeconds()).format(time);
+                .plusSeconds(attack.travelSeconds()).format(App.TIME_ONLY);
         StringBuilder attackRow = new StringBuilder();
         attackRow
                 .append("[b]")
-                .append(attack.getSendingTime().format(time))
+                .append(attack.getSendingTime().format(App.TIME_ONLY))
                 .append(" ")
-                .append(attack.getSendingTime().format(day))
+                .append(attack.getSendingTime().format(App.DAY_AND_MONTH))
                 .append("[/b] // ")
                 .append(travelTime)
                 .append(" // [b]")
-                .append(attack.getLandingTime().format(time))
+                .append(attack.getLandingTime().format(App.TIME_ONLY))
                 .append(" ")
-                .append(attack.getLandingTime().format(day))
+                .append(attack.getLandingTime().format(App.TIME_ONLY))
                 .append("[/b] [x|y]")
                 .append(attack.getTarget().getCoords())
                 .append("[/x|y] ");
