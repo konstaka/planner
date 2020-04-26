@@ -1,7 +1,7 @@
 # Operation planner for Travian (version T4, 2019->)
 This tool makes it easy to plan coordinated attack operations for the browsergame Travian (https://www.travian.com/). 
 By copying and pasting information from the game, the program parses relevant data and creates a simple visual sheet for planning.
-The program computes sending times for all participants and supports hitting time randomisation, sending time conflict scheduling with a genetic algorithm,
+The program computes sending times for all participants and supports hitting time randomisation, sending time conflict scheduling,
 easy hitting order adjusting, cross-faking, and chief/hero faking.
 When you're ready, you can just grab the templated operation commands and send away!
 
@@ -10,16 +10,14 @@ When you're ready, you can just grab the templated operation commands and send a
 ## Installation
 Some releases will include installers for Windows and macOS. 
 If these are not available, you are running some other OS, or you're experiencing trouble with the installers: 
-download the sources, install Java SDK version 14, install Gradle (https://gradle.org/) and run `gradle run` in the root folder.
+download the sources, install Java SDK version 12, install Gradle (https://gradle.org/) and run `gradle run` in the root folder.
 Older Java versions may work, but are not supported.
 
 ### Windows
-Double click the .exe.
-Choose a writeable folder for the installation!
-If installed to the default location, the program likely won't work since it will not be able to create a database file.
+Double click the .exe and follow the instructions.
 
 ### macOS
-Todo
+Open the .dmg and drag the app to your Applications folder.
 
 ## Usage
 
