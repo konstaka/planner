@@ -460,8 +460,8 @@ public class MainController implements Initializable {
     /**
      * Left side navigation; updates the action variable and the labels
      */
-    public void sizeAndSpeed() {
-        action = "sizeAndSpeed";
+    public void serverDetails() {
+        action = "serverDetails";
         okButton.setVisible(false);
         infoLabel1.setText("Not implemented yet.");
         infoLabel2.setText("Defaults: size 200, speed 1");
@@ -475,7 +475,7 @@ public class MainController implements Initializable {
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as CAPITALS.");
         infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
-        infoLabel3.setText("");
+        infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
         pastedText.setVisible(true);
@@ -485,7 +485,7 @@ public class MainController implements Initializable {
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as OFF VILLAGES.");
         infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
-        infoLabel3.setText("");
+        infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
         pastedText.setVisible(true);
@@ -505,7 +505,7 @@ public class MainController implements Initializable {
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as WORLD WONDERS.");
         infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
-        infoLabel3.setText("");
+        infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
         pastedText.setVisible(true);
@@ -514,7 +514,7 @@ public class MainController implements Initializable {
         action = "smallArtes";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here the source code of your treasury page for SMALL (lvl10) ARTEFACTS.");
-        infoLabel2.setText("");
+        infoLabel2.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel3.setText("");
         infoLabel4.setText("");
         pastedText.setText("");
@@ -524,7 +524,7 @@ public class MainController implements Initializable {
         action = "largeArtes";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here the source code of your treasury page for LARGE (lvl20) ARTEFACTS.");
-        infoLabel2.setText("");
+        infoLabel2.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel3.setText("");
         infoLabel4.setText("");
         pastedText.setText("");

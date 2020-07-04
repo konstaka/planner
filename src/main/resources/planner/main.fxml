@@ -20,8 +20,8 @@
                 <VBox       spacing="4" >
                     <Button text="Choose map.sql"
                             onAction="#loadMapsql" />
-                    <Button text="Set size+speed"
-                            onAction="#sizeAndSpeed" />
+                    <Button text="Server details"
+                            onAction="#serverDetails" />
                     <Button text="Input caps"
                             onAction="#capitals" />
                     <Button text="Input offs"
