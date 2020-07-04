@@ -8,10 +8,12 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -135,8 +137,23 @@ public class Attack {
         r4.setMaxHeight(2);
         r4.setMinHeight(2);
         offs.getChildren().add(r4);
-        offs.getChildren().add(attacker.offIconRow());
-        offs.getChildren().add(new Label(attacker.offSizeRounded()));
+        HBox offIconRow = attacker.offIconRow();
+        Tooltip offStringTooltip = new Tooltip(
+                attacker.getOffString() + "\n" +
+                        "Earliest send: " + attacker.getSendMin() + "\n" +
+                        "Latest send: " + attacker.getSendMax()+ "\n" +
+                        "Comment: " + attacker.getComment());
+        offStringTooltip.setShowDelay(Duration.millis(0));
+        offStringTooltip.setHideDelay(Duration.millis(500));
+        offStringTooltip.setShowDuration(Duration.INDEFINITE);
+        offStringTooltip.setMaxWidth(200);
+        offStringTooltip.setWrapText(true);
+        Tooltip.install(offIconRow, offStringTooltip);
+        offs.getChildren().add(offIconRow);
+        Label shortOffSizeString = new Label(attacker.offSizeRounded());
+        shortOffSizeString.setTooltip(offStringTooltip);
+        offs.getChildren().add(shortOffSizeString);
+
         for (Node n : offs.getChildren()) n.getStyleClass().add("attack-box-off-column");
         box.getChildren().add(offs);
 
@@ -201,6 +218,8 @@ public class Attack {
 
     @Override
     public String toString() {
-        return attacker.toString() + " " + this.getSendingTime().format(App.TIME_ONLY);
+        String ret = "";
+        if (this.waves > 0) ret = "- ";
+        return ret + attacker.toString() + " " + this.getSendingTime().format(App.TIME_ONLY);
     }
 }

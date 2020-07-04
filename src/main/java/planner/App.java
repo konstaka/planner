@@ -44,14 +44,18 @@ public class App extends Application {
         this.stage = stage;
 
         this.readyDb();
+        this.downloadMapSql();
 
         this.initMainController();
         this.initPlanController();
         this.initCommandController();
 
-        stage.setTitle("Planner 1.02");
-        stage.setScene(mainScene);
+        stage.setTitle("Planner 1.03-dev");
+        stage.setScene(planScene);
         stage.show();
+
+        planSceneController.loadOperation();
+        planSceneController.updateCycle();
     }
 
 
@@ -169,6 +173,11 @@ public class App extends Application {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private void downloadMapSql() {
+
     }
 
 
