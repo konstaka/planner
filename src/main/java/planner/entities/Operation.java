@@ -333,10 +333,10 @@ public class Operation {
      * @return Operation object or null if there was a problem.
      * TODO move DB operations to the Database class
      */
-    public static Operation load() {
+    public static Operation load() throws SQLException {
         Operation operation = new Operation();
+        Connection conn = DriverManager.getConnection(App.DB);
         try {
-            Connection conn = DriverManager.getConnection(App.DB);
             // Get landing time and flex seconds
             ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
             while (rs1.next()) {
@@ -396,8 +396,9 @@ public class Operation {
             // Compute landing times for all attacks
             operation.computeLandingTimes(false);
             conn.close();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            conn.close();
             return null;
         }
         return operation;

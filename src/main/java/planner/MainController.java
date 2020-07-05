@@ -52,6 +52,15 @@ public class MainController implements Initializable {
     private String action;
 
     @FXML
+    Label serverUrl;
+
+    @FXML
+    Label serverSize;
+
+    @FXML
+    Label serverSpeed;
+
+    @FXML
     Label lastUpdated;
 
     @FXML
@@ -91,29 +100,32 @@ public class MainController implements Initializable {
 
         this.action = "";
 
+        serverUrl.setText("Server: N/A");
+        serverSize.setText("Size: N/A");
+        serverSpeed.setText("Speed: N/A");
         lastUpdated.setText("No map.sql found");
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
-            if (rs != null && !rs.isClosed()) {
-                lastUpdated.setText("Map.sql updated at " + rs.getString("last"));
-            }
-            conn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Could not connect to database 1");
-        }
         noParticipants.setText("No participants in database");
+
         try {
             Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
-            if (rs != null && !rs.isClosed()) {
-                noParticipants.setText("Current participants: " + rs.getInt(1));
+            ResultSet rs1 = conn.prepareStatement("SELECT * FROM updated").executeQuery();
+            if (rs1 != null && !rs1.isClosed()) {
+                lastUpdated.setText("Map.sql updated at " + rs1.getString("last"));
+            }
+            ResultSet rs2 = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
+            if (rs2 != null && !rs2.isClosed()) {
+                noParticipants.setText("Current participants: " + rs2.getInt(1));
+            }
+            ResultSet rs3 = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs3 != null && !rs3.isClosed()) {
+                serverUrl.setText("Server: " + rs3.getString("serverurl"));
+                serverSize.setText("Size: " + rs3.getString("serversize"));
+                serverSpeed.setText("Speed: " + rs3.getString("serverspeed"));
             }
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Could not connect to database 2");
+            System.out.println("Could not connect to database");
         }
     }
 
@@ -149,12 +161,24 @@ public class MainController implements Initializable {
                         + "'" + updateInfo + "'"
                         + ")").execute();
                 lastUpdated.setText("Map.sql updated at " + updateInfo);
-
+                App.displayInfoAlert("Map.sql updated", "Reload operation to see the changes.");
                 conn.close();
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Could not update map.sql");
             }
+        }
+    }
+
+
+    /**
+     * Updates map.sql from server.
+     */
+    public void downloadMapSql() {
+        String updateInfo = App.downloadMapSql();
+        lastUpdated.setText("Map.sql updated at " + updateInfo);
+        if (!updateInfo.equals("[error]")) {
+            App.displayInfoAlert("Map.sql updated", "Reload operation to see the changes.");
         }
     }
 
@@ -418,6 +442,42 @@ public class MainController implements Initializable {
 
 
     /**
+     * Reads server size, speed, and url from the text field.
+     * Saves these to DB.
+     * TODO move DB operations to a new class
+     */
+    private void configureServer() {
+        try {
+            String[] settings = pastedText.getText().split(" ");
+            if (settings.length == 3) {
+                int size = Integer.parseInt(settings[0]);
+                int speed = Integer.parseInt(settings[1]);
+                String url = settings[2].strip();
+                if (size < 0 || speed < 0 || url.isEmpty()) {
+                    throw new Exception("Syntax error");
+                }
+                Connection conn = DriverManager.getConnection(App.DB);
+                conn.prepareStatement("DELETE FROM world_meta").execute();
+                PreparedStatement ins = conn.prepareStatement("INSERT INTO world_meta VALUES(?,?,?)");
+                ins.setInt(1, size);
+                ins.setInt(2, speed);
+                ins.setString(3, url);
+                ins.execute();
+                ResultSet rs = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+                if (rs != null && !rs.isClosed()) {
+                    serverUrl.setText("Server: " + rs.getString("serverurl"));
+                    serverSize.setText("Size: " + rs.getString("serversize"));
+                    serverSpeed.setText("Speed: " + rs.getString("serverspeed"));
+                }
+                conn.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
      * Changes to the planning view.
      */
     public void toPlanning() {
@@ -430,6 +490,9 @@ public class MainController implements Initializable {
      */
     public void doAction(ActionEvent actionEvent) {
         switch (action) {
+            case "serverDetails":
+                configureServer();
+                break;
             case "capitals":
                 markCapitals();
                 break;
@@ -457,18 +520,19 @@ public class MainController implements Initializable {
         }
     }
 
+
     /**
      * Left side navigation; updates the action variable and the labels
      */
     public void serverDetails() {
         action = "serverDetails";
-        okButton.setVisible(false);
-        infoLabel1.setText("Not implemented yet.");
-        infoLabel2.setText("Defaults: size 200, speed 1");
-        infoLabel3.setText("");
+        okButton.setVisible(true);
+        infoLabel1.setText("Input server size, speed, and url, separated by spaces.");
+        infoLabel2.setText("200 for a 401x401 map, 400 for a 801x801 map.");
+        infoLabel3.setText("Example: 200 1 ts4.nordics.travian.com");
         infoLabel4.setText("");
         pastedText.setText("");
-        pastedText.setVisible(false);
+        pastedText.setVisible(true);
     }
     public void capitals() {
         action = "capitals";

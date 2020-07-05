@@ -13,15 +13,20 @@
             <HBox       spacing="24" >
                 <Button     text="Back to planning"
                             onAction="#toPlanning" />
-                <Label  fx:id="lastUpdated" />
-                <Label  fx:id="noParticipants" />
+                <Label      fx:id="serverUrl" />
+                <Label      fx:id="serverSize" />
+                <Label      fx:id="serverSpeed" />
+                <Label      fx:id="lastUpdated" />
+                <Label      fx:id="noParticipants" />
             </HBox>
             <HBox       spacing="24" >
                 <VBox       spacing="4" >
-                    <Button text="Choose map.sql"
-                            onAction="#loadMapsql" />
                     <Button text="Server details"
                             onAction="#serverDetails" />
+                    <Button text="Fetch map.sql"
+                            onAction="#downloadMapSql" />
+                    <Button text="Choose map.sql"
+                            onAction="#loadMapsql" />
                     <Button text="Input caps"
                             onAction="#capitals" />
                     <Button text="Input offs"
