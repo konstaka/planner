@@ -16,6 +16,9 @@ public class TargetVillage extends Village {
     private boolean offvillage = false;
 
     @Getter @Setter
+    private boolean deffvillage = false;
+
+    @Getter @Setter
     private boolean wwvillage = false;
 
     @Getter @Setter
