@@ -94,6 +94,7 @@ public class Operation {
                 TargetVillage t = new TargetVillage(rs.getInt("coordId"));
                 if (rs.getInt("capital") == 1) t.setCapital(true);
                 if (rs.getInt("offvillage") == 1) t.setOffvillage(true);
+                if (rs.getInt("deffvillage") == 1) t.setDeffvillage(true);
                 if (rs.getInt("wwvillage") == 1) t.setWwvillage(true);
                 int small = rs.getInt("small_arte");
                 int large = rs.getInt("large_arte");
@@ -151,33 +152,15 @@ public class Operation {
 
 
     /**
-     * Join participant info with world data.
+     * Load attackers from DB.
      */
     private void assembleAttackers() {
 
-        // Assemble attacking villages
-        // TODO Notify somewhere if the village is not found, this could mean wrong coordinates or deleted account.
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM participants").executeQuery();
             while (rs.next()) {
-                for (Village v : targets) {
-                    if (v.getXCoord() == rs.getInt("xCoord")
-                            && v.getYCoord() == rs.getInt("yCoord")) {
-                        AttackerVillage attacker = new AttackerVillage(v.getCoordId());
-                        attacker.setTs(rs.getInt("ts"));
-                        attacker.setArteSpeed(rs.getDouble("speed"));
-                        attacker.setOffString(rs.getString("offstring"));
-                        attacker.setOffSize(rs.getInt("offsize"));
-                        attacker.setCatas(rs.getInt("catas"));
-                        attacker.setChiefs(rs.getInt("chiefs"));
-                        attacker.setSendMin(rs.getString("sendmin"));
-                        attacker.setSendMax(rs.getString("sendmax"));
-                        attacker.setComment(rs.getString("comment"));
-                        attackers.add(attacker);
-                        break;
-                    }
-                }
+                matchAndAdd(rs);
             }
             conn.close();
         } catch (SQLException e) {
@@ -211,15 +194,31 @@ public class Operation {
 
 
     /**
-     * Creates a new, empty map of attacks for each participant.
+     * Creates a new, empty map of attacks for each participant
+     * OR patches the existing one with new attackers added.
      */
     private void createAttacks() {
+
+        int serverSize = 200;
+        int serverSpeed = 1;
+
+        // Get server size and speed
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs != null && !rs.isClosed()) {
+                serverSize = rs.getInt("serversize");
+                serverSpeed = rs.getInt("serverspeed");
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         // Create the attack matrix
         for (AttackerVillage attacker : attackers) {
             Map<Integer, Attack> attackerAttacks = new HashMap<>();
             for (TargetVillage target : targets) {
-                // TODO make all magic numbers editable.
-                // TODO: server speed, server size
                 // Waves needs to be 0 at this point to mark that the attack is not planned for now
                 Attack attack = new Attack(
                         target,
@@ -230,8 +229,8 @@ public class Operation {
                         attacker.getUnitSpeed().get(),
                         landTimes.get(target.getCoordId()),
                         0,
-                        1,
-                        200,
+                        serverSpeed,
+                        serverSize,
                         false,
                         false,
                         new SimpleBooleanProperty(false));
@@ -241,7 +240,10 @@ public class Operation {
                 });
                 attackerAttacks.put(target.getCoordId(), attack);
             }
-            attacks.put(attacker.getCoordId(), attackerAttacks);
+            // Don't overwrite planned attacks
+            if (!attacks.containsKey(attacker.getCoordId())) {
+                attacks.put(attacker.getCoordId(), attackerAttacks);
+            }
         }
     }
 
@@ -329,14 +331,72 @@ public class Operation {
 
 
     /**
+     * Adds new attackers to this operation.
+     */
+    public void addNewAttackers() {
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT * FROM participants").executeQuery();
+            while (rs.next()) {
+                // Check if this attacker already exists
+                boolean exists = false;
+                for (AttackerVillage av : attackers) {
+                    if (av.getXCoord() == rs.getInt("xCoord")
+                            && av.getYCoord() == rs.getInt("yCoord")) {
+                        exists = true;
+                    }
+                }
+                if (!exists) {
+                    matchAndAdd(rs);
+                }
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        createAttacks();
+    }
+
+
+    /**
+     * Join participant info with world data.
+     * @param rs ResultSet containing participant information
+     * @throws SQLException
+     */
+    private void matchAndAdd(ResultSet rs) throws SQLException {
+
+        // Assemble attacking villages
+        // TODO Notify somewhere if the village is not found,
+        //  this could mean wrong coordinates or deleted account.
+        for (Village v : targets) {
+            if (v.getXCoord() == rs.getInt("xCoord")
+                    && v.getYCoord() == rs.getInt("yCoord")) {
+                AttackerVillage attacker = new AttackerVillage(v.getCoordId());
+                attacker.setTs(rs.getInt("ts"));
+                attacker.setArteSpeed(rs.getDouble("speed"));
+                attacker.setOffString(rs.getString("offstring"));
+                attacker.setOffSize(rs.getInt("offsize"));
+                attacker.setCatas(rs.getInt("catas"));
+                attacker.setChiefs(rs.getInt("chiefs"));
+                attacker.setSendMin(rs.getString("sendmin"));
+                attacker.setSendMax(rs.getString("sendmax"));
+                attacker.setComment(rs.getString("comment"));
+                attackers.add(attacker);
+                break;
+            }
+        }
+    }
+
+
+    /**
      * Loads last saved operation from the database.
      * @return Operation object or null if there was a problem.
      * TODO move DB operations to the Database class
      */
-    public static Operation load() {
+    public static Operation load() throws SQLException {
         Operation operation = new Operation();
+        Connection conn = DriverManager.getConnection(App.DB);
         try {
-            Connection conn = DriverManager.getConnection(App.DB);
             // Get landing time and flex seconds
             ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
             while (rs1.next()) {
@@ -396,8 +456,9 @@ public class Operation {
             // Compute landing times for all attacks
             operation.computeLandingTimes(false);
             conn.close();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            conn.close();
             return null;
         }
         return operation;

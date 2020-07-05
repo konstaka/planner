@@ -443,7 +443,7 @@ public class AttackerVillage extends Village {
         switch (this.getTribe()) {
             case 1:
                 ret[0] = 37; // imperian
-                ret[1] = 73; // ei
+                ret[1] = 74; // ei
                 break;
             case 2:
                 ret[0] = 0; // club

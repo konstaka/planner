@@ -64,6 +64,9 @@ public class PlanSceneController implements Initializable {
     CheckBox offs;
 
     @FXML
+    CheckBox deffs;
+
+    @FXML
     CheckBox small_artes;
 
     @FXML
@@ -175,9 +178,14 @@ public class PlanSceneController implements Initializable {
      * Loads last saved operation from database.
      */
     public void loadOperation() {
-
-        this.operation = Operation.load();
-        initOperation();
+        try {
+            this.operation = Operation.load();
+            if (this.operation != null) {
+                initOperation();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -274,7 +282,7 @@ public class PlanSceneController implements Initializable {
     /**
      * Master update method; first triggers the update in the Operation object and then redraws the screen.
      */
-    private void updateCycle() {
+    public void updateCycle() {
 
         if (operation != null) {
 
@@ -314,6 +322,7 @@ public class PlanSceneController implements Initializable {
                     && (
                     (target.isCapital() && this.caps.isSelected())
                             || (target.isOffvillage() && this.offs.isSelected())
+                            || (target.isDeffvillage() && this.deffs.isSelected())
                             || (target.getArtefact().contains("Small") && this.small_artes.isSelected())
                             || (target.getArtefact().contains("Large") && this.large_artes.isSelected())
                             || (target.getArtefact().contains("Unique") && this.large_artes.isSelected())
@@ -325,12 +334,11 @@ public class PlanSceneController implements Initializable {
             }
         }
 
-        // Checkbox for planned attacks should show all planned attacks for selected alliances
+        // Checkbox for planned attacks should show all planned attacks
         if (planned_attacks.isSelected()) {
             for (AttackerVillage attackerVillage : operation.getAttackers()) {
                 for (Attack attack : attackerVillage.getPlannedAttacks()) {
-                    if (!shownVillages.contains(attack.getTarget())
-                            && enemyAlliances.contains(attack.getTarget().getAllyName())) {
+                    if (!shownVillages.contains(attack.getTarget())) {
                         shownVillages.add(attack.getTarget());
                     }
                 }
