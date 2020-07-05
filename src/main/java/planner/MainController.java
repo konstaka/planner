@@ -49,6 +49,9 @@ public class MainController implements Initializable {
     @Getter
     private BooleanProperty loadOp = new SimpleBooleanProperty(false);
 
+    @Getter
+    private BooleanProperty attackersAdded = new SimpleBooleanProperty(false);
+
     private String action;
 
     @FXML
@@ -184,14 +187,30 @@ public class MainController implements Initializable {
 
 
     /**
+     * Clears the db for a new operation.
+     */
+    public void clearOperation() {
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            conn.prepareStatement("DELETE FROM participants").execute();
+            conn.prepareStatement("DELETE FROM attacker_info").execute();
+            conn.prepareStatement("DELETE FROM target_info").execute();
+            conn.prepareStatement("DELETE FROM attacks").execute();
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
      * Loads the participant data into internal DB.
      * TODO: contains a lot of magic numbers for parsing.
      */
     public void loadParticipants() {
 
-        // New operation without new participants
+        // Do nothing on empty input
         if (pastedText.getText().isEmpty()) {
-            newOp.set(true);
             return;
         }
 
@@ -219,10 +238,6 @@ public class MainController implements Initializable {
         // Add participants to database
         try {
             Connection conn = DriverManager.getConnection(App.DB);
-            conn.prepareStatement("DELETE FROM participants").execute();
-            conn.prepareStatement("DELETE FROM attacker_info").execute();
-            conn.prepareStatement("DELETE FROM target_info").execute();
-            conn.prepareStatement("DELETE FROM attacks").execute();
             for (String o : offs) {
                 String[] off = o.split("\t");
                 String sql = "INSERT INTO participants VALUES (null,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -242,8 +257,11 @@ public class MainController implements Initializable {
                 ps.setString(13, (off.length > 12 ? off[12] : null));
                 ps.execute();
             }
-            noParticipants.setText("Current participants: " + offs.length);
-            newOp.set(true);
+            ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
+            if (rs != null && !rs.isClosed()) {
+                noParticipants.setText("Current participants: " + rs.getInt(1));
+            }
+            conn.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Database error");
@@ -509,10 +527,18 @@ public class MainController implements Initializable {
                 parseLarge();
                 break;
             case "new":
-                loadParticipants();
+                if (!pastedText.getText().isEmpty()) {
+                    clearOperation();
+                    loadParticipants();
+                }
+                newOp.set(true);
                 break;
             case "load":
                 loadOp.set(true);
+                break;
+            case "addParticipants":
+                loadParticipants();
+                attackersAdded.set(true);
                 break;
             default:
                 System.out.println("Action <" + action + "> not implemented yet.");
@@ -613,5 +639,15 @@ public class MainController implements Initializable {
         infoLabel4.setText("");
         pastedText.setText("");
         pastedText.setVisible(false);
+    }
+    public void participants() {
+        action = "addParticipants";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste participant rows from sheets to ADD PARTICIPANTS, exactly in the following format (tsv):");
+        infoLabel2.setText("timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment");
+        infoLabel3.setText("Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
     }
 }
