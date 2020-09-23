@@ -159,8 +159,8 @@
         </HBox>
         <ScrollPane minWidth="1280"
                     maxWidth="1280"
-                    minHeight="500"
-                    maxHeight="500" >
+                    minHeight="485"
+                    maxHeight="485" >
             <VBox   fx:id="targetRows" />
         </ScrollPane>
     </VBox>
