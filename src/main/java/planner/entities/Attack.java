@@ -139,7 +139,8 @@ public class Attack {
         offs.getChildren().add(r4);
         HBox offIconRow = attacker.offIconRow();
         Tooltip offStringTooltip = new Tooltip(
-                attacker.getOffString() + "\n" +
+                attacker.getPlayerName() + " " + attacker.getCoords() + "\n" +
+                        attacker.getOffString() + "\n" +
                         "Earliest send: " + attacker.getSendMin() + "\n" +
                         "Latest send: " + attacker.getSendMax()+ "\n" +
                         "Comment: " + attacker.getComment());
