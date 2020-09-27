@@ -17,6 +17,9 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import javax.swing.*;
+
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
@@ -107,6 +110,9 @@ public class PlanSceneController implements Initializable {
     CheckBox withHero;
 
     @FXML
+    CheckBox specialSpeed;
+
+    @FXML
     TextField unitSpeedField;
 
     int unitSpeed = 3;
@@ -154,6 +160,9 @@ public class PlanSceneController implements Initializable {
                 wavesField.fireEvent(new ActionEvent());
             }
         });
+
+        // Listen to the special speed checkbox
+        specialSpeed.setOnAction((ActionEvent e) -> this.updateCycle());
 
         // Listen to the unit speed field
         unitSpeedField.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -459,28 +468,53 @@ public class PlanSceneController implements Initializable {
         row.getChildren().add(targetLandTime);
 
         // Dropdown for adding an attack
-        // TODO display times for different unit speeds and hero boots without affecting the Attack object
         ComboBox<Attack> attackerPicker = new ComboBox<>();
         for (AttackerVillage attackerVillage : operation.getAttackers()) {
-            Attack pickableAttack = operation
+            // Deep copy
+            Attack attack = operation
                     .getAttacks()
                     .get(attackerVillage.getCoordId())
                     .get(target.getCoordId());
-            //pickableAttack.setWithHero(withHero.isSelected());
-            //pickableAttack.setUnitSpeed(unitSpeed);
+
+            Attack pickableAttack = new Attack(
+                    attack.getTarget(),
+                    attack.getAttacker(),
+                    attack.getWaves(),
+                    attack.isReal(),
+                    attack.isConq(),
+                    attack.getUnitSpeed(),
+                    attack.getLandingTime(),
+                    attack.getLandingTimeShift(),
+                    attack.getServerSpeed(),
+                    attack.getServerSize(),
+                    attack.isConflicting(),
+                    attack.isWithHero(),
+                    new SimpleBooleanProperty(attack.getUpdated().get())
+            );
+            // Set current values
+            pickableAttack.setWithHero(withHero.isSelected());
+            pickableAttack.setUnitSpeed(
+                    specialSpeed.isSelected() ? unitSpeed : attack.getAttacker().getUnitSpeed().get()
+            );
             attackerPicker
                     .getItems()
                     .add(pickableAttack);
         }
         attackerPicker.setPromptText("Add attacker...");
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
-            Attack attack = attackerPicker.getSelectionModel().getSelectedItem();
-            if (attack != null) {
+            Attack pickedAttack = attackerPicker.getSelectionModel().getSelectedItem();
+            if (pickedAttack != null) {
+                Attack attack = operation
+                        .getAttacks()
+                        .get(pickedAttack.getAttacker().getCoordId())
+                        .get(pickedAttack.getTarget().getCoordId());
                 if (!attack.getAttacker().getPlannedAttacks().contains(attack)) {
                     attack.getAttacker().getPlannedAttacks().add(attack);
                 }
                 attack.setWaves(waves);
-                attack.setUnitSpeed(unitSpeed);
+                attack.setUnitSpeed(
+                        specialSpeed.isSelected() ? unitSpeed : attack.getAttacker().getUnitSpeed().get()
+                );
                 attack.setReal(reals.isSelected());
                 attack.setConq(conquer.isSelected());
                 attack.setWithHero(withHero.isSelected());
@@ -681,6 +715,9 @@ public class PlanSceneController implements Initializable {
             unitSpeed = 3;
         }
         unitSpeedField.setText(""+unitSpeed);
+        if (specialSpeed.isSelected()) {
+            updateCycle();
+        }
     }
 
 

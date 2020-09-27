@@ -64,6 +64,7 @@ public class AttackTest {
         this.att.setUnitSpeed(19);
         when(attacker.getArteSpeed()).thenReturn(2.0);
         when(attacker.getTs()).thenReturn(0);
+        when(attacker.getHeroBoots()).thenReturn(0);
         String send = "2020-04-11 11:58:25";
         assertEquals(95L, this.att.travelSeconds());
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
@@ -77,7 +78,8 @@ public class AttackTest {
         when(target.getYCoord()).thenReturn(-1);
         this.att.setUnitSpeed(19);
         when(attacker.getArteSpeed()).thenReturn(2.0);
-        when(attacker.getTs()).thenReturn(0);
+        when(attacker.getTs()).thenReturn(5);
+        when(attacker.getHeroBoots()).thenReturn(25);
         String send = "2020-04-11 11:43:45";
         assertEquals(975L, this.att.travelSeconds());
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
@@ -92,6 +94,7 @@ public class AttackTest {
         this.att.setUnitSpeed(19);
         when(attacker.getArteSpeed()).thenReturn(2.0);
         when(attacker.getTs()).thenReturn(0);
+        when(attacker.getHeroBoots()).thenReturn(0);
         String send = "2020-04-11 07:20:13";
         assertEquals(16787L, this.att.travelSeconds());
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
@@ -106,9 +109,44 @@ public class AttackTest {
         this.att.setUnitSpeed(19);
         when(attacker.getArteSpeed()).thenReturn(2.0);
         when(attacker.getTs()).thenReturn(10);
+        when(attacker.getHeroBoots()).thenReturn(0);
         String send = "2020-04-11 10:05:41";
         assertEquals(6859L, this.att.travelSeconds());
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+    }
+
+    @Test
+    public void longTTheroboots() {
+        when(attacker.getXCoord()).thenReturn(-122);
+        when(attacker.getYCoord()).thenReturn(4);
+        when(target.getXCoord()).thenReturn(44);
+        when(target.getYCoord()).thenReturn(66);
+        this.att.setUnitSpeed(19);
+        when(attacker.getArteSpeed()).thenReturn(1.5);
+        when(attacker.getTs()).thenReturn(0);
+        this.att.setWithHero(true);
+        when(attacker.getHeroBoots()).thenReturn(75);
+        String send = "2020-04-11 08:08:47";
+        assertEquals(13873L, this.att.travelSeconds());
+        assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+        this.att.setWithHero(false);
+    }
+
+    @Test
+    public void longTTtsANDheroboots() {
+        when(attacker.getXCoord()).thenReturn(-122);
+        when(attacker.getYCoord()).thenReturn(4);
+        when(target.getXCoord()).thenReturn(44);
+        when(target.getYCoord()).thenReturn(66);
+        this.att.setUnitSpeed(19);
+        when(attacker.getArteSpeed()).thenReturn(1.5);
+        when(attacker.getTs()).thenReturn(7);
+        this.att.setWithHero(true);
+        when(attacker.getHeroBoots()).thenReturn(75);
+        String send = "2020-04-11 09:32:50";
+        assertEquals(8830L, this.att.travelSeconds());
+        assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+        this.att.setWithHero(false);
     }
 
     @Test
@@ -120,6 +158,7 @@ public class AttackTest {
         this.att.setUnitSpeed(3);
         when(attacker.getArteSpeed()).thenReturn(1.0);
         when(attacker.getTs()).thenReturn(0);
+        when(attacker.getHeroBoots()).thenReturn(0);
         String send = "2020-04-11 10:03:23";
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
     }
@@ -134,6 +173,7 @@ public class AttackTest {
         this.att.setServerSize(400);
         when(attacker.getArteSpeed()).thenReturn(1.0);
         when(attacker.getTs()).thenReturn(3);
+        when(attacker.getHeroBoots()).thenReturn(0);
         String send = "2020-04-10 23:34:17";
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
     }

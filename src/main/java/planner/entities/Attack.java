@@ -92,16 +92,17 @@ public class Attack {
         );
         // Baseline speed
         double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getArteSpeed() / 60 / 60;
-        // Return if no TS
-        if (distance <= 20 || this.attacker.getTs() == 0) return Math.round(distance / squaresPerSecond);
+        // Return if distance is under 20
+        if (distance <= 20) return Math.round(distance / squaresPerSecond);
         // No-TS part of travel
         double travelTime = 20L / squaresPerSecond;
         // Reduce distance
         distance -= 20;
         // Calculate TS factor
         double factor = 1.0 + this.attacker.getTs() * 0.2;
+        // Calculate boots factor
+        if (this.isWithHero()) factor += this.attacker.getHeroBoots() / 100.0;
         // Adjust speed
-        if (this.isWithHero()) squaresPerSecond *= 1 + this.attacker.getHeroBoots() / 100.0;
         squaresPerSecond *= factor;
         // Compute remaining time
         travelTime += distance / squaresPerSecond;
