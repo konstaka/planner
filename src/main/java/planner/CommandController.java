@@ -172,7 +172,7 @@ public class CommandController implements Initializable {
                 .append(a.getArteSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
         commandText.append("[b]Departure[/b] // Travel time // [b]Arrival[/b] " +
-                "Target\n[b]:: Type ::[/b]\n[ Other info ]\nLanding order\n");
+                "Target\n[b]:: Type ::[/b] (speed)\n[ Other info ]\nLanding order\n");
         for (Attack attack : targets) {
             commandText.append(this.toAttackRow(attack));
         }
@@ -211,7 +211,9 @@ public class CommandController implements Initializable {
                 .append(attack.getWaves())
                 .append("x ")
                 .append(Converters.attackType(attack))
-                .append(" ::[/b]");
+                .append(" ::[/b] (")
+                .append(attack.getUnitSpeed())
+                .append("sq/h)");
         attackRow.append("\n");
         // List artefacts and their effects on target
         if (!attack.getTarget().getArtefact().isEmpty()
