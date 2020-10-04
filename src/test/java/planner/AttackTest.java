@@ -177,4 +177,34 @@ public class AttackTest {
         String send = "2020-04-10 23:34:17";
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
     }
+
+    @Test
+    public void roundingErrors1(){
+        when(attacker.getXCoord()).thenReturn(-48);
+        when(attacker.getYCoord()).thenReturn(-4);
+        when(target.getXCoord()).thenReturn(-40);
+        when(target.getYCoord()).thenReturn(-14);
+        this.att.setUnitSpeed(3);
+        this.att.setServerSize(400);
+        when(attacker.getArteSpeed()).thenReturn(1.0);
+        when(attacker.getTs()).thenReturn(0);
+        when(attacker.getHeroBoots()).thenReturn(0);
+        String send = "2020-04-11 07:43:52";
+        assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+    }
+
+    @Test
+    public void roundingErrors2(){
+        when(attacker.getXCoord()).thenReturn(-48);
+        when(attacker.getYCoord()).thenReturn(-4);
+        when(target.getXCoord()).thenReturn(124);
+        when(target.getYCoord()).thenReturn(395);
+        this.att.setUnitSpeed(17);
+        this.att.setServerSize(400);
+        when(attacker.getArteSpeed()).thenReturn(1.0);
+        when(attacker.getTs()).thenReturn(0);
+        when(attacker.getHeroBoots()).thenReturn(0);
+        String send = "2020-04-10 10:26:30";
+        assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+    }
 }
