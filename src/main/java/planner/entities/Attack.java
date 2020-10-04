@@ -40,6 +40,9 @@ public class Attack {
     @Getter @Setter
     private int unitSpeed;
 
+    @Getter @Setter
+    private int ts;
+
     @Setter
     private LocalDateTime landingTime;
 
@@ -101,7 +104,7 @@ public class Attack {
         // Reduce distance
         distance -= 20;
         // Calculate TS factor
-        double factor = 1.0 + this.attacker.getTs() * 0.2;
+        double factor = 1.0 + this.getTs() * 0.2;
         // Calculate boots factor
         if (this.isWithHero()) factor += this.attacker.getHeroBoots() / 100.0;
         // Adjust speed
@@ -144,8 +147,10 @@ public class Attack {
         Tooltip offStringTooltip = new Tooltip(
                 attacker.getPlayerName() + " " + attacker.getCoords() + "\n" +
                         attacker.getOffString() + "\n" +
+                        "This send: " + this.getSendingTime().format(App.TIME_ONLY) + "\n" +
+                        "with TS " + this.getTs() + ", speed " + this.getUnitSpeed() + "\n" +
                         "Earliest send: " + attacker.getSendMin() + "\n" +
-                        "Latest send: " + attacker.getSendMax()+ "\n" +
+                        "Latest send: " + attacker.getSendMax() + "\n" +
                         "Comment: " + attacker.getComment());
         offStringTooltip.setShowDelay(Duration.millis(0));
         offStringTooltip.setHideDelay(Duration.millis(500));

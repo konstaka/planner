@@ -135,8 +135,8 @@
                                 text="with hero"
                                 onAction="#updateCycle" />
                 <Region     VBox.vgrow="ALWAYS"
-                            minHeight="1"
-                            maxHeight="1" />
+                            minHeight="8"
+                            maxHeight="8" />
                 <CheckBox       fx:id="specialSpeed"
                                 text="special speed" />
                 <HBox>
@@ -147,6 +147,20 @@
                     <TextField  fx:id="unitSpeedField"
                                 onAction="#updateUnitSpeed"
                                 text="3"
+                                prefWidth="22"
+                                style="-fx-padding: 0 1 0 1"
+                                alignment="BASELINE_CENTER" />
+                </HBox>
+                <CheckBox       fx:id="specialTs"
+                                text="special TS" />
+                <HBox>
+                    <Label      text="set TS: "
+                                minHeight="30"
+                                maxHeight="30"
+                                alignment="TOP_LEFT" />
+                    <TextField  fx:id="tsField"
+                                onAction="#updateTs"
+                                text="0"
                                 prefWidth="22"
                                 style="-fx-padding: 0 1 0 1"
                                 alignment="BASELINE_CENTER" />

@@ -32,7 +32,7 @@ public class App extends Application {
 
     public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM");
+    public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM.");
 
     public static String DB = "";
 
@@ -110,7 +110,8 @@ public class App extends Application {
                     "    unit_speed int not null,\n" +
                     "    server_speed int not null,\n" +
                     "    server_size int not null,\n" +
-                    "    withHero int not null" +
+                    "    withHero int not null," +
+                    "    ts int not null\n" +
                     ")").execute();
             conn.prepareStatement("create table if not exists operation_meta\n" +
                     "(\n" +

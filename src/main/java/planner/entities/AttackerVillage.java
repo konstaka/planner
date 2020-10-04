@@ -31,7 +31,7 @@ import planner.App;
 public class AttackerVillage extends Village {
 
     @Getter @Setter
-    private int ts;
+    private IntegerProperty ts = new SimpleIntegerProperty(0);
 
     @Getter @Setter
     private double arteSpeed;
@@ -180,7 +180,7 @@ public class AttackerVillage extends Village {
         tsRow.getChildren().add(r5);
         // TS level selector
         TextField tsLvl = new TextField();
-        tsLvl.setText(""+this.getTs());
+        tsLvl.setText(""+this.getTs().get());
         tsLvl.setPrefWidth(22);
         tsLvl.setAlignment(Pos.BASELINE_CENTER);
         tsLvl.setPadding(new Insets(0, 1, 0, 1));
@@ -190,12 +190,12 @@ public class AttackerVillage extends Village {
                 int lvl = Integer.parseInt(tsLvl.getText());
                 if (lvl < 0) {
                     tsLvl.setText("0");
-                    this.setTs(0);
+                    this.getTs().set(0);
                 } else if (lvl > 20) {
                     tsLvl.setText("20");
-                    this.setTs(20);
+                    this.getTs().set(20);
                 }
-                this.setTs(lvl);
+                this.getTs().set(lvl);
                 this.getUpdated().set(true);
             } catch (NumberFormatException ex) {
                 tsLvl.setText("0");
