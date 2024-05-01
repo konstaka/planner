@@ -143,8 +143,9 @@ public class MainController implements Initializable {
         fileChooser.setTitle("Open map.sql File");
         File f = fileChooser.showOpenDialog(stage);
         if (f != null) {
+            BufferedReader br = null;
             try {
-                BufferedReader br = new BufferedReader(new FileReader(f));
+               br = new BufferedReader(new FileReader(f));
 
                 Connection conn = DriverManager.getConnection(App.DB);
                 conn.prepareStatement("DELETE FROM x_world").execute();
@@ -169,6 +170,14 @@ public class MainController implements Initializable {
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Could not update map.sql");
+            } finally {
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -285,7 +294,6 @@ public class MainController implements Initializable {
      * Updates the cap/off/etc data from the user input.
      * Format example:
      * https://ts4.nordics.travian.com/position_details.php?x=-74&y=99
-     * TODO remove old capital if player has more than one after this.
      * TODO clear/remove button(s)
      * @param column column to be updated
      */

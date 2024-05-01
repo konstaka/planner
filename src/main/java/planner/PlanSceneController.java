@@ -242,7 +242,7 @@ public class PlanSceneController implements Initializable {
         }
         // Naïve sort, number of alliances is small
         List<String> sortedEnemies = new ArrayList<>();
-        for (String e : enemies) {
+        for (int i = 0; i < enemies.size(); i++) {
             int maxCount = 0;
             String maxE = null;
             for (String ec : enemyCounts.keySet()) {

@@ -10,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import org.junit.Before;
 import org.junit.Test;
 import planner.entities.Attack;
