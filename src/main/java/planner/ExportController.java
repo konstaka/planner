@@ -1,11 +1,6 @@
 package planner;
 
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,7 +14,6 @@ import java.util.ResourceBundle;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -32,21 +26,13 @@ import planner.entities.Attack;
 import planner.entities.AttackerVillage;
 import planner.util.Converters;
 
-// TODO Make this optionally print out google sheet format for exporting to tabs via copypaste.
-// Line up all attacker details as well, to make it repeatable.
-public class CommandController implements Initializable {
+public class ExportController implements Initializable {
 
     @Getter
     private StringProperty toScene = new SimpleStringProperty("");
 
     @FXML
-    TextArea template1;
-
-    @FXML
-    TextArea template2;
-
-    @FXML
-    VBox commands;
+    TextArea sheetExport;
 
     @Setter
     private List<AttackerVillage> attackers;
@@ -66,23 +52,10 @@ public class CommandController implements Initializable {
      * @param resources The resources used to localize the root object, or {@code null} if
      */
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs = conn.prepareStatement("SELECT * FROM templates").executeQuery();
-            while (rs.next()) {
-                template1.setText(rs.getString("template1"));
-                template2.setText(rs.getString("template2"));
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+    public void initialize(URL location, ResourceBundle resources) {}
 
 
     public void updateCommands() {
-        commands.getChildren().clear();
         attacksPerPlayer.clear();
         for (AttackerVillage av : attackers) {
             if (!attacksPerPlayer.containsKey(av.getPlayerId())) {
@@ -93,7 +66,7 @@ public class CommandController implements Initializable {
             }
         }
         for (AttackerVillage av : attackers) {
-            commands.getChildren().add(this.toAttackerRow(av));
+            sheetExport.setText(sheetExport.getText() + "\n" + this.toAttackerRow(av));
         }
     }
 
@@ -120,7 +93,6 @@ public class CommandController implements Initializable {
 
         TextArea attackerCommand = new TextArea();
         StringBuilder commandText = new StringBuilder();
-        commandText.append(template1.getText());
         commandText.append("\n");
         commandText.append("------------------------------------------");
         commandText.append("\n");
@@ -191,7 +163,6 @@ public class CommandController implements Initializable {
             }
             commandText.append(this.toAttackRow(attack));
         }
-        commandText.append(template2.getText());
         attackerCommand.setText(commandText.toString());
         attackerCommand.getStyleClass().add("attacker-command");
         attackerRow.getChildren().add(attackerCommand);
@@ -284,27 +255,6 @@ public class CommandController implements Initializable {
             attackRow.append("\n");
         }
         return attackRow.toString();
-    }
-
-
-    /**
-     * Saves the command templates to database and updates the commands.
-     * TODO move DB operations to the Database class
-     * @param actionEvent button press
-     */
-    public void saveTemplates(ActionEvent actionEvent) {
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            conn.prepareStatement("DELETE FROM templates").execute();
-            PreparedStatement ps = conn.prepareStatement("INSERT INTO templates VALUES(?, ?)");
-            ps.setString(1, template1.getText());
-            ps.setString(2, template2.getText());
-            ps.execute();
-            conn.close();
-            updateCommands();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
 

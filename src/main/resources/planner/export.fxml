@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="planner.ExportController"
+            prefHeight="800.0" prefWidth="1280.0">
+    <HBox>
+        <Region     maxWidth="4" minWidth="4" />
+        <VBox       spacing="8" >
+            <Button     text="Back to planning"
+                        onAction="#toPlanning" />
+            <HBox       spacing="16" >
+                <TextArea   fx:id="sheetExport" minWidth="1250" maxWidth="1250" minHeight="750" maxHeight="750" wrapText="false" />
+            </HBox>
+        </VBox>
+    </HBox>
+</AnchorPane>

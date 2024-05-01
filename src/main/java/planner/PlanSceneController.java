@@ -792,4 +792,13 @@ public class PlanSceneController implements Initializable {
     public void toCommands(ActionEvent actionEvent) {
         this.toScene.set("commands");
     }
+
+
+    /**
+     * Changes to the operation export view.
+     * @param actionEvent event
+     */
+    public void toExport(ActionEvent actionEvent) {
+        this.toScene.set("export");
+    }
 }
