@@ -7,7 +7,7 @@ public class Converters {
 
     /**
      * Computes the size of this off from submitted tribe and off size string.
-     * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
+     * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul, 6 = Egyptian, 7 = Hun
      * @param offString off size in the format (example) 1000+0+500+100+100
      * @return off consumption (romans computed without drinking trough)
      */
@@ -21,6 +21,8 @@ public class Converters {
             case 1: return ints[0] + 3*ints[1] + 4*ints[2];
             case 2: return ints[0] + ints[1] + 3*ints[2];
             case 3: return ints[0] + 2*ints[1] + 3*ints[2];
+            case 6: return ints[0] + 3*ints[1];
+            case 7: return ints[0] + ints[1] + 2*ints[2] + 2*ints[3] + 3*ints[4];
         }
         return 0;
     }
@@ -36,6 +38,8 @@ public class Converters {
             case "Roman": return 1;
             case "Teuton": return 2;
             case "Gaul": return 3;
+            case "Egyptian": return 6;
+            case "Hun": return 7;
         }
         return -1;
     }
@@ -86,6 +90,8 @@ public class Converters {
             case 1: return "Roman";
             case 2: return "Teuton";
             case 3: return "Gaul";
+            case 6: return "Egyptian";
+            case 7: return "Hun";
         }
         return "Unknown";
     }
