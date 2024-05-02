@@ -10,8 +10,16 @@
     <HBox>
         <Region     maxWidth="4" minWidth="4" />
         <VBox       spacing="8" >
-            <Button     text="Back to planning"
-                        onAction="#toPlanning" />
+            <HBox       spacing="8" >
+                <Button     text="Back to planning"
+                            onAction="#toPlanning" />
+                <Label text="Format:" />
+                <RadioButton    fx:id="sheet"
+                                selected="true"
+                                text="sheet" />
+                <RadioButton    fx:id="igm"
+                                text="igm" />
+            </HBox>
             <HBox       spacing="16" >
                 <VBox       spacing="4" >
                     <TextArea   fx:id="template1" minWidth="550" maxWidth="550" minHeight="300" maxHeight="300" wrapText="true" />

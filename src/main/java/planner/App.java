@@ -47,9 +47,6 @@ public class App extends Application {
     private CommandController commandController;
     private Scene commandScene;
 
-    private ExportController exportController;
-    private Scene exportScene;
-
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -62,7 +59,6 @@ public class App extends Application {
         this.initMainController();
         this.initPlanController();
         this.initCommandController();
-        this.initExportController();
 
         stage.setTitle("Planner 2.0-dev");
         stage.setScene(planScene);
@@ -346,20 +342,6 @@ public class App extends Application {
         });
     }
 
-    private void initExportController() throws IOException {
-        FXMLLoader exportLoader = new FXMLLoader(getClass().getResource("export.fxml"));
-        Parent exportRoot = exportLoader.load();
-        exportController = exportLoader.getController();
-        exportScene = new Scene(exportRoot);
-        exportScene.getStylesheets().add(getClass().getResource("export.css").toExternalForm());
-        exportController.getToScene().addListener((observable, oldValue, newValue) -> {
-            if (!oldValue.equals(newValue)) {
-                commandController.getToScene().set("");
-                this.switchTo(newValue);
-            }
-        });
-    }
-
 
     public static void main(String[] args) {
         launch(args);
@@ -382,15 +364,6 @@ public class App extends Application {
                 commandController.setDefaultHittingTime(planSceneController.getOperation().getDefaultLandingTime());
                 commandController.updateCommands();
                 stage.setScene(commandScene);
-                break;
-            case "export":
-                if (planSceneController.getOperation() == null) {
-                    break;
-                }
-                exportController.setAttackers(planSceneController.getOperation().getAttackers());
-                exportController.setDefaultHittingTime(planSceneController.getOperation().getDefaultLandingTime());
-                exportController.updateCommands();
-                stage.setScene(exportScene);
                 break;
         }
         stage.show();

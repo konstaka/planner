@@ -28,10 +28,6 @@
                             maxWidth="110"
                             onAction="#save" />
                 <Label      fx:id="savedText" />
-                <Button     text="Export"
-                            minWidth="110"
-                            maxWidth="110"
-                            onAction="#toExport" />
             </VBox>
             <Region         minWidth="8"
                             maxWidth="8" />
