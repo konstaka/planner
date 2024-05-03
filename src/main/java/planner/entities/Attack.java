@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -118,14 +119,14 @@ public class Attack {
     /**
      * Creates a visual representation of the attack for planning.
      */
-    public HBox toDisplayBox() {
+    public Pane toDisplayBox() {
         HBox box = new HBox();
 
         if (this.isWithHero()) {
             VBox heroBox = new VBox();
             Region r0 = new Region();
-            r0.setMinHeight(2);
-            r0.setMaxHeight(2);
+            r0.setMinHeight(4);
+            r0.setMaxHeight(4);
             heroBox.getChildren().add(r0);
             ImageView heroImg = new ImageView(
                     String.valueOf(getClass().getResource("images/specials.gif"))
@@ -140,8 +141,8 @@ public class Attack {
 
         VBox offs = new VBox();
         Region r4 = new Region();
-        r4.setMaxHeight(2);
-        r4.setMinHeight(2);
+        r4.setMaxHeight(4);
+        r4.setMinHeight(4);
         offs.getChildren().add(r4);
         HBox offIconRow = attacker.offIconRow();
         Tooltip offStringTooltip = new Tooltip(
@@ -169,8 +170,8 @@ public class Attack {
         if (this.isConq()) {
             VBox chiefs = new VBox();
             Region r5 = new Region();
-            r5.setMaxHeight(2);
-            r5.setMinHeight(2);
+            r5.setMaxHeight(4);
+            r5.setMinHeight(4);
             chiefs.getChildren().add(r5);
             chiefs.getChildren().add(attacker.getChiefImg());
             Label chiefAmt = new Label(""+attacker.getChiefs());
@@ -181,12 +182,16 @@ public class Attack {
         }
 
         VBox wavesBox = new VBox();
+        Label attackerNameLabel = new Label(this.attacker.getPlayerName());
+        attackerNameLabel.getStyleClass().add("attack-attacker-name");
+        wavesBox.getChildren().add(attackerNameLabel);
         String wavesString = this.waves+"x ";
         if (this.getLandingTimeShift() != 0) {
             if (this.getLandingTimeShift() > 0) wavesString += "+";
             wavesString += this.getLandingTimeShift() + "s";
         }
         Label wavesLabel = new Label(wavesString);
+        wavesLabel.getStyleClass().add("attack-box-waves-label");
         if (this.isReal()) wavesLabel.getStyleClass().add("real-target");
         wavesBox.getChildren().add(wavesLabel);
         Button minus = new Button("-");
@@ -221,7 +226,14 @@ public class Attack {
         });
         box.getChildren().add(del);
 
-        return box;
+        VBox boxWithPadding = new VBox();
+        Region r6 = new Region();
+        r6.setMaxHeight(1);
+        r6.setMinHeight(1);
+        boxWithPadding.getChildren().add(r6);
+        boxWithPadding.getChildren().add(box);
+
+        return boxWithPadding;
     }
 
 
