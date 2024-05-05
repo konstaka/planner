@@ -179,7 +179,7 @@ public class CommandController implements Initializable {
             commandText.append(x + "\t");
             commandText.append(y + "\t");
             commandText.append(attack.getLandingTime().format(App.SHEET_TIME) + "\t");
-            commandText.append(target.getArtefact() + "\t");
+            commandText.append(target.getArteEffects() + "\t");
             commandText.append("\t");
             commandText.append("\t");
             if (attack.isReal() && !attack.isWithHero()) {

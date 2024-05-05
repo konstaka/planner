@@ -293,7 +293,7 @@ public class MainController implements Initializable {
     /**
      * Updates the cap/off/etc data from the user input.
      * Format example:
-     * https://ts4.nordics.travian.com/position_details.php?x=-74&y=99
+     * https://ts4.nordics.travian.com/karte.php?x=-74&y=99
      * TODO clear/remove button(s)
      * @param column column to be updated
      */
@@ -590,7 +590,7 @@ public class MainController implements Initializable {
         action = "capitals";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as CAPITALS.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/karte.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
@@ -600,7 +600,7 @@ public class MainController implements Initializable {
         action = "offs";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as OFF VILLAGES.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/karte.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
@@ -610,7 +610,7 @@ public class MainController implements Initializable {
         action = "deffs";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as DEF VILLAGES.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/karte.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
@@ -620,7 +620,7 @@ public class MainController implements Initializable {
         action = "wws";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as WORLD WONDERS.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/karte.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
