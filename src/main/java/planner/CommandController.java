@@ -35,7 +35,6 @@ import planner.entities.AttackerVillage;
 import planner.entities.TargetVillage;
 import planner.util.Converters;
 
-// TODO Make this optionally print out google sheet format for exporting to tabs via copypaste.
 // Line up all attacker details as well, to make it repeatable.
 public class CommandController implements Initializable {
 
@@ -65,6 +64,10 @@ public class CommandController implements Initializable {
 
     private Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
 
+    private String serverUrl;
+
+    private int mapSize;
+
 
     /**
      * Called to initialize a controller after its root element has been
@@ -76,6 +79,9 @@ public class CommandController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Get server url and size from App
+        this.serverUrl = App.getServerBaseUrl();
+        this.mapSize = 2 * App.getServerSize() + 1;
         // Group fake/real radio buttons
         ToggleGroup commandFormat = new ToggleGroup();
         sheet.setToggleGroup(commandFormat);
@@ -117,9 +123,8 @@ public class CommandController implements Initializable {
     }
 
 
-    // TODO: get server size from settings
     private String getSheetDistanceFormulaForRow(int rowId) {
-        return "=(IF((ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5))<=20;ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24);20/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24)+(ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5)-20)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24*(((IF(O" + rowId + "<>\"\";O" + rowId + ";M$5)/5+1))))))";
+        return "=(IF((ROUND(SQRT(min((abs($C" + rowId + "-M$4));" + this.mapSize + "-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));" + this.mapSize + "-abs($D" + rowId + "-N$4))^2);5))<=20;ROUND(SQRT(min((abs($C" + rowId + "-M$4));" + this.mapSize + "-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));" + this.mapSize + "-abs($D" + rowId + "-N$4))^2);5)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24);20/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24)+(ROUND(SQRT(min((abs($C" + rowId + "-M$4));" + this.mapSize + "-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));" + this.mapSize + "-abs($D" + rowId + "-N$4))^2);5)-20)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24*(((IF(O" + rowId + "<>\"\";O" + rowId + ";M$5)/5+1))))))";
     }
 
 
@@ -168,8 +173,7 @@ public class CommandController implements Initializable {
             int x = target.getXCoord();
             int y = target.getYCoord();
             String villageName = target.getVillageName();
-            // TODO: get url from server settings
-            commandText.append("=HYPERLINK(\"https://ts9.x1.international.travian.com/karte.php?x=" + x + "&y=" + y + "\"; \"" + villageName + "\")\t");
+            commandText.append("=HYPERLINK(\"" + this.serverUrl + "karte.php?x=" + x + "&y=" + y + "\"; \"" + villageName + "\")\t");
             String arteData = "";
             if (target.isCapital()) arteData += "Cap";
             if (target.isOffvillage()) arteData += "Off ";

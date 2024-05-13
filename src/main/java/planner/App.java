@@ -240,6 +240,44 @@ public class App extends Application {
     }
 
 
+    public static String getServerBaseUrl() {
+        String url = "localhost";
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs != null && !rs.isClosed()) {
+                url = rs.getString("serverurl");
+                if (!url.endsWith("/")) url += "/";
+                url = "https://" + url;
+            }
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return url;
+    }
+
+
+    /**
+     * Server size setting
+     * @return e.g. 200 for 401x401 map, 400 for 801x801 map
+     */
+    public static int getServerSize() {
+        int serverSize = 200;
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs != null && !rs.isClosed()) {
+                serverSize = rs.getInt("serversize");
+            }
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return serverSize;
+    }
+
+
     public static void displayInfoAlert(String text1, String text2) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Information");
