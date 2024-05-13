@@ -13,7 +13,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
@@ -56,7 +55,6 @@ public class App extends Application {
         this.stage = stage;
 
         this.readyDb();
-        this.checkMapSql();
 
         this.initMainController();
         this.initPlanController();
@@ -196,36 +194,6 @@ public class App extends Application {
                     ")").execute();
             conn.close();
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    /**
-     * Checks map.sql age and downloads a new one if necessary.
-     */
-    private void checkMapSql() {
-        try {
-            // Conditions: server details set, map.sql last updated at least one day ago
-            LocalDateTime updatedAt = LocalDateTime.now().minusDays(1);
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs1 = conn.prepareStatement("SELECT * FROM updated").executeQuery();
-            if (rs1 != null && !rs1.isClosed()) {
-                updatedAt = LocalDateTime.parse(
-                        rs1.getString("last"),
-                        App.FULL_DATE_TIME
-                );
-            }
-            Duration sinceUpdated = Duration.between(updatedAt, LocalDateTime.now());
-            Duration threshold = Duration.ofHours(24);
-            conn.close();
-            if (sinceUpdated.compareTo(threshold) > 0) {
-                String updateInfo = downloadMapSql();
-                if (!updateInfo.equals("[error]")) {
-                    App.displayInfoAlert("Map.sql updated", "Reload operation to see the changes.");
-                }
-            }
-        } catch (Exception e) {
             e.printStackTrace();
         }
     }
