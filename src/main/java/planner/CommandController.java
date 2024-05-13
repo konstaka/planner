@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -32,6 +33,7 @@ import lombok.Getter;
 import lombok.Setter;
 import planner.entities.Attack;
 import planner.entities.AttackerVillage;
+import planner.entities.Operation;
 import planner.entities.TargetVillage;
 import planner.util.Converters;
 
@@ -67,6 +69,9 @@ public class CommandController implements Initializable {
     private String serverUrl;
 
     private int mapSize;
+    
+    @Setter
+    private Operation operation;
 
 
     /**
@@ -104,19 +109,22 @@ public class CommandController implements Initializable {
 
     public void updateCommands() {
         commands.getChildren().clear();
-        attacksPerPlayer.clear();
-        for (AttackerVillage av : attackers) {
-            if (!attacksPerPlayer.containsKey(av.getPlayerId())) {
-                attacksPerPlayer.put(av.getPlayerId(), new ArrayList<>());
+        if (this.sheet.isSelected()) {
+            commands.getChildren().add(new Label("Attackers, paste to cell A1"));
+            commands.getChildren().add(this.toSheetAttackerDetails());
+            commands.getChildren().add(new Label("Operation plan, paste to cell A7"));
+            //commands.getChildren().add(this.toSheetMasterTab());
+        } else {
+            attacksPerPlayer.clear();
+            for (AttackerVillage av : attackers) {
+                if (!attacksPerPlayer.containsKey(av.getPlayerId())) {
+                    attacksPerPlayer.put(av.getPlayerId(), new ArrayList<>());
+                }
+                for (Attack a : av.getPlannedAttacks()) {
+                    attacksPerPlayer.get(a.getAttacker().getPlayerId()).add(a);
+                }
             }
-            for (Attack a : av.getPlannedAttacks()) {
-                attacksPerPlayer.get(a.getAttacker().getPlayerId()).add(a);
-            }
-        }
-        for (AttackerVillage av : attackers) {
-            if (this.sheet.isSelected()) {
-                commands.getChildren().add(this.toSheetPasteableAttackerRow(av));
-            } else {
+            for (AttackerVillage av : attackers) {
                 commands.getChildren().add(this.toAttackerRow(av));
             }
         }
@@ -130,6 +138,110 @@ public class CommandController implements Initializable {
 
     private String getSheetSendingTimeFormulaForRow(int rowId) {
         return "=$E" + rowId + "-VALUE(M" + rowId + ")+VALUE(G" + rowId + ")";
+    }
+
+
+    private static String addTabs(int n) {
+        StringBuilder tabs = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            tabs.append("\t");
+        }
+        return tabs.toString();
+    }
+
+
+    private TextArea toSheetAttackerDetails() {
+        StringBuilder attackerDetailsText = new StringBuilder();
+
+        // Start attacker details from column M
+
+        // 1st row: Player & village name
+        attackerDetailsText.append(addTabs(12));
+        for (AttackerVillage a : this.operation.getAttackers()) {
+            attackerDetailsText.append(a.getPlayerName());
+            attackerDetailsText.append(" ");
+            attackerDetailsText.append(a.getVillageName());
+            attackerDetailsText.append(addTabs(4));
+        }
+        attackerDetailsText.append("\n");
+        // 2nd row: Off size
+        attackerDetailsText.append(addTabs(12));
+        for (AttackerVillage a : this.operation.getAttackers()) {
+            attackerDetailsText.append(a.getOffString());
+            attackerDetailsText.append(addTabs(4));
+        }
+        attackerDetailsText.append("\n");
+        // 3rd row: Send times
+        attackerDetailsText.append(addTabs(12));
+        for (AttackerVillage a : this.operation.getAttackers()) {
+            attackerDetailsText.append(a.getSendMin());
+            attackerDetailsText.append(addTabs(1));
+            attackerDetailsText.append(a.getSendMax());
+            attackerDetailsText.append(addTabs(3));
+        }
+        attackerDetailsText.append("\n");
+        // 4th row: Coords
+        attackerDetailsText.append(addTabs(12));
+        for (AttackerVillage a : this.operation.getAttackers()) {
+            attackerDetailsText.append(a.getXCoord());
+            attackerDetailsText.append(addTabs(1));
+            attackerDetailsText.append(a.getYCoord());
+            attackerDetailsText.append(addTabs(3));
+        }
+        attackerDetailsText.append("\n");
+        // 5th row: TS and speed
+        attackerDetailsText.append(addTabs(12));
+        for (AttackerVillage a : this.operation.getAttackers()) {
+            attackerDetailsText.append(a.getTs().getValue());
+            attackerDetailsText.append(addTabs(1));
+            double attackerSpeed = a.getUnitSpeed().getValue() * a.getArteSpeed();
+            attackerDetailsText.append(Math.round(Math.floor(attackerSpeed)));
+            attackerDetailsText.append(",");
+            attackerDetailsText.append(Math.round((attackerSpeed - Math.floor(attackerSpeed)) * 10));
+            attackerDetailsText.append(addTabs(1));
+            attackerDetailsText.append("TS");
+            attackerDetailsText.append(addTabs(1));
+            attackerDetailsText.append("SPEED");
+            attackerDetailsText.append(addTabs(1));
+        }
+        attackerDetailsText.append("\n");
+        // 6th row: Headers
+        attackerDetailsText.append("Target");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Type");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("X");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Y");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Time");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Arty");
+        attackerDetailsText.append(addTabs(3));
+        attackerDetailsText.append("OC Notes");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Info");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Hammers");
+        attackerDetailsText.append(addTabs(1));
+        attackerDetailsText.append("Waves");
+        attackerDetailsText.append(addTabs(1));
+        for (int i = 0; i < this.operation.getAttackers().size(); i++) {
+            attackerDetailsText.append("Distance");
+            attackerDetailsText.append(addTabs(1));
+            attackerDetailsText.append("Send time");
+            attackerDetailsText.append(addTabs(3));
+        }
+
+        TextArea attackerDetails = new TextArea();
+        attackerDetails.setText(attackerDetailsText.toString());
+        return attackerDetails;
+    }
+
+
+    private TextArea toSheetMasterTab() {
+        // TODO
+        return null;
     }
 
 
