@@ -49,23 +49,31 @@ public class MainController implements Initializable {
     @Getter
     private BooleanProperty loadOp = new SimpleBooleanProperty(false);
 
-    @FXML
-    Label lastUpdated;
+    private String action;
 
     @FXML
-    TextArea participants;
+    Label lastUpdated;
 
     @FXML
     Label noParticipants;
 
     @FXML
-    TextArea villageInfo;
+    Label infoLabel1;
 
     @FXML
-    TextArea artefactInfo;
+    Label infoLabel2;
 
     @FXML
-    Button planButton;
+    Label infoLabel3;
+
+    @FXML
+    Label infoLabel4;
+
+    @FXML
+    TextArea pastedText;
+
+    @FXML
+    Button okButton;
 
     Stage stage;
 
@@ -81,24 +89,26 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-        lastUpdated.setText(" No map.sql found");
+        this.action = "";
+
+        lastUpdated.setText("No map.sql found");
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                lastUpdated.setText(" Last updated at " + rs.getString("last"));
+                lastUpdated.setText("Map.sql updated at " + rs.getString("last"));
             }
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Could not connect to database 1");
         }
-        noParticipants.setText(" No participants in database");
+        noParticipants.setText("No participants in database");
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                noParticipants.setText(" Current participants: " + rs.getInt(1));
+                noParticipants.setText("Current participants: " + rs.getInt(1));
             }
             conn.close();
         } catch (Exception e) {
@@ -138,7 +148,7 @@ public class MainController implements Initializable {
                 conn.prepareStatement("INSERT INTO updated VALUES ("
                         + "'" + updateInfo + "'"
                         + ")").execute();
-                lastUpdated.setText(" Last updated at " + updateInfo);
+                lastUpdated.setText("Map.sql updated at " + updateInfo);
 
                 conn.close();
             } catch (Exception e) {
@@ -152,17 +162,16 @@ public class MainController implements Initializable {
     /**
      * Loads the participant data into internal DB.
      * TODO: contains a lot of magic numbers for parsing.
-     * @param actionEvent event
      */
-    public void loadParticipants(ActionEvent actionEvent) {
+    public void loadParticipants() {
 
         // New operation without new participants
-        if (participants.getText().isEmpty()) {
+        if (pastedText.getText().isEmpty()) {
             newOp.set(true);
             return;
         }
 
-        String[] offs = participants.getText().split("\n");
+        String[] offs = pastedText.getText().split("\n");
 
         for (String o : offs) {
 
@@ -170,14 +179,14 @@ public class MainController implements Initializable {
             // Input validation: only last 3 can be empty, off size should include '+'-signs
             // We do not care about the timestamp
             if (off.length < 10) {
-                noParticipants.setText(" Error parsing participant data: insufficient length");
+                noParticipants.setText("Error parsing participant data: insufficient length");
                 return;
             }
             for (int i = 1; i < off.length; i++) {
                 if (off[i] == null
                         || (i < 10 && off[i].equals(""))
                         || (i == 7 && !off[i].contains("+"))) {
-                    noParticipants.setText(" Error parsing participant data: syntax");
+                    noParticipants.setText("Error parsing participant data: syntax");
                     return;
                 }
             }
@@ -209,7 +218,7 @@ public class MainController implements Initializable {
                 ps.setString(13, (off.length > 12 ? off[12] : null));
                 ps.execute();
             }
-            noParticipants.setText(" Current participants: " + offs.length);
+            noParticipants.setText("Current participants: " + offs.length);
             newOp.set(true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -227,7 +236,7 @@ public class MainController implements Initializable {
      * @param column column to be updated
      */
     private void updateVillageData(String column) {
-        String[] villages = this.villageInfo.getText().split("\n");
+        String[] villages = this.pastedText.getText().split("\n");
         for (String v : villages) {
             String[] c = v.split("\\?")[1].split("&");
             int[] co = new int[c.length];
@@ -260,17 +269,17 @@ public class MainController implements Initializable {
     }
 
 
-    public void markCapitals(ActionEvent actionEvent) {
+    public void markCapitals() {
         this.updateVillageData("capital");
     }
 
 
-    public void markOffs(ActionEvent actionEvent) {
+    public void markOffs() {
         this.updateVillageData("offvillage");
     }
 
 
-    public void markWWs(ActionEvent actionEvent) { this.updateVillageData("wwvillage");}
+    public void markWWs() { this.updateVillageData("wwvillage");}
 
 
     /**
@@ -305,7 +314,7 @@ public class MainController implements Initializable {
     private void parseArtefacts(String size) {
         Map<Integer, Integer> artefacts = new HashMap<>();
         Set<Integer> uniques = new HashSet<>();
-        String html = this.artefactInfo.getText();
+        String html = this.pastedText.getText();
         int trimmer = html.indexOf("show_artefacts");
         html = html.substring(trimmer);
         // Read bp's if they are in the game
@@ -398,12 +407,12 @@ public class MainController implements Initializable {
     }
 
 
-    public void parseSmall(ActionEvent actionEvent) {
+    public void parseSmall() {
         this.parseArtefacts("small_arte");
     }
 
 
-    public void parseLarge(ActionEvent actionEvent) {
+    public void parseLarge() {
         this.parseArtefacts("large_arte");
     }
 
@@ -416,7 +425,129 @@ public class MainController implements Initializable {
     }
 
 
-    public void load(ActionEvent actionEvent) {
-        loadOp.set(true);
+    /**
+     * Action confirmation: commit the chosen action based on the input in pastedText.
+     */
+    public void doAction(ActionEvent actionEvent) {
+        switch (action) {
+            case "capitals":
+                markCapitals();
+                break;
+            case "offs":
+                markOffs();
+                break;
+            case "wws":
+                markWWs();
+                break;
+            case "smallArtes":
+                parseSmall();
+                break;
+            case "largeArtes":
+                parseLarge();
+                break;
+            case "new":
+                loadParticipants();
+                break;
+            case "load":
+                loadOp.set(true);
+                break;
+            default:
+                System.out.println("Action <" + action + "> not implemented yet.");
+                break;
+        }
+    }
+
+    /**
+     * Left side navigation; updates the action variable and the labels
+     */
+    public void sizeAndSpeed() {
+        action = "sizeAndSpeed";
+        okButton.setVisible(false);
+        infoLabel1.setText("Not implemented yet.");
+        infoLabel2.setText("Defaults: size 200, speed 1");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(false);
+    }
+    public void capitals() {
+        action = "capitals";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here links to villages you want to mark as CAPITALS.");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void offs() {
+        action = "offs";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here links to villages you want to mark as OFF VILLAGES.");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void deffs() {
+        action = "deffs";
+        okButton.setVisible(false);
+        infoLabel1.setText("Not implemented yet.");
+        infoLabel2.setText("");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(false);
+    }
+    public void wws() {
+        action = "wws";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here links to villages you want to mark as WORLD WONDERS.");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void smallArtes() {
+        action = "smallArtes";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here the source code of your treasury page for SMALL (lvl10) ARTEFACTS.");
+        infoLabel2.setText("");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void largeArtes() {
+        action = "largeArtes";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here the source code of your treasury page for LARGE (lvl20) ARTEFACTS.");
+        infoLabel2.setText("");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void newOperation() {
+        action = "new";
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste participant rows from sheets for a NEW OPERATION, exactly in the following format (tsv):");
+        infoLabel2.setText("timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment");
+        infoLabel3.setText("Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			");
+        infoLabel4.setText("WARNING! This will remove all existing participants and their planned attacks. Leave the field clear to use existing participants.");
+        pastedText.setText("");
+        pastedText.setVisible(true);
+    }
+    public void loadOperation() {
+        action = "load";
+        okButton.setVisible(true);
+        infoLabel1.setText("LOAD the last saved OPERATION from database");
+        infoLabel2.setText("");
+        infoLabel3.setText("");
+        infoLabel4.setText("");
+        pastedText.setText("");
+        pastedText.setVisible(false);
     }
 }

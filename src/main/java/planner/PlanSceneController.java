@@ -274,7 +274,7 @@ public class PlanSceneController implements Initializable {
     /**
      * Master update method; first triggers the update in the Operation object and then redraws the screen.
      */
-    private void updateCycle() {
+    public void updateCycle() {
 
         if (operation != null) {
 
@@ -325,12 +325,11 @@ public class PlanSceneController implements Initializable {
             }
         }
 
-        // Checkbox for planned attacks should show all planned attacks for selected alliances
+        // Checkbox for planned attacks should show all planned attacks
         if (planned_attacks.isSelected()) {
             for (AttackerVillage attackerVillage : operation.getAttackers()) {
                 for (Attack attack : attackerVillage.getPlannedAttacks()) {
-                    if (!shownVillages.contains(attack.getTarget())
-                            && enemyAlliances.contains(attack.getTarget().getAllyName())) {
+                    if (!shownVillages.contains(attack.getTarget())) {
                         shownVillages.add(attack.getTarget());
                     }
                 }
