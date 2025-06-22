@@ -62,6 +62,10 @@ public class Operation {
     @Getter
     Set<Integer> architectAccounts = new HashSet<>();
 
+    @Getter
+    @Setter
+    Set<String> enemyAlliances = new HashSet<>();
+
 
     /**
      * Creates a new, empty operation. Gets world data and participants from database.

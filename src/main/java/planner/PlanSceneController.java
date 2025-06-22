@@ -340,6 +340,9 @@ public class PlanSceneController implements Initializable {
             }
         }
 
+        // Save the alliance selection
+        this.operation.setEnemyAlliances(enemyAlliances);
+
         // For those alliances, check types of village to show
         List<TargetVillage> shownVillages = new ArrayList<>();
         for (TargetVillage target : operation.getTargets()) {
