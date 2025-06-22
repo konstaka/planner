@@ -103,6 +103,12 @@ public class AttackerVillage extends Village {
                 case 3:
                     tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
                     break;
+                case 6:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/egyptians.png")));
+                    break;
+                case 7:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/huns.png")));
+                    break;
             }
         }
         assert tribeTroops != null;
@@ -454,6 +460,14 @@ public class AttackerVillage extends Village {
                 ret[0] = 19; // sword
                 ret[1] = 95; // haed
                 break;
+            case 6:
+                ret[0] = 37; // khopesh
+                ret[1] = 95; // rc
+                break;
+            case 7:
+                ret[0] = 0; // merc
+                ret[1] = 55; // steppe
+
         }
         String[] offs = this.offString.split("\\+");
         int[] offCounts = new int[offs.length];
@@ -474,6 +488,18 @@ public class AttackerVillage extends Village {
             case 3:
                 if (offCounts[1] > offCounts[2]) {
                     ret[1] = 55; // tt
+                }
+                break;
+            // case 6: Only one type of egy hammer supported (khopesh+rc)
+            case 7:
+                if (offCounts[1] > offCounts[0]) {
+                    ret[0] = 37; // bow
+                }
+                if (offCounts[3] > offCounts[2]) {
+                    ret[1] = 74; // marks
+                }
+                if (offCounts[4] > offCounts[3]) {
+                    ret[1] = 95; // mara
                 }
                 break;
         }
