@@ -23,13 +23,16 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.Setter;
 import planner.entities.Attack;
 import planner.entities.AttackerVillage;
+import planner.entities.TargetVillage;
 import planner.util.Converters;
 
 // TODO Make this optionally print out google sheet format for exporting to tabs via copypaste.
@@ -38,6 +41,12 @@ public class CommandController implements Initializable {
 
     @Getter
     private StringProperty toScene = new SimpleStringProperty("");
+
+    @FXML
+    RadioButton sheet;
+
+    @FXML
+    RadioButton igm;
 
     @FXML
     TextArea template1;
@@ -67,6 +76,12 @@ public class CommandController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Group fake/real radio buttons
+        ToggleGroup commandFormat = new ToggleGroup();
+        sheet.setToggleGroup(commandFormat);
+        igm.setToggleGroup(commandFormat);
+        sheet.setOnAction((ActionEvent e) -> this.updateCommands());
+        igm.setOnAction((ActionEvent e) -> this.updateCommands());
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM templates").executeQuery();
@@ -93,8 +108,122 @@ public class CommandController implements Initializable {
             }
         }
         for (AttackerVillage av : attackers) {
-            commands.getChildren().add(this.toAttackerRow(av));
+            if (this.sheet.isSelected()) {
+                commands.getChildren().add(this.toSheetPasteableAttackerRow(av));
+            } else {
+                commands.getChildren().add(this.toAttackerRow(av));
+            }
         }
+    }
+
+
+    private HBox toSheetPasteableAttackerRow(AttackerVillage a) {
+        HBox attackerRow = new HBox();
+        List<Attack> targets = a.getPlannedAttacks();
+        if (targets.isEmpty()) return attackerRow;
+        attackerRow.setSpacing(8);
+        targets.sort(Comparator.comparing(Attack::getSendingTime));
+
+        VBox attackerDetails = new VBox();
+        Label name = new Label(a.getPlayerName());
+        Label village = new Label(a.getVillageName() + " (" + a.getCoords() + ")");
+        Label sendWindow = new Label("Send window: " + a.getSendMin() + " - " + a.getSendMax());
+        Label comment = new Label("Comment: " + a.getComment());
+        Label sendInfo = new Label("Sends between " +
+                targets.get(0).getSendingTime().format(App.TIME_ONLY) +
+                " - " +
+                targets.get(targets.size()-1).getSendingTime().format(App.TIME_ONLY));
+        attackerDetails.getChildren().addAll(name, village, sendWindow, comment, sendInfo);
+        attackerDetails.getStyleClass().add("attacker-details");
+        attackerRow.getChildren().add(attackerDetails);
+
+        TextArea attackerCommand = new TextArea();
+        StringBuilder commandText = new StringBuilder();
+
+        commandText.append("\t\t\t\t\t\t\t\t\t\t\t\t" + a.getPlayerName() + " " + a.getVillageName() + "\n");
+        commandText.append("\t\t\t\t\t\t\t\t\t\t\t\t" + a.getOffString());
+        if (a.getChiefs() > 0) {
+            commandText.append(" (" + a.getChiefs() + "chief)");
+        }
+        commandText.append("\n");
+        commandText.append("\t\t\t\t\t\t\t\t\t\t\t\t" + a.getSendMin() + "\t" + a.getSendMax() + "\n");
+        commandText.append("\t\t\t\t\t\t\t\t\t\t\t\t" + a.getXCoord() + "\t" + a.getYCoord() + "\n");
+        commandText.append("\t\t\t\t\t\t\t\t\t\t\t\t" + a.getTs().getValue() + "\t" + Math.round(a.getUnitSpeed().getValue() * a.getArteSpeed()) + "\n");
+        commandText.append("Target\tType\tX\tY\tTime\tArty\tShift\tLanding time\tSender Notes\tInfo\tHammer\tWaves\tDistance\tSend time\n");
+
+        for (int i = 0; i < targets.size(); i++) {
+            Attack attack = targets.get(i);
+            TargetVillage target = attack.getTarget();
+            int x = target.getXCoord();
+            int y = target.getYCoord();
+            String villageName = target.getVillageName();
+            // TODO: get url from server settings
+            commandText.append("=HYPERLINK(\"https://ts9.x1.international.travian.com/karte.php?x=" + x + "&y=" + y + "\"; \"" + villageName + "\")\t");
+            String arteData = "";
+            if (target.isCapital()) arteData += "Cap";
+            if (target.isOffvillage()) arteData += "Off ";
+            if (target.isWwvillage()) arteData += "WW";
+            arteData += target.getArtefact();
+            commandText.append(arteData + "\t");
+            commandText.append(x + "\t");
+            commandText.append(y + "\t");
+            commandText.append(attack.getLandingTime().format(App.TIME_ONLY) + "\t");
+            commandText.append(target.getArtefact() + "\t");
+            commandText.append("\t");
+            commandText.append("\t");
+            commandText.append("\t");
+            commandText.append((attack.isReal() ? "REAL" : "FAKE") + "\t");
+            // List attacks in landing order
+            List<Attack> targetAttacks = new ArrayList<>();
+            for (AttackerVillage av : attackers) {
+                for (Attack plannedAttack : av.getPlannedAttacks()) {
+                    if (plannedAttack.getTarget().getCoordId() == attack.getTarget().getCoordId()) {
+                        targetAttacks.add(plannedAttack);
+                    }
+                }
+            }
+            targetAttacks.sort((attack1, attack2) -> {
+                if (attack1.getLandingTime().equals(attack2.getLandingTime())) {
+                    return attack1.getSendingTime().compareTo(attack2.getSendingTime());
+                } else {
+                    return attack1.getLandingTime().compareTo(attack2.getLandingTime());
+                }
+            });
+            if (targetAttacks.size() > 0) {
+                for (int j = 0; j < targetAttacks.size(); j++) {
+                    Attack att = targetAttacks.get(j);
+                    commandText
+                            .append(att.getAttacker().getPlayerName() + " ")
+                            .append(att.getAttacker().getVillageName());
+                    if (j < targetAttacks.size() - 1) commandText.append(" + ");
+                }
+            }
+            commandText.append("\t");
+            if (targetAttacks.size() > 0) {
+                for (int j = 0; j < targetAttacks.size(); j++) {
+                    Attack att = targetAttacks.get(j);
+                    commandText
+                            .append(att.getWaves());
+                    if (j < targetAttacks.size() - 1) commandText.append("+");
+                }
+            }
+            commandText.append("\t");
+            String travelTime = LocalDateTime.of(
+                    LocalDate.now(), 
+                    LocalTime.of(0, 0)
+                )
+                .plusSeconds(attack.travelSeconds()).format(App.TIME_ONLY);
+            commandText.append(travelTime + "\t");
+            commandText.append(attack.getSendingTime().format(App.TIME_ONLY));
+
+            commandText.append("\n");
+        }
+
+        attackerCommand.setText(commandText.toString());
+        attackerCommand.getStyleClass().add("attacker-command");
+        attackerRow.getChildren().add(attackerCommand);
+
+        return attackerRow;
     }
 
 
