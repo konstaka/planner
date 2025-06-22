@@ -74,6 +74,10 @@
                                 maxHeight="30"
                                 alignment="TOP_RIGHT" />
                 </HBox>
+                <Button     fx:id="optimiseButton"
+                            minWidth="140"
+                            maxWidth="140"
+                            onAction="#optimiseTimes" />
             </VBox>
             <Region         minWidth="8"
                             maxWidth="8" />

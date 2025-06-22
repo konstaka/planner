@@ -11,6 +11,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.util.Pair;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
@@ -46,6 +51,9 @@ public class GeneticScheduler {
 
     private Random random = new Random();
 
+    @Getter
+    private DoubleProperty progress = new SimpleDoubleProperty(0.0);
+
 
     /**
      * Initialises a genetic attack scheduler.
@@ -79,6 +87,9 @@ public class GeneticScheduler {
      */
     public Map<Integer, Long> schedule() throws IllegalStateException {
 
+        // Set progress to 0
+        progress.set(0);
+
         // Read attacks
         assembleAttackLists();
         // Stop if there are no attacks to schedule
@@ -99,6 +110,9 @@ public class GeneticScheduler {
         }
 
         for (int i = 0; i < GENERATIONS; i++) {
+
+            // Update progress
+            progress.set((1.0+i)/GENERATIONS);
 
             // Compute the fitness values of this generation
             double[] fitnessValues = new double[POPULATION_SIZE];

@@ -15,13 +15,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -36,6 +39,7 @@ import planner.entities.AttackerVillage;
 import planner.entities.Operation;
 import planner.entities.TargetVillage;
 import planner.util.Converters;
+import planner.util.GeneticScheduler;
 
 public class PlanSceneController implements Initializable {
 
@@ -44,6 +48,8 @@ public class PlanSceneController implements Initializable {
 
     @Getter
     private Operation operation;
+
+    Thread optimiseThread = new Thread();
 
     @FXML
     VBox enemyTickboxes;
@@ -76,6 +82,9 @@ public class PlanSceneController implements Initializable {
     TextField randomShiftMinsField;
 
     int randomShiftMins = 0;
+
+    @FXML
+    Button optimiseButton;
 
     @FXML
     RadioButton fakes;
@@ -271,6 +280,10 @@ public class PlanSceneController implements Initializable {
 
             savedText.setText("");
             operation.update();
+            randomShiftMins = operation.getRandomShiftWindow() / 60;
+            randomShiftMinsField.setText(""+randomShiftMins);
+            optimiseButton.textProperty().unbind();
+            optimiseButton.setText("Optimise (slow!)");
             updateTargets();
             updateAttackers();
         }
@@ -519,6 +532,88 @@ public class PlanSceneController implements Initializable {
         if (operation != null) {
             operation.computeLandingTimes(true);
             updateCycle();
+        }
+    }
+
+
+    /**
+     * Optimises the landing times with GeneticScheduler.
+     * @param actionEvent button press
+     */
+    public void optimiseTimes(ActionEvent actionEvent) {
+
+        if (!optimiseThread.isAlive()) {
+
+            Task<Map<Integer, Long>> task = new Task<>() {
+                @Override
+                protected Map<Integer, Long> call() {
+
+                    Map<Integer, TargetVillage> targetsMap = new HashMap<>();
+                    for (AttackerVillage attackerVillage : operation.getAttackers()) {
+                        for (Attack attack : attackerVillage.getPlannedAttacks()) {
+                            targetsMap.put(attack.getTarget().getCoordId(), attack.getTarget());
+                        }
+                    }
+
+                    GeneticScheduler gs = new GeneticScheduler(
+                            operation,
+                            240.0,
+                            0.8
+                    );
+                    Map<Integer, Long> solution = null;
+                    try {
+                        for (int i = operation.getRandomShiftWindow() / 60; i <= 10; i++) {
+                            updateMessage("Optimising... 0%");
+                            gs.getProgress().addListener((observable, oldValue, newValue) -> {
+                                long percents = Math.round((double) newValue * 100);
+                                updateMessage("Optimising... " + percents + "%");
+                            });
+                            operation.setRandomShiftWindow(i * 60);
+                            System.out.println("Scheduling for a flex window of " + i + " minute(s)");
+                            solution = gs.schedule();
+                            System.out.println(solution);
+                            if (solution != null) break;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (solution != null) {
+                        GSDebugger.printSolution(
+                                gs,
+                                solution,
+                                targetsMap,
+                                operation.getAttackers(),
+                                operation.getDefaultLandingTime()
+                        );
+                    }
+                    return solution;
+                }
+            };
+
+            optimiseButton.textProperty().unbind();
+            optimiseButton.textProperty().bind(task.messageProperty());
+            task.setOnSucceeded(event -> {
+                Map<Integer, Long> solution = null;
+                try {
+                    solution = task.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+                if (solution != null) {
+                    Map<Integer, LocalDateTime> schedule = operation.getLandTimes();
+                    for (Integer t_coordId : solution.keySet()) {
+                        schedule.put(
+                                t_coordId,
+                                operation.getDefaultLandingTime().plusSeconds(solution.get(t_coordId))
+                        );
+                    }
+                    operation.setLandTimes(schedule);
+                }
+                updateCycle();
+            });
+            task.setOnFailed(event -> updateCycle());
+            optimiseThread = new Thread(task);
+            optimiseThread.start();
         }
     }
 
