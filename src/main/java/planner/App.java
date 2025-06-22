@@ -4,6 +4,9 @@
 package planner;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -19,7 +22,7 @@ public class App extends Application {
     private static final String GREETING = "Welcome";
 
     @Getter
-    private static final String DB = "jdbc:sqlite:mapsql.db";
+    private static final String DB = "jdbc:sqlite:planner.db";
 
     private Stage stage;
 
@@ -37,6 +40,8 @@ public class App extends Application {
     public void start(Stage stage) throws Exception {
 
         this.stage = stage;
+
+        this.readyDb();
 
         FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
         Parent mainRoot = mainLoader.load();
@@ -67,6 +72,97 @@ public class App extends Application {
         stage.setTitle("Planner 1.0 by GoNu");
         stage.setScene(mainScene);
         stage.show();
+    }
+
+    private void readyDb() {
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            conn.prepareStatement("create table if not exists artefacts\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint artefacts_pk\n" +
+                    "            primary key,\n" +
+                    "    small_arte int default 0,\n" +
+                    "    large_arte int default 0,\n" +
+                    "    unique_arte int default 0\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists attacks\n" +
+                    "(\n" +
+                    "    a_coordId int not null,\n" +
+                    "    t_coordId int not null,\n" +
+                    "    landing_time String not null,\n" +
+                    "    waves int not null,\n" +
+                    "    realTgt int not null,\n" +
+                    "    conq int not null,\n" +
+                    "    time_shift int not null,\n" +
+                    "    unit_speed int not null,\n" +
+                    "    server_speed int not null,\n" +
+                    "    server_size int not null\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists operation_meta\n" +
+                    "(\n" +
+                    "    flex_seconds int,\n" +
+                    "    defaultLandingTime String\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists participants\n" +
+                    "(\n" +
+                    "    id integer\n" +
+                    "        constraint participants_pk\n" +
+                    "            primary key autoincrement,\n" +
+                    "    account String,\n" +
+                    "    xCoord int not null,\n" +
+                    "    yCoord int not null,\n" +
+                    "    ts int not null,\n" +
+                    "    speed double not null,\n" +
+                    "    tribe int not null,\n" +
+                    "    offstring String not null,\n" +
+                    "    offsize int not null,\n" +
+                    "    catas int not null,\n" +
+                    "    chiefs int not null,\n" +
+                    "    sendmin String,\n" +
+                    "    sendmax String,\n" +
+                    "    comment String\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists templates\n" +
+                    "(\n" +
+                    "    template1 String,\n" +
+                    "    template2 String\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists updated\n" +
+                    "(\n" +
+                    "    last String not null\n" +
+                    "        constraint updated_pk\n" +
+                    "            primary key\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists village_data\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint village_data_pk\n" +
+                    "            primary key,\n" +
+                    "    capital int default 0 not null,\n" +
+                    "    offvillage int default 0 not null,\n" +
+                    "    wwvillage int default 0\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists x_world\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint x_world_pk\n" +
+                    "            primary key,\n" +
+                    "    xCoord int not null,\n" +
+                    "    yCoord int not null,\n" +
+                    "    tribe int not null,\n" +
+                    "    villageId int not null,\n" +
+                    "    villageName String not null,\n" +
+                    "    playerId int not null,\n" +
+                    "    playerName String not null,\n" +
+                    "    allyId int not null,\n" +
+                    "    allyName String not null,\n" +
+                    "    population int not null\n" +
+                    ")").execute();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void newPlan() {
