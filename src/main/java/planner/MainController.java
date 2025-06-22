@@ -240,15 +240,23 @@ public class MainController implements Initializable {
             Connection conn = DriverManager.getConnection(App.DB);
             for (String o : offs) {
                 String[] off = o.split("\t");
+                int xCoord = Integer.parseInt(off[2].replace("−", "-").replace("\u202D", ""));
+                int yCoord = Integer.parseInt(off[3].replace("−", "-").replace("\u202D", ""));
+                PreparedStatement checkDupes = conn.prepareStatement(
+                        "SELECT COUNT(*) FROM participants WHERE xCoord=? AND yCoord=?"
+                );
+                checkDupes.setInt(1, xCoord);
+                checkDupes.setInt(2, yCoord);
+                ResultSet dupes = checkDupes.executeQuery();
+                if (dupes.getInt(1) > 0) {
+                    conn.close();
+                    return;
+                }
                 String sql = "INSERT INTO participants VALUES (null,?,?,?,?,?,?,?,?,?,?,?,?,?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, off[1]);
-                ps.setInt(2, Integer.parseInt(
-                        off[2].replace("−", "-").replace("\u202D", ""))
-                );
-                ps.setInt(3, Integer.parseInt(
-                        off[3].replace("−", "-").replace("\u202D", ""))
-                );
+                ps.setInt(2, xCoord);
+                ps.setInt(3, yCoord);
                 ps.setInt(4, Integer.parseInt(off[4]));
                 ps.setDouble(5, Double.parseDouble(off[5].replace(',', '.')));
                 ps.setInt(6, Converters.tribeNumber(off[6]));
@@ -656,7 +664,7 @@ public class MainController implements Initializable {
         infoLabel1.setText("Paste participant rows from sheets to ADD PARTICIPANTS, exactly in the following format (tsv):");
         infoLabel2.setText("timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment");
         infoLabel3.setText("Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			");
-        infoLabel4.setText("");
+        infoLabel4.setText("NOTE: Current version will not overwrite an existing participant with the same coordinates.");
         pastedText.setText("");
         pastedText.setVisible(true);
     }
