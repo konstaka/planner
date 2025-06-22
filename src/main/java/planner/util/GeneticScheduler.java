@@ -61,6 +61,8 @@ public class GeneticScheduler {
         @SuppressWarnings("unchecked")
         Map<Integer, Long>[] population = new HashMap[POPULATION_SIZE];
         Map<Integer, Long> currentBest = new HashMap<>();
+        double currentBestFitness = 0.0;
+
 
         // Update attacks in case they have changed in the operation
         assembleAttackLists();
@@ -80,21 +82,30 @@ public class GeneticScheduler {
                 totalFitness += fitnessValues[j];
             }
 
+            // Find the best in generation
+            int bestInThisIdx = findBest(fitnessValues);
+            // Report scores
+            System.out.println("*** Generation " + i +
+                    ", total score: " + totalFitness +
+                    ", best score: " + fitnessValues[bestInThisIdx] +
+                    " (" + (fitnessValues[bestInThisIdx] - currentBestFitness) + ")" +
+                    ", ratio: " + (fitnessValues[bestInThisIdx] / totalFitness));
             // Compare the best from this generation to the best of all chromosomes
-            Map<Integer, Long> bestInLastGeneration = findBest(population, fitnessValues);
-            if (fitness(bestInLastGeneration) > fitness(currentBest)) {
-                currentBest = bestInLastGeneration;
+            if (currentBest.isEmpty() || fitnessValues[bestInThisIdx] > currentBestFitness) {
+                currentBest = population[bestInThisIdx];
+                currentBestFitness = fitnessValues[bestInThisIdx];
             }
 
-            // Report score
-            System.out.print("*** Generation " + i + ", best score: " + fitness(currentBest));
+
 
             // Reproduce
             @SuppressWarnings("unchecked")
             Map<Integer, Long>[] newPop = new HashMap[POPULATION_SIZE];
 
             // If total fitness is absolutely zero, crossover is not used, only mutation.
-            if (totalFitness != 0) {
+            if (totalFitness == 0) {
+                newPop = population;
+            } else {
                 // Compute fitness ratios
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     fitnessValues[j] = fitnessValues[j] / totalFitness * 100;
@@ -116,8 +127,6 @@ public class GeneticScheduler {
                         newPop[j] = dist.sample();
                     }
                 }
-            } else {
-                newPop = population;
             }
 
             // Mutate
@@ -217,7 +226,7 @@ public class GeneticScheduler {
      * Computes the value of the sending time interval based on deviation from the optimum.
      * The drop in value should be sharper on the shorter side; inverse quadratic is used here.
      * On the longer side, inverse drop in value is used.
-     * Right at the optimal interval threshold, the max value is returned for 30 consecutive seconds.
+     * Around the optimal interval threshold, the max value is returned for 30 consecutive seconds.
      * If the interval is not positive, zero is returned (two sends on the exactly same second).
      * @param interval interval to be evaluated
      * @param waves waves to be set for the next send
@@ -226,8 +235,8 @@ public class GeneticScheduler {
     private static double value(long interval, int waves) {
         if (interval <= 0) return 0.0;
         long diff = interval - optimalInterval(waves);
-        if (diff < -15L) return 1.0 / Math.pow(diff, 2);
-        if (diff > 15L) return 1.0 / diff;
+        if (diff < -4L) return 1.0 / Math.pow(diff+4, 2);
+        if (diff > 24L) return 1.0 / (diff-24);
         return 1.0;
     }
 
@@ -244,19 +253,16 @@ public class GeneticScheduler {
 
 
     /**
-     * Finds the best solution in a given array,
-     * given the corresponding fitness values.
+     * Simple argmax to find the fittest chromosome.
      */
-    private static Map<Integer, Long> findBest(Map<Integer, Long>[] population, double[] fitnessValues) {
+    private static int findBest(double[] fitnessValues) {
         int bestIdx = 0;
-        Map<Integer, Long> best = population[bestIdx];
         for (int i = 1; i < POPULATION_SIZE; i++) {
             if (fitnessValues[i] > fitnessValues[bestIdx]) {
                 bestIdx = i;
-                best = population[bestIdx];
             }
         }
-        return best;
+        return bestIdx;
     }
 
 
