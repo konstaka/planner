@@ -345,6 +345,7 @@ public class PlanSceneController implements Initializable {
                         200);
                 // Listen to changes that mark planned fake/real attacks
                 a.getWaves().addListener(observable -> {
+                    if (a.getWaves().get() == 0) attacker.getPlannedAttacks().remove(a);
                     this.updateTargets();
                     this.updateAttackers();
                 });
@@ -582,7 +583,9 @@ public class PlanSceneController implements Initializable {
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
             Attack a = attackerPicker.getSelectionModel().getSelectedItem();
             if (a != null) {
-                a.getAttacker().getPlannedAttacks().add(a);
+                if (!a.getAttacker().getPlannedAttacks().contains(a)) {
+                    a.getAttacker().getPlannedAttacks().add(a);
+                }
                 a.getWaves().set(waves);
                 if (reals.isSelected()) a.getReal().set(true);
                 else a.getReal().set(false);
@@ -674,7 +677,7 @@ public class PlanSceneController implements Initializable {
 
 
     /**
-     * Loads saved operation from database. Overwrites anything that is now planned.
+     * Loads saved operation from database on top of all information that currently is in planning.
      */
     public void load() {
         try {
@@ -699,6 +702,13 @@ public class PlanSceneController implements Initializable {
                 a.setUnitSpeed(rs3.getInt("unit_speed"));
                 a.setServerSpeed(rs3.getInt("server_speed"));
                 a.setServerSize(rs3.getInt("server_size"));
+                if (a.getWaves().get() > 0) {
+                    for (AttackerVillage attackerVillage : attackers) {
+                        if (attackerVillage.getCoordId() == a_coordId) {
+                            attackerVillage.getPlannedAttacks().add(a);
+                        }
+                    }
+                }
             }
             conn.close();
         } catch (SQLException e) {
