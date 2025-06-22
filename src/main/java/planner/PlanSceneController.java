@@ -17,8 +17,6 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.*;
-
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -118,6 +116,14 @@ public class PlanSceneController implements Initializable {
     int unitSpeed = 3;
 
     @FXML
+    CheckBox specialTs;
+
+    @FXML
+    TextField tsField;
+
+    int ts = 0;
+
+    @FXML
     HBox attackerCols;
 
     @FXML
@@ -168,6 +174,16 @@ public class PlanSceneController implements Initializable {
         unitSpeedField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue && oldValue) {
                 unitSpeedField.fireEvent(new ActionEvent());
+            }
+        });
+
+        // Listen to the special TS checkbox
+        specialTs.setOnAction((ActionEvent e) -> this.updateCycle());
+
+        // Listen to the TS field
+        tsField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) {
+                tsField.fireEvent(new ActionEvent());
             }
         });
     }
@@ -483,6 +499,7 @@ public class PlanSceneController implements Initializable {
                     attack.isReal(),
                     attack.isConq(),
                     attack.getUnitSpeed(),
+                    attack.getTs(),
                     attack.getLandingTime(),
                     attack.getLandingTimeShift(),
                     attack.getServerSpeed(),
@@ -495,6 +512,9 @@ public class PlanSceneController implements Initializable {
             pickableAttack.setWithHero(withHero.isSelected());
             pickableAttack.setUnitSpeed(
                     specialSpeed.isSelected() ? unitSpeed : attack.getAttacker().getUnitSpeed().get()
+            );
+            pickableAttack.setTs(
+                    specialTs.isSelected() ? ts : attack.getAttacker().getTs().get()
             );
             attackerPicker
                     .getItems()
@@ -515,6 +535,7 @@ public class PlanSceneController implements Initializable {
                 attack.setUnitSpeed(
                         specialSpeed.isSelected() ? unitSpeed : attack.getAttacker().getUnitSpeed().get()
                 );
+                attack.setTs(specialTs.isSelected() ? ts : attack.getAttacker().getTs().get());
                 attack.setReal(reals.isSelected());
                 attack.setConq(conquer.isSelected());
                 attack.setWithHero(withHero.isSelected());
@@ -705,7 +726,7 @@ public class PlanSceneController implements Initializable {
 
     /**
      * Updates the unit speed used for added attacks.
-     * @param actionEvent focus leave on enter keypress
+     * @param actionEvent focus leave or enter keypress
      */
     public void updateUnitSpeed(ActionEvent actionEvent) {
         try {
@@ -716,6 +737,23 @@ public class PlanSceneController implements Initializable {
         }
         unitSpeedField.setText(""+unitSpeed);
         if (specialSpeed.isSelected()) {
+            updateCycle();
+        }
+    }
+
+    /**
+     * Updates the TS level used for added attacks.
+     * @param actionEvent focus leave or enter keypress
+     */
+    public void updateTs(ActionEvent actionEvent) {
+        try {
+            ts = Integer.parseInt(tsField.getText());
+            if (ts < 0 || ts > 20) ts = 0;
+        } catch (NumberFormatException e) {
+            ts = 0;
+        }
+        tsField.setText(""+ts);
+        if (specialTs.isSelected()) {
             updateCycle();
         }
     }

@@ -144,14 +144,20 @@ public class CommandController implements Initializable {
                         .append(" (")
                         .append(attack.getAttacker().getCoords())
                         .append(")")
-                        .append(attack.isReal() ? "[/b]" : "")
+                        .append(attack.isReal() ? "[/b] " : " ")
+                        .append(attack.getUnitSpeed())
+                        .append("sq/h TS")
+                        .append(attack.getTs())
                         .append("\n");
             }
         } else {
             for (Attack attack : targets) {
                 commandText.append(attack.isReal() ? "[b]" : "")
                         .append(attack.getSendingTime().format(App.TIME_ONLY))
-                        .append(attack.isReal() ? " real[/b]" : " fake")
+                        .append(attack.isReal() ? " real[/b] " : " fake ")
+                        .append(attack.getUnitSpeed())
+                        .append("sq/h TS")
+                        .append(attack.getTs())
                         .append("\n");
             }
         }
@@ -166,14 +172,21 @@ public class CommandController implements Initializable {
                 .append(a.getCoords())
                 .append(")[/b]\n");
         commandText
-                .append("TS")
-                .append(a.getTs())
-                .append(", Speed multiplier: ")
+                .append("Speed multiplier: ")
                 .append(a.getArteSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
         commandText.append("[b]Departure[/b] // Travel time // [b]Arrival[/b] " +
-                "Target\n[b]:: Type ::[/b] (speed)\n[ Other info ]\nLanding order\n");
-        for (Attack attack : targets) {
+                "Target\n[b]:: Type ::[/b] (speed TS)\n[ Other info ]\nLanding order\n");
+        for (int i = 0; i < targets.size(); i++) {
+            Attack attack = targets.get(i);
+            if (i > 0 && targets.get(i - 1).getTs() != attack.getTs()) {
+                commandText
+                        .append("\n*** CHANGE TS LEVEL ")
+                        .append(targets.get(i - 1).getTs())
+                        .append(" -> ")
+                        .append(attack.getTs())
+                        .append("\n");
+            }
             commandText.append(this.toAttackRow(attack));
         }
         commandText.append(template2.getText());
@@ -213,7 +226,9 @@ public class CommandController implements Initializable {
                 .append(Converters.attackType(attack))
                 .append(" ::[/b] (")
                 .append(attack.getUnitSpeed())
-                .append("sq/h)");
+                .append("sq/h TS")
+                .append(attack.getTs())
+                .append(")");
         attackRow.append("\n");
         // List artefacts and their effects on target
         if (!attack.getTarget().getArtefact().isEmpty()
@@ -264,8 +279,8 @@ public class CommandController implements Initializable {
                         .append(a.getLandingTime().format(DateTimeFormatter.ofPattern(" :ss")));
                 if (i < targetAttacks.size()-1) attackRow.append(", ");
             }
+            attackRow.append("\n");
         }
-        attackRow.append("\n");
         return attackRow.toString();
     }
 

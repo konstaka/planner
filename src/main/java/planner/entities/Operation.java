@@ -227,6 +227,7 @@ public class Operation {
                         false,
                         false,
                         attacker.getUnitSpeed().get(),
+                        attacker.getTs().get(),
                         landTimes.get(target.getCoordId()),
                         0,
                         serverSpeed,
@@ -234,9 +235,12 @@ public class Operation {
                         false,
                         false,
                         new SimpleBooleanProperty(false));
-                // Listen to updates in unit speeds
+                // Listen to updates regarding speed
                 attack.getAttacker().getUnitSpeed().addListener((observable, oldValue, newValue) -> {
                     if (!newValue.equals(oldValue)) attack.setUnitSpeed(newValue.intValue());
+                });
+                attack.getAttacker().getTs().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.equals(oldValue)) attack.setTs(newValue.intValue());
                 });
                 attackerAttacks.put(target.getCoordId(), attack);
             }
@@ -372,7 +376,7 @@ public class Operation {
             if (v.getXCoord() == rs.getInt("xCoord")
                     && v.getYCoord() == rs.getInt("yCoord")) {
                 AttackerVillage attacker = new AttackerVillage(v.getCoordId());
-                attacker.setTs(rs.getInt("ts"));
+                attacker.getTs().set(rs.getInt("ts"));
                 attacker.setArteSpeed(rs.getDouble("speed"));
                 attacker.setOffString(rs.getString("offstring"));
                 attacker.setOffSize(rs.getInt("offsize"));
@@ -409,7 +413,7 @@ public class Operation {
             while (rs2.next()) {
                 for (AttackerVillage attackerVillage : operation.getAttackers()) {
                     if (attackerVillage.getCoordId() == rs2.getInt("coordId")) {
-                        attackerVillage.setTs(rs2.getInt("tsLvl"));
+                        attackerVillage.getTs().set(rs2.getInt("tsLvl"));
                         attackerVillage.setArteSpeed(rs2.getDouble("arteSpeed"));
                         attackerVillage.setHeroBoots(rs2.getInt("heroBoots"));
                         attackerVillage.getUnitSpeed().set(rs2.getInt("unitSpeed"));
@@ -429,6 +433,7 @@ public class Operation {
                 attack.setWithHero(rs3.getInt("withHero") == 1);
                 attack.setLandingTimeShift(rs3.getInt("time_shift"));
                 attack.setUnitSpeed(rs3.getInt("unit_speed"));
+                attack.setTs(rs3.getInt("ts"));
                 attack.setServerSpeed(rs3.getInt("server_speed"));
                 attack.setServerSize(rs3.getInt("server_size"));
                 if (attack.getWaves() > 0) {
@@ -482,12 +487,12 @@ public class Operation {
             // Save attack and attacker data
             conn.prepareStatement("DELETE FROM attacks").execute();
             conn.prepareStatement("DELETE FROM attacker_info").execute();
-            String attackInsert = "INSERT INTO attacks VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+            String attackInsert = "INSERT INTO attacks VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement attackInserts = conn.prepareStatement(attackInsert);
             for (AttackerVillage attacker : attackers) {
                 conn.prepareStatement("INSERT INTO attacker_info VALUES ("
                         + attacker.getCoordId() + ","
-                        + attacker.getTs() + "," +
+                        + attacker.getTs().get() + "," +
                         attacker.getArteSpeed() + "," +
                         attacker.getHeroBoots() + "," +
                         attacker.getUnitSpeed().get() + ")"
@@ -506,6 +511,7 @@ public class Operation {
                     attackInserts.setInt(9, attack.getServerSpeed());
                     attackInserts.setInt(10, attack.getServerSize());
                     attackInserts.setInt(11, (attack.isWithHero() ? 1 : 0));
+                    attackInserts.setInt(12, attack.getTs());
                     attackInserts.addBatch();
                 }
             }
