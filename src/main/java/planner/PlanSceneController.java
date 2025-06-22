@@ -183,7 +183,7 @@ public class PlanSceneController implements Initializable {
                     if (v.getXCoord() == rs.getInt("xCoord")
                             && v.getYCoord() == rs.getInt("yCoord")) {
                         AttackerVillage attacker = new AttackerVillage(v.getCoordId());
-                        attacker.setTs(rs.getInt("ts"));
+                        attacker.getTs().set(rs.getInt("ts"));
                         attacker.setSpeed(rs.getDouble("speed"));
                         attacker.setOffString(rs.getString("offstring"));
                         attacker.setOffSize(rs.getInt("offsize"));
@@ -192,6 +192,9 @@ public class PlanSceneController implements Initializable {
                         attacker.setSendMin(rs.getString("sendmin"));
                         attacker.setSendMax(rs.getString("sendmax"));
                         attacker.setComment(rs.getString("comment"));
+                        attacker.getTs().addListener((ov, oldV, newV) -> {
+                            this.updateTargets();
+                        });
                         attackers.add(attacker);
                         break;
                     }
@@ -202,7 +205,8 @@ public class PlanSceneController implements Initializable {
             e.printStackTrace();
         }
         for (AttackerVillage a : attackers) {
-            attackerCols.getChildren().add(a.toDisplayBox());
+            VBox attackerBox = a.toDisplayBox();
+            attackerCols.getChildren().add(attackerBox);
         }
     }
 
@@ -264,12 +268,11 @@ public class PlanSceneController implements Initializable {
         }
     }
 
-    /**
-     * Refresh target list based on current filters
-     * @param actionEvent event
-     */
-    public void refreshTargets(ActionEvent actionEvent) {
 
+    /**
+     * Refresh target list based on current filters.
+     */
+    public void updateTargets() {
         // Check which alliances to show
         targetRows.getChildren().clear();
         Set<String> enemyAlliances = new HashSet<>();
@@ -288,14 +291,14 @@ public class PlanSceneController implements Initializable {
         for (TargetVillage v : villages) {
             if (enemyAlliances.contains(v.getAllyName())
                     && (
-                        (v.isCapital() && this.caps.isSelected())
-                        || (v.isOffvillage() && this.offs.isSelected())
-                        || (v.getArtefact().contains("small") && this.small_artes.isSelected())
-                        || (v.getArtefact().contains("large") && this.large_artes.isSelected())
-                        || (v.getArtefact().contains("unique") && this.large_artes.isSelected())
-                        || (v.isWwvillage() && this.bps_wws.isSelected())
-                        || (v.getArtefact().contains("buildplan") && this.bps_wws.isSelected())
-                    )
+                    (v.isCapital() && this.caps.isSelected())
+                            || (v.isOffvillage() && this.offs.isSelected())
+                            || (v.getArtefact().contains("small") && this.small_artes.isSelected())
+                            || (v.getArtefact().contains("large") && this.large_artes.isSelected())
+                            || (v.getArtefact().contains("unique") && this.large_artes.isSelected())
+                            || (v.isWwvillage() && this.bps_wws.isSelected())
+                            || (v.getArtefact().contains("buildplan") && this.bps_wws.isSelected())
+            )
             ) {
                 shownVillages.add(v);
             }
@@ -305,6 +308,10 @@ public class PlanSceneController implements Initializable {
         for (TargetVillage t : shownVillages) {
             targetRows.getChildren().add(this.targetRow(t));
         }
+    }
+
+    public void refreshTargets(ActionEvent actionEvent) {
+        this.updateTargets();
     }
 
     /**

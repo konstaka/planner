@@ -63,13 +63,13 @@ public class Attack {
         // Baseline speed
         double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getSpeed() / 60 / 60;
         // Return if no TS
-        if (distance <= 20 || this.attacker.getTs() == 0) return Math.round(distance / squaresPerSecond);
+        if (distance <= 20 || this.attacker.getTs().getValue() == 0) return Math.round(distance / squaresPerSecond);
         // No-TS part of travel
         double travelTime = 20L / squaresPerSecond;
         // Reduce distance
         distance -= 20;
         // Calculate TS factor
-        double factor = 1.0 + this.attacker.getTs() * 0.2;
+        double factor = 1.0 + this.attacker.getTs().getValue() * 0.2;
         // Adjust speed
         squaresPerSecond *= factor;
         // Compute remaining time
