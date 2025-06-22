@@ -321,6 +321,9 @@ public class MainController implements Initializable {
     }
 
 
+    public void markDeffs() { this.updateVillageData("deffvillage"); }
+
+
     public void markWWs() { this.updateVillageData("wwvillage");}
 
 
@@ -517,6 +520,9 @@ public class MainController implements Initializable {
             case "offs":
                 markOffs();
                 break;
+            case "deffs":
+                markDeffs();
+                break;
             case "wws":
                 markWWs();
                 break;
@@ -574,7 +580,7 @@ public class MainController implements Initializable {
         action = "offs";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as OFF VILLAGES.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
@@ -582,19 +588,19 @@ public class MainController implements Initializable {
     }
     public void deffs() {
         action = "deffs";
-        okButton.setVisible(false);
-        infoLabel1.setText("Not implemented yet.");
-        infoLabel2.setText("");
-        infoLabel3.setText("");
+        okButton.setVisible(true);
+        infoLabel1.setText("Paste here links to villages you want to mark as DEF VILLAGES.");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
+        infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");
-        pastedText.setVisible(false);
+        pastedText.setVisible(true);
     }
     public void wws() {
         action = "wws";
         okButton.setVisible(true);
         infoLabel1.setText("Paste here links to villages you want to mark as WORLD WONDERS.");
-        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&amp;y=99");
+        infoLabel2.setText("One per line, format example: https://ts4.nordics.travian.com/position_details.php?x=-74&y=99");
         infoLabel3.setText("To see the changes, save and load the operation or create a new one.");
         infoLabel4.setText("");
         pastedText.setText("");

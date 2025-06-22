@@ -64,6 +64,9 @@ public class PlanSceneController implements Initializable {
     CheckBox offs;
 
     @FXML
+    CheckBox deffs;
+
+    @FXML
     CheckBox small_artes;
 
     @FXML
@@ -319,6 +322,7 @@ public class PlanSceneController implements Initializable {
                     && (
                     (target.isCapital() && this.caps.isSelected())
                             || (target.isOffvillage() && this.offs.isSelected())
+                            || (target.isDeffvillage() && this.deffs.isSelected())
                             || (target.getArtefact().contains("Small") && this.small_artes.isSelected())
                             || (target.getArtefact().contains("Large") && this.large_artes.isSelected())
                             || (target.getArtefact().contains("Unique") && this.large_artes.isSelected())

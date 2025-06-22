@@ -32,7 +32,7 @@
                             onAction="#capitals" />
                     <Button text="Input offs"
                             onAction="#offs" />
-                    <Button text="Input deffs"
+                    <Button text="Input defs"
                             onAction="#deffs" />
                     <Button text="Input WWs"
                             onAction="#wws" />

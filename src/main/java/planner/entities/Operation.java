@@ -94,6 +94,7 @@ public class Operation {
                 TargetVillage t = new TargetVillage(rs.getInt("coordId"));
                 if (rs.getInt("capital") == 1) t.setCapital(true);
                 if (rs.getInt("offvillage") == 1) t.setOffvillage(true);
+                if (rs.getInt("deffvillage") == 1) t.setDeffvillage(true);
                 if (rs.getInt("wwvillage") == 1) t.setWwvillage(true);
                 int small = rs.getInt("small_arte");
                 int large = rs.getInt("large_arte");

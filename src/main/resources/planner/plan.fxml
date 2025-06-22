@@ -56,6 +56,7 @@
                     <VBox   fx:id="targetTickboxes" >
                         <CheckBox   fx:id="caps" text="Capitals" />
                         <CheckBox   fx:id="offs" text="Off villages" />
+                        <CheckBox   fx:id="deffs" text="Def villages" />
                         <CheckBox   fx:id="small_artes" text="Small artefacts" />
                         <CheckBox   fx:id="large_artes" text="Large artefacts" />
                         <CheckBox   fx:id="bps_wws" text="BP/WW" />
