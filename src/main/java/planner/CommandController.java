@@ -24,6 +24,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import planner.entities.Attack;
+import planner.entities.AttackerVillage;
 
 public class CommandController implements Initializable {
 

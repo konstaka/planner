@@ -1,4 +1,4 @@
-package planner;
+package planner.entities;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import lombok.Getter;
+import planner.App;
 
 public abstract class Village {
 

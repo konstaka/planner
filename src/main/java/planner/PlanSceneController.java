@@ -36,6 +36,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import planner.entities.Attack;
+import planner.entities.AttackerVillage;
+import planner.entities.TargetVillage;
+import planner.entities.Village;
 
 public class PlanSceneController implements Initializable {
 
