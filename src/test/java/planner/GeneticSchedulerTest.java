@@ -6,8 +6,10 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +43,13 @@ public class GeneticSchedulerTest {
     private transient TargetVillage gothmog_11 = mock(TargetVillage.class);
     private transient TargetVillage sauron_cap = mock(TargetVillage.class);
     private transient TargetVillage treebeard_cap = mock(TargetVillage.class);
-    private transient TargetVillage gothmog_09 = mock(TargetVillage.class);
+    //private transient TargetVillage gothmog_09 = mock(TargetVillage.class);
     private transient TargetVillage arPharazon_cap = mock(TargetVillage.class);
     private transient TargetVillage gothmog_05 = mock(TargetVillage.class);
-    private transient TargetVillage gandalf_cap = mock(TargetVillage.class);
+    //private transient TargetVillage gandalf_cap = mock(TargetVillage.class);
     private transient List<TargetVillage> targets = Arrays.asList(
             iluvatar_cap, gothmog_11, sauron_cap, treebeard_cap,
-            gothmog_09, arPharazon_cap, gothmog_05, gandalf_cap
+            arPharazon_cap, gothmog_05
     );
     private transient Map<Integer, TargetVillage> targetsMap = new HashMap<>();
 
@@ -73,21 +75,25 @@ public class GeneticSchedulerTest {
     @Before
     public void setUp() throws CloneNotSupportedException {
 
+        when(spank_me_14.getPlayerName()).thenReturn("SPANK ME");
         when(spank_me_14.getPlayerId()).thenReturn(382);
         when(spank_me_14.getXCoord()).thenReturn(-74);
         when(spank_me_14.getYCoord()).thenReturn(99);
         when(spank_me_14.getArteSpeed()).thenReturn(1.5);
 
+        when(spank_me_03.getPlayerName()).thenReturn("SPANK ME");
         when(spank_me_03.getPlayerId()).thenReturn(382);
         when(spank_me_03.getXCoord()).thenReturn(-71);
         when(spank_me_03.getYCoord()).thenReturn(99);
         when(spank_me_03.getArteSpeed()).thenReturn(1.5);
 
+        when(spank_me_23.getPlayerName()).thenReturn("SPANK ME");
         when(spank_me_23.getPlayerId()).thenReturn(382);
         when(spank_me_23.getXCoord()).thenReturn(-75);
         when(spank_me_23.getYCoord()).thenReturn(99);
         when(spank_me_23.getArteSpeed()).thenReturn(1.5);
 
+        when(donald_trump_01.getPlayerName()).thenReturn("Donald Trump");
         when(donald_trump_01.getPlayerId()).thenReturn(181);
         when(donald_trump_01.getXCoord()).thenReturn(-74);
         when(donald_trump_01.getYCoord()).thenReturn(122);
@@ -138,9 +144,9 @@ public class GeneticSchedulerTest {
         when(treebeard_cap.getXCoord()).thenReturn(-20);
         when(treebeard_cap.getYCoord()).thenReturn(5);
 
-        when(gothmog_09.getCoordId()).thenReturn(78389);
-        when(gothmog_09.getXCoord()).thenReturn(-7);
-        when(gothmog_09.getYCoord()).thenReturn(5);
+        //when(gothmog_09.getCoordId()).thenReturn(78389);
+        //when(gothmog_09.getXCoord()).thenReturn(-7);
+        //when(gothmog_09.getYCoord()).thenReturn(5);
 
         when(arPharazon_cap.getCoordId()).thenReturn(78400);
         when(arPharazon_cap.getXCoord()).thenReturn(4);
@@ -150,9 +156,9 @@ public class GeneticSchedulerTest {
         when(gothmog_05.getXCoord()).thenReturn(-6);
         when(gothmog_05.getYCoord()).thenReturn(4);
 
-        when(gandalf_cap.getCoordId()).thenReturn(79996);
-        when(gandalf_cap.getXCoord()).thenReturn(-4);
-        when(gandalf_cap.getYCoord()).thenReturn(1);
+        //when(gandalf_cap.getCoordId()).thenReturn(79996);
+        //when(gandalf_cap.getXCoord()).thenReturn(-4);
+        //when(gandalf_cap.getYCoord()).thenReturn(1);
 
         for (TargetVillage target : targets) {
             targetsMap.put(target.getCoordId(), target);
@@ -163,17 +169,21 @@ public class GeneticSchedulerTest {
         when(operation.getAttackers()).thenReturn(attackers);
         when(operation.getTargets()).thenReturn(targets);
         when(operation.getDefaultLandingTime()).thenReturn(landingTime);
-
-        geneticScheduler = new GeneticScheduler(operation);
     }
 
 
     @Test
     public void tenMinuteWindow() {
         when(operation.getRandomShiftWindow()).thenReturn(5);
+        geneticScheduler = new GeneticScheduler(operation,
+                1000,
+                30,
+                0.6,
+                0.15
+        );
         try {
             this.printSolution(geneticScheduler.schedule());
-        } catch (IllegalStateException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -185,7 +195,8 @@ public class GeneticSchedulerTest {
      * @param solution output of the scheduler
      */
     private void printSolution(Map<Integer, Long> solution) {
-        System.out.println("--- SOLUTION:");
+        System.out.println();
+        System.out.println("SOLUTION:");
         for (Integer t_coordId : solution.keySet()) {
             System.out.println(
                     targetsMap.get(t_coordId).getXCoord() +
@@ -194,6 +205,30 @@ public class GeneticSchedulerTest {
                             " " +
                             landingTime.plusSeconds(solution.get(t_coordId)).format(App.TIME_ONLY)
             );
+        }
+        System.out.println();
+        System.out.println("Sending intervals:");
+        Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
+        for (AttackerVillage attacker : attackers) {
+            if (!attacksPerPlayer.containsKey(attacker.getPlayerId())) {
+                attacksPerPlayer.put(attacker.getPlayerId(), new ArrayList<>());
+            }
+            List<Attack> villageAttacks = new ArrayList<>();
+            for (Attack attack : attacker.getPlannedAttacks()) {
+                attack.setLandingTime(landingTime.plusSeconds(solution.get(attack.getTarget().getCoordId())));
+                villageAttacks.add(attack);
+            }
+            attacksPerPlayer.get(attacker.getPlayerId()).addAll(villageAttacks);
+        }
+        for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
+            System.out.println(attacksForPlayer.get(0).getAttacker().getPlayerName());
+            attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
+            for (int i = 0; i < attacksForPlayer.size()-1; i++) {
+                System.out.println(ChronoUnit.SECONDS.between(
+                        attacksForPlayer.get(i).getSendingTime(),
+                        attacksForPlayer.get(i+1).getSendingTime()
+                ));
+            }
         }
     }
 }

@@ -80,18 +80,6 @@ public class AttackerVillage extends Village {
     public AttackerVillage(int coordId) {
 
         super(coordId);
-
-        switch(this.getTribe()) {
-            case 1:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
-                break;
-            case 2:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
-                break;
-            case 3:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
-                break;
-        }
     }
 
 
@@ -103,6 +91,20 @@ public class AttackerVillage extends Village {
 
         VBox box = new VBox();
         box.getStyleClass().add("attacker-box");
+
+        if (tribeTroops == null) {
+            switch(this.getTribe()) {
+                case 1:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
+                    break;
+                case 2:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
+                    break;
+                case 3:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
+                    break;
+            }
+        }
         assert tribeTroops != null;
 
         // Spacer
