@@ -98,4 +98,18 @@ public class AttackTest {
         String send = "2020-04-11 10:03:23";
         assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
     }
+
+    @Test
+    public void around2() {
+        when(attacker.getXCoord()).thenReturn(-199);
+        when(attacker.getYCoord()).thenReturn(-198);
+        when(target.getXCoord()).thenReturn(397);
+        when(target.getYCoord()).thenReturn(300);
+        this.att.setUnitSpeed(19);
+        this.att.setServerSize(400);
+        when(attacker.getSpeed()).thenReturn(1.0);
+        when(attacker.getTs()).thenReturn(3);
+        String send = "2020-04-10 23:34:17";
+        assertEquals(LocalDateTime.parse(send, f), this.att.getSendingTime());
+    }
 }
