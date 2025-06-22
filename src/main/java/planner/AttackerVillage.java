@@ -56,6 +56,8 @@ public class AttackerVillage extends Village {
     @Setter
     private String comment;
 
+    private Image image = null;
+
 
     public AttackerVillage(int coordId) {
         super(coordId);
@@ -63,7 +65,6 @@ public class AttackerVillage extends Village {
 
 
     public VBox toDisplayBox() {
-        Image image = null;
         switch(this.getTribe()) {
             case 1:
                 image = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
@@ -86,10 +87,7 @@ public class AttackerVillage extends Village {
         r1.setMinHeight(4);
         box.getChildren().add(r1);
         // Chiefs
-        ImageView chief = new ImageView(image);
-        chief.setViewport(new Rectangle2D(152, 0, 18, 16));
-        chief.setPreserveRatio(true);
-        chief.setFitHeight(11);
+        ImageView chief = this.getChief();
         chief.setTranslateX(17);
         box.getChildren().add(chief);
         box.getChildren().add(new Label(""+this.chiefs));
@@ -112,19 +110,7 @@ public class AttackerVillage extends Village {
         r3.setMinHeight(4);
         box.getChildren().add(r3);
         // Offs
-        HBox offRow = new HBox();
-        int[] offUnitCoords = this.getOffUnitCoords();
-        ImageView off1 = new ImageView(image);
-        off1.setViewport(new Rectangle2D(offUnitCoords[0], 0, 18, 16));
-        off1.setPreserveRatio(true);
-        off1.setFitHeight(11);
-        offRow.getChildren().add(off1);
-        ImageView off2 = new ImageView(image);
-        off2.setViewport(new Rectangle2D(offUnitCoords[1], 0, 18, 16));
-        off2.setPreserveRatio(true);
-        off2.setFitHeight(11);
-        offRow.getChildren().add(off2);
-        box.getChildren().add(offRow);
+        box.getChildren().add(this.toOffRow());
         box.getChildren().add(new Label(this.offSizeRounded()));
         // Spacer
         Region r4 = new Region();
@@ -165,6 +151,32 @@ public class AttackerVillage extends Village {
         name.getStyleClass().add("attacker-name");
         box.getChildren().add(name);
         return box;
+    }
+
+
+    public HBox toOffRow() {
+        HBox offRow = new HBox();
+        int[] offUnitCoords = this.getOffUnitCoords();
+        ImageView off1 = new ImageView(image);
+        off1.setViewport(new Rectangle2D(offUnitCoords[0], 0, 18, 16));
+        off1.setPreserveRatio(true);
+        off1.setFitHeight(11);
+        offRow.getChildren().add(off1);
+        ImageView off2 = new ImageView(image);
+        off2.setViewport(new Rectangle2D(offUnitCoords[1], 0, 18, 16));
+        off2.setPreserveRatio(true);
+        off2.setFitHeight(11);
+        offRow.getChildren().add(off2);
+        return offRow;
+    }
+
+
+    public ImageView getChief() {
+        ImageView chief = new ImageView(image);
+        chief.setViewport(new Rectangle2D(152, 0, 18, 16));
+        chief.setPreserveRatio(true);
+        chief.setFitHeight(11);
+        return chief;
     }
 
 
@@ -244,7 +256,7 @@ public class AttackerVillage extends Village {
     }
 
 
-    private String offSizeRounded() {
+    public String offSizeRounded() {
         return Math.round(this.offSize / 1000.0) + "k";
     }
 }

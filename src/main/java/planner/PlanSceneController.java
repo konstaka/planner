@@ -74,6 +74,9 @@ public class PlanSceneController implements Initializable {
     RadioButton reals;
 
     @FXML
+    CheckBox conquer;
+
+    @FXML
     TextField wavesBox;
 
     @FXML
@@ -295,7 +298,8 @@ public class PlanSceneController implements Initializable {
             this.updateLandingTimes();
             for (Map<Integer, Attack> attackMap : attacks.values()) {
                 for (Attack a : attackMap.values()) {
-                    a.setLandingTime(landTimes.get(a.getTarget().getCoordId()));
+                    a.setLandingTime(landTimes.get(a.getTarget().getCoordId())
+                            .plusSeconds(a.getLandingTimeShift().get()));
                 }
             }
             this.updateTargets();
@@ -323,7 +327,6 @@ public class PlanSceneController implements Initializable {
             }
         });
 
-
         // Update landing times
         this.updateLandingTimes();
         // Create the attack matrix
@@ -338,26 +341,26 @@ public class PlanSceneController implements Initializable {
                         attacker,
                         new SimpleIntegerProperty(0),
                         new SimpleBooleanProperty(false),
+                        new SimpleBooleanProperty(false),
                         3,
                         landTimes.get(target.getCoordId()),
+                        new SimpleIntegerProperty(0),
                         1,
                         200);
                 // Listen to changes that mark planned fake/real attacks
                 a.getWaves().addListener(observable -> this.updateTargets());
                 a.getReal().addListener(observable -> this.updateTargets());
+                a.getConq().addListener(observable -> this.updateTargets());
+                a.getLandingTimeShift().addListener(observable -> this.updateTargets());
                 toAdd.put(target.getCoordId(), a);
             }
             attacks.put(attacker.getCoordId(), toAdd);
         }
-
-
-
     }
 
 
     /**
      * Refreshes the landing times map based on baseline hit time and flex seconds.
-     * TODO add individual attacker shifts like -1s, +1s etc
      */
     private void updateLandingTimes() {
         for (TargetVillage target : villages) {
@@ -519,6 +522,9 @@ public class PlanSceneController implements Initializable {
             if (a != null) {
                 attacks.get(a.getCoordId()).get(village.getCoordId()).getWaves().set(waves);
                 if (reals.isSelected()) attacks.get(a.getCoordId()).get(village.getCoordId()).getReal().set(true);
+                else attacks.get(a.getCoordId()).get(village.getCoordId()).getReal().set(false);
+                if (conquer.isSelected()) attacks.get(a.getCoordId()).get(village.getCoordId()).getConq().set(true);
+                else attacks.get(a.getCoordId()).get(village.getCoordId()).getConq().set(false);
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
             }
@@ -546,10 +552,8 @@ public class PlanSceneController implements Initializable {
             }
         });
         for (Attack a : rowAttacks) {
-            row.getChildren().add(new Label(a.getAttacker().getPlayerName()));
+            row.getChildren().add(a.toDisplayBox());
         }
-
-
 
         return row;
     }

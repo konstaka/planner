@@ -4,8 +4,8 @@
     -fx-border-style: solid;
     -fx-border-color: grey;
     -fx-font-size: 0.8em;
-    -fx-min-height: 28px;
-    -fx-max-height: 28px;
+    -fx-min-height: 30px;
+    -fx-max-height: 30px;
 }
 .target-col-0 {
     -fx-min-width: 50px;
@@ -59,6 +59,18 @@
     -fx-alignment: center;
     -fx-font-size: 0.9em;
 }
+.attack-box-off-column {
+    -fx-min-width: 36px;
+    -fx-max-width: 36px;
+    -fx-alignment: center;
+    -fx-font-size: 0.9em;
+}
+.attack-box-chief-column {
+    -fx-min-width: 18px;
+    -fx-max-width: 18px;
+    -fx-alignment: center;
+    -fx-font-size: 0.9em;
+}
 .attacker-name {
     -fx-min-height: 45px;
     -fx-max-height: 45px;
@@ -68,4 +80,14 @@
     -fx-translate-x: -22.5px;
     -fx-alignment: center-left;
     -fx-font-size: 0.8em;
+}
+.real-target {
+    -fx-text-fill: red;
+}
+.attack-box-button {
+    -fx-max-height: 5px;
+    -fx-pref-width: 15px;
+    -fx-alignment: center;
+    -fx-padding: 0;
+    -fx-font-size: 0.5em;
 }

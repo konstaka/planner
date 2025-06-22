@@ -98,6 +98,8 @@
                                 maxHeight="30"
                                 alignment="TOP_RIGHT" />
                 </HBox>
+                <CheckBox       fx:id="conquer"
+                                text="conquer" />
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
             <HBox       fx:id="attackerCols"
