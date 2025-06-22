@@ -345,6 +345,7 @@ public class Operation {
                 for (AttackerVillage attackerVillage : operation.getAttackers()) {
                     if (attackerVillage.getCoordId() == rs2.getInt("coordId")) {
                         attackerVillage.setTs(rs2.getInt("tsLvl"));
+                        attackerVillage.setSpeed(rs2.getDouble("arteSpeed"));
                         break;
                     }
                 }
@@ -418,7 +419,8 @@ public class Operation {
             for (AttackerVillage attacker : attackers) {
                 conn.prepareStatement("INSERT INTO attacker_info VALUES ("
                         + attacker.getCoordId() + ","
-                        + attacker.getTs() + ")"
+                        + attacker.getTs() + "," +
+                        attacker.getSpeed() + ")"
                 ).execute();
                 for (Attack attack : attacker.getPlannedAttacks()) {
                     int a_coordId = attack.getAttacker().getCoordId();
