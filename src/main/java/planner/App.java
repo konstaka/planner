@@ -4,10 +4,18 @@
 package planner;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -151,7 +159,14 @@ public class App extends Application {
                     "            primary key,\n" +
                     "    capital int default 0 not null,\n" +
                     "    offvillage int default 0 not null,\n" +
+                    "    deffvillage int default 0 not null,\n" +
                     "    wwvillage int default 0\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists world_meta\n" +
+                    "(\n" +
+                    "    serversize INTEGER default 200,\n" +
+                    "    serverspeed INTEGER default 1,\n" +
+                    "    serverurl TEXT\n" +
                     ")").execute();
             conn.prepareStatement("create table if not exists x_world\n" +
                     "(\n" +
@@ -177,7 +192,52 @@ public class App extends Application {
 
 
     private void downloadMapSql() {
-
+        try {
+            // Conditions: server details set, map.sql last updated at least one day ago
+            LocalDateTime updatedAt = LocalDateTime.now().minusDays(1);
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs1 = conn.prepareStatement("SELECT * FROM updated").executeQuery();
+            if (rs1 != null && !rs1.isClosed()) {
+                updatedAt = LocalDateTime.parse(
+                        rs1.getString("last"),
+                        App.FULL_DATE_TIME
+                );
+            }
+            Duration sinceUpdated = Duration.between(updatedAt, LocalDateTime.now());
+            Duration threshold = Duration.ofHours(24);
+            ResultSet rs2 = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs2.next() && sinceUpdated.compareTo(threshold) > 0) {
+                System.out.println("Updating map.sql");
+                // Get newest map.sql from server
+                String url = rs2.getString("serverurl");
+                if (!url.endsWith("/")) url += "/";
+                HttpRequest req = HttpRequest.newBuilder()
+                        .uri(URI.create(url + "map.sql"))
+                        .header("Accept", "application/octet-stream")
+                        .build();
+                HttpResponse<String> res = HttpClient.newHttpClient()
+                        .send(req, HttpResponse.BodyHandlers.ofString());
+                // Read response and update x_world
+                Scanner sqlLines = new Scanner(res.body());
+                if (sqlLines.hasNext()) conn.prepareStatement("DELETE FROM x_world").execute();
+                while (sqlLines.hasNext()) {
+                    String line = sqlLines.nextLine();
+                    if (line.endsWith(";")) {
+                        conn.prepareStatement(line).execute();
+                    }
+                }
+                sqlLines.close();
+                // Update last updated field
+                conn.prepareStatement("DELETE FROM updated").execute();
+                String updateInfo = LocalDateTime.now().format(App.FULL_DATE_TIME);
+                conn.prepareStatement("INSERT INTO updated VALUES ("
+                        + "'" + updateInfo + "'"
+                        + ")").execute();
+            }
+            conn.close();
+        } catch (SQLException | IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
