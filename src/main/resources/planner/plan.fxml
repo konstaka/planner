@@ -38,6 +38,7 @@
                         <CheckBox   fx:id="small_artes" text="Small artefacts" />
                         <CheckBox   fx:id="large_artes" text="Large artefacts" />
                         <CheckBox   fx:id="bps_wws" text="BP/WW" />
+                        <CheckBox   fx:id="planned_attacks" text="Planned attacks" />
                     </VBox>
                 </ScrollPane>
             </VBox>
@@ -92,8 +93,7 @@
                             minWidth="110"
                             maxWidth="110"
                             onAction="#save" />
-                <Label      fx:id="savedText"
-                            styleClass="green" />
+                <Label      fx:id="savedText" />
             </VBox>
             <Region         minWidth="8"
                             maxWidth="8" />
