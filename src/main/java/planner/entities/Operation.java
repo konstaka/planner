@@ -286,9 +286,31 @@ public class Operation {
             }
         }
 
-        for (AttackerVillage a : attackers) {
-            // Alert if two sending times are equal for the same target village (unlikely, but yeah)
-            // This needs to look different
+        // Alert if two sending times are equal for the same target village (unlikely, but yeah)
+        Map<Integer, List<Attack>> attacksPerTarget = new HashMap<>();
+        for (AttackerVillage attackerVillage : attackers) {
+            for (Attack attack : attackerVillage.getPlannedAttacks()) {
+                if (!attacksPerTarget.containsKey(attack.getTarget().getCoordId())) {
+                    attacksPerTarget.put(attack.getTarget().getCoordId(), new ArrayList<>());
+                }
+                attacksPerTarget.get(attack.getTarget().getCoordId()).add(attack);
+            }
+        }
+        for (List<Attack> attacksForTarget : attacksPerTarget.values()) {
+            attacksForTarget.sort(Comparator.comparing(Attack::getSendingTime));
+            for (int i = 0; i < attacksForTarget.size()-1; i++) {
+                LocalDateTime send1 = attacksForTarget.get(i).getSendingTime();
+                LocalDateTime send2 = attacksForTarget.get(i+1).getSendingTime();
+                LocalDateTime land1 = attacksForTarget.get(i).getLandingTime();
+                LocalDateTime land2 = attacksForTarget.get(i+1).getLandingTime();
+                if (Math.abs(ChronoUnit.SECONDS.between(send1, send2)) < 1
+                        && Math.abs(ChronoUnit.SECONDS.between(land1, land2)) < 1) {
+                    attacksForTarget.get(i).setConflicting(true);
+                    attacksForTarget.get(i+1).setConflicting(true);
+                    attacksForTarget.get(i).getAttacker().setAlert(true);
+                    attacksForTarget.get(i+1).getAttacker().setAlert(true);
+                }
+            }
         }
     }
 
