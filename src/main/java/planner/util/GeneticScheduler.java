@@ -203,6 +203,10 @@ public class GeneticScheduler {
                 attack.getTarget().setRandomShiftSeconds(
                         candidate.get(attack.getTarget().getCoordId())
                 );
+                attack.setLandingTime(
+                        operation.getDefaultLandingTime()
+                                .plusSeconds(candidate.get(attack.getTarget().getCoordId()))
+                );
             }
         }
         double candidateFitness = 0;
@@ -212,10 +216,8 @@ public class GeneticScheduler {
             for (int i = 0; i < attacksForPlayer.size()-1; i++) {
                 LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
                 LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
-                candidateFitness += value(
-                        ChronoUnit.SECONDS.between(send1, send2),
-                        attacksForPlayer.get(i+1).getWaves()
-                );
+                long interval = ChronoUnit.SECONDS.between(send1, send2);
+                candidateFitness += value(interval, attacksForPlayer.get(i+1).getWaves());
             }
         }
         return candidateFitness;
