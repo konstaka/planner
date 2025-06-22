@@ -132,6 +132,7 @@ public class AttackerVillage extends Village {
         Tooltip t1 = new Tooltip(offString);
         t1.setShowDelay(Duration.millis(0));
         t1.setHideDelay(Duration.millis(500));
+        t1.setShowDuration(Duration.INDEFINITE);
         HBox offRow = this.toOffRow();
         Tooltip.install(offRow, t1);
         box.getChildren().add(offRow);
@@ -190,6 +191,7 @@ public class AttackerVillage extends Village {
         Tooltip t2 = new Tooltip(tool2.toString());
         t2.setShowDelay(Duration.millis(0));
         t2.setHideDelay(Duration.millis(500));
+        t2.setShowDuration(Duration.INDEFINITE);
         name.setTooltip(t2);
         if (alert.get()) name.getStyleClass().add("alert");
         box.getChildren().add(name);
