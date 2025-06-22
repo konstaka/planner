@@ -148,10 +148,10 @@
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
             <ScrollPane maxWidth="570"
-                        minHeight="300"
-                        maxHeight="300"
+                        minHeight="315"
+                        maxHeight="315"
                         vbarPolicy="NEVER"
-                        hbarPolicy="NEVER"
+                        hbarPolicy="ALWAYS"
                         style="-fx-background-color: transparent" >
                 <HBox       fx:id="attackerCols"
                             alignment="TOP_RIGHT" />
