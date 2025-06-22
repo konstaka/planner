@@ -7,22 +7,24 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import lombok.Getter;
 
 
 public class App extends Application {
 
-    @Getter
-    private static final String GREETING = "Welcome";
+    public static final String DB = "jdbc:sqlite:planner.db";
 
-    @Getter
-    private static final String DB = "jdbc:sqlite:planner.db";
+    public static final DateTimeFormatter FULL_DATE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+
+    public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM");
 
     private Stage stage;
 
@@ -43,40 +45,19 @@ public class App extends Application {
 
         this.readyDb();
 
-        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
-        Parent mainRoot = mainLoader.load();
-        mainController = mainLoader.getController();
-        mainScene = new Scene(mainRoot);
-        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
-        mainController.toScene.addListener((observable, oldValue, newValue) -> {
-            if (!oldValue.equals(newValue)) {
-                mainController.toScene.set("");
-                this.switchTo(newValue);
-            }
-        });
-        mainController.newOp.addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue()) {
-                mainController.newOp.set(false);
-                this.newPlan();
-            }
-        });
-        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
-            if (observable.getValue()) {
-                mainController.loadOp.set(false);
-                planSceneController.load();
-            }
-        });
+        this.initMainController();
+        this.initPlanController();
+        this.initCommandController();
 
-        this.newPlan();
-
-        stage.setTitle("Planner 1.0 by GoNu");
+        stage.setTitle("Planner 1.01");
         stage.setScene(mainScene);
         stage.show();
     }
 
+
     private void readyDb() {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("create table if not exists artefacts\n" +
                     "(\n" +
                     "    coordId int not null\n" +
@@ -85,6 +66,16 @@ public class App extends Application {
                     "    small_arte int default 0,\n" +
                     "    large_arte int default 0,\n" +
                     "    unique_arte int default 0\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists attacker_info\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint attacker_info_pk\n" +
+                    "            primary key,\n" +
+                    "    tsLvl int default 0 not null,\n" +
+                    "    arteSpeed double default 1.0 not null,\n" +
+                    "    heroBoots int default 0 not null,\n" +
+                    "    unitSpeed int default 3 not null\n" +
                     ")").execute();
             conn.prepareStatement("create table if not exists attacks\n" +
                     "(\n" +
@@ -97,7 +88,8 @@ public class App extends Application {
                     "    time_shift int not null,\n" +
                     "    unit_speed int not null,\n" +
                     "    server_speed int not null,\n" +
-                    "    server_size int not null\n" +
+                    "    server_size int not null,\n" +
+                    "    withHero int not null" +
                     ")").execute();
             conn.prepareStatement("create table if not exists operation_meta\n" +
                     "(\n" +
@@ -122,6 +114,13 @@ public class App extends Application {
                     "    sendmin String,\n" +
                     "    sendmax String,\n" +
                     "    comment String\n" +
+                    ")").execute();
+            conn.prepareStatement("create table if not exists target_info\n" +
+                    "(\n" +
+                    "    coordId int not null\n" +
+                    "        constraint target_info_pk\n" +
+                    "            primary key,\n" +
+                    "    randomShiftSeconds long not null\n" +
                     ")").execute();
             conn.prepareStatement("create table if not exists templates\n" +
                     "(\n" +
@@ -165,51 +164,68 @@ public class App extends Application {
         }
     }
 
-    private void newPlan() {
+
+    private void initMainController() throws IOException {
+        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
+        Parent mainRoot = mainLoader.load();
+        mainController = mainLoader.getController();
+        mainScene = new Scene(mainRoot);
+        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
+        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                mainController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.newOp.set(false);
+                planSceneController.newOperation();
+            }
+        });
+        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.loadOp.set(false);
+                planSceneController.loadOperation();
+            }
+        });
+    }
+
+    private void initPlanController() throws IOException {
         FXMLLoader planLoader = new FXMLLoader(getClass().getResource("plan.fxml"));
-        Parent planRoot = null;
-        try {
-            planRoot = planLoader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Parent planRoot = planLoader.load();
         planSceneController = planLoader.getController();
         assert planRoot != null;
         planScene = new Scene(planRoot);
         planScene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
-        planSceneController.toScene.addListener((observable, oldValue, newValue) -> {
+        planSceneController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.toScene.set("");
+                planSceneController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
     }
 
-    private void generateCommands() {
+    private void initCommandController() throws IOException {
         FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
-        Parent commandRoot = null;
-        try {
-            commandRoot = commandLoader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Parent commandRoot = commandLoader.load();
         commandController = commandLoader.getController();
         assert commandRoot != null;
         commandScene = new Scene(commandRoot);
         commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
-        commandController.toScene.addListener((observable, oldValue, newValue) -> {
+        commandController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.toScene.set("");
+                planSceneController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
-        commandController.attackers = planSceneController.attackers;
-        commandController.updateCommands();
     }
+
 
     public static void main(String[] args) {
         launch(args);
     }
+
 
     private void switchTo(String scene) {
         switch (scene) {
@@ -220,11 +236,14 @@ public class App extends Application {
                 stage.setScene(planScene);
                 break;
             case "commands":
-                this.generateCommands();
+                if (planSceneController.getOperation() == null) {
+                    break;
+                }
+                commandController.setAttackers(planSceneController.getOperation().getAttackers());
+                commandController.updateCommands();
                 stage.setScene(commandScene);
                 break;
         }
         stage.show();
     }
-
 }

@@ -1,4 +1,4 @@
-package planner;
+package planner.entities;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import lombok.Getter;
+import planner.App;
 
 public abstract class Village {
 
@@ -45,7 +46,7 @@ public abstract class Village {
     public Village(int coordId) {
         this.coordId = coordId;
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             String sql = "SELECT * FROM x_world WHERE coordId=" + coordId;
             ResultSet rs = conn.prepareStatement(sql).executeQuery();
             this.xCoord = rs.getInt("xCoord");

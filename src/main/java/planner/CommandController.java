@@ -24,10 +24,16 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import lombok.Getter;
+import lombok.Setter;
+import planner.entities.Attack;
+import planner.entities.AttackerVillage;
+import planner.util.Converters;
 
 public class CommandController implements Initializable {
 
-    StringProperty toScene = new SimpleStringProperty("");
+    @Getter
+    private StringProperty toScene = new SimpleStringProperty("");
 
     @FXML
     TextArea template1;
@@ -38,7 +44,8 @@ public class CommandController implements Initializable {
     @FXML
     VBox commands;
 
-    List<AttackerVillage> attackers;
+    @Setter
+    private List<AttackerVillage> attackers;
 
     DateTimeFormatter time = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -56,7 +63,7 @@ public class CommandController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM templates").executeQuery();
             while (rs.next()) {
                 template1.setText(rs.getString("template1"));
@@ -108,9 +115,9 @@ public class CommandController implements Initializable {
                 .append(")[/b]\n");
         commandText
                 .append("TS")
-                .append(a.getTs().get())
+                .append(a.getTs())
                 .append(", Speed multiplier: ")
-                .append(a.getSpeed()).append("\n\n");
+                .append(a.getArteSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
         commandText.append("[b]Departure[/b]  // Travel time //  [b]Arrival[/b]  " +
                 "Target  Other  [b]Type[/b]  Attack order\n\n");
@@ -128,7 +135,8 @@ public class CommandController implements Initializable {
 
     /**
      * Generates a target row for the command message. Example:
-     * [b]19:04:24 05.03[/b] // 14:21:18 // [b]9:25:42 06.03[/b] [x|y]-6|5[/x|y] Scout effect [b]Fake cata[/b] anger, others
+     * [b]19:04:24 05.03[/b] // 14:21:18 // [b]9:25:42 06.03[/b] [x|y]-6|5[/x|y] Scout effect [b]Fake cata[/b]
+     * TODO add conditionals for adding landing orders
      */
     private String toAttackRow(Attack attack) {
         String travelTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0))
@@ -163,9 +171,9 @@ public class CommandController implements Initializable {
         }
         attackRow
                 .append("[b]")
-                .append(attack.getWaves().get())
+                .append(attack.getWaves())
                 .append("x ")
-                .append(this.attackType(attack))
+                .append(Converters.attackType(attack))
                 .append("[/b] ");
         // List attacks in landing order
         List<Attack> targetAttacks = new ArrayList<>();
@@ -176,11 +184,11 @@ public class CommandController implements Initializable {
                 }
             }
         }
-        targetAttacks.sort((o1, o2) -> {
-            if (o1.getLandingTime().equals(o2.getLandingTime())) {
-                return o1.getSendingTime().compareTo(o2.getSendingTime());
+        targetAttacks.sort((attack1, attack2) -> {
+            if (attack1.getLandingTime().equals(attack2.getLandingTime())) {
+                return attack1.getSendingTime().compareTo(attack2.getSendingTime());
             } else {
-                return o1.getLandingTime().compareTo(o2.getLandingTime());
+                return attack1.getLandingTime().compareTo(attack2.getLandingTime());
             }
         });
         if (targetAttacks.size() > 1) {
@@ -200,31 +208,14 @@ public class CommandController implements Initializable {
     }
 
 
-    private String attackType(Attack attack) {
-        switch (attack.getUnitSpeed()) {
-            case 5:
-                return attack.getReal().get() ? "Conquer" : "Fake conquer";
-            case 4:
-                if (attack.getConq().get()) {
-                    return attack.getReal().get() ? "Conquer" : "Fake conquer";
-                } else {
-                    return attack.getReal().get() ? "Ram" : "Fake ram";
-                }
-            case 3:
-                if (attack.getConq().get()) {
-                    return attack.getReal().get() ? "Conquer" : "Fake conquer";
-                } else {
-                    return attack.getReal().get() ? "Cata" : "Fake cata";
-                }
-            default:
-                return attack.getReal().get() ? "Sweep" : "Fake sweep";
-        }
-    }
-
-
+    /**
+     * Saves the command templates to database and updates the commands.
+     * TODO move DB operations to the Database class
+     * @param actionEvent button press
+     */
     public void saveTemplates(ActionEvent actionEvent) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("DELETE FROM templates").execute();
             PreparedStatement ps = conn.prepareStatement("INSERT INTO templates VALUES(?, ?)");
             ps.setString(1, template1.getText());
