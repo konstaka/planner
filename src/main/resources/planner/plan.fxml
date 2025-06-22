@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="planner.PlanSceneController"
+            prefHeight="400.0" prefWidth="600.0">
+    <VBox   fillWidth="true">
+        <HBox>
+            <VBox>
+                <Label      text="Pick enemies" />
+                <ScrollPane minWidth="130"
+                            maxWidth="130"
+                            maxHeight="200"
+                            hbarPolicy="NEVER">
+                    <VBox   fx:id="enemyTickboxes" />
+                </ScrollPane>
+            </VBox>
+            <VBox>
+                <Label      text="Pick targets" />
+                <ScrollPane minWidth="130"
+                            maxWidth="130"
+                            maxHeight="200"
+                            hbarPolicy="NEVER">
+                    <VBox   fx:id="targetTickboxes" >
+                        <CheckBox   text="Capitals" />
+                        <CheckBox   text="Off villages" />
+                        <CheckBox   text="Small artefacts" />
+                        <CheckBox   text="Large artefacts" />
+                        <CheckBox   text="BP/WW" />
+                    </VBox>
+                </ScrollPane>
+            </VBox>
+            <Button     text="Refresh target list"
+                        onAction="#refreshTargets" />
+        </HBox>
+        <ScrollPane minWidth="1280"
+                    fitToWidth="true"
+                    maxHeight="600" >
+            <VBox   fx:id="targetRows" />
+        </ScrollPane>
+    </VBox>
+</AnchorPane>

@@ -3,20 +3,23 @@ package planner;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 public class MainController implements Initializable {
 
@@ -29,6 +32,10 @@ public class MainController implements Initializable {
     @FXML
     Label noParticipants;
 
+    Scene scene;
+
+    Stage stage;
+
     /**
      * Called to initialize a controller after its root element has been
      * completely processed.
@@ -39,6 +46,7 @@ public class MainController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         lastUpdated.setText("No map.sql found");
         try {
             Connection conn = DriverManager.getConnection(App.getDB());
@@ -73,7 +81,7 @@ public class MainController implements Initializable {
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Resource File");
-        File f = fileChooser.showOpenDialog(lastUpdated.getScene().getWindow());
+        File f = fileChooser.showOpenDialog(stage);
         if (f != null) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(f));
@@ -173,7 +181,7 @@ public class MainController implements Initializable {
      * Computes the size of this off from submitted tribe and off size string.
      * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
      * @param offString off size in the format (example) 1000+0+500+100+100
-     * @return off consumption (romans computed without drinking through)
+     * @return off consumption (romans computed without drinking trough)
      */
     private int offSize(int tribe, String offString) {
         String[] offs = offString.split("\\+");
@@ -201,5 +209,17 @@ public class MainController implements Initializable {
             case "Gaul": return 3;
         }
         return -1;
+    }
+
+    /**
+     * Changes to the planning view.
+     * @throws IOException if the fxml file is not found
+     */
+    public void toPlanning() throws IOException {
+        scene = lastUpdated.getScene();
+        stage = (Stage) lastUpdated.getScene().getWindow();
+        scene.setRoot(FXMLLoader.load(getClass().getResource("plan.fxml")));
+        scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
+        stage.show();
     }
 }

@@ -13,22 +13,21 @@
     <VBox>
         <HBox>
             <Button text="Choose map.sql"
-                    onAction="#loadMapsql"
-                    fx:id="mapsqlButton" />
+                    onAction="#loadMapsql" />
             <Label  fx:id="lastUpdated" />
         </HBox>
-        <Label      text="Paste participant rows from sheets, exactly in this format: timestamp,account,x,y,ts,speed,tribe,offsize,catas,chiefs,sendmin,sendmax,comment" />
+        <Label      text="Paste participant rows from sheets, exactly in the following format, separated by tabs:" />
+        <Label      text="timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment" />
         <Label      text="Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			" />
         <TextArea   maxWidth="300"
                     maxHeight="100"
                     fx:id="participants" />
         <HBox>
-            <Button text="insert participants"
-                    onAction="#loadParticipants"
-                    fx:id="participantsButton" />
+            <Button text="Update participants"
+                    onAction="#loadParticipants" />
             <Label  fx:id="noParticipants" />
         </HBox>
+        <Button     text="Plan!"
+                    onAction="#toPlanning" />
     </VBox>
-
-
 </AnchorPane>
