@@ -117,7 +117,7 @@ public class CommandController implements Initializable {
                 .append("TS")
                 .append(a.getTs())
                 .append(", Speed multiplier: ")
-                .append(a.getSpeed()).append("\n\n");
+                .append(a.getArteSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
         commandText.append("[b]Departure[/b]  // Travel time //  [b]Arrival[/b]  " +
                 "Target  Other  [b]Type[/b]  Attack order\n\n");

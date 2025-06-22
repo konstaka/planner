@@ -75,6 +75,10 @@ public class Attack {
      * @return travel time in seconds
      */
     public long travelSeconds() {
+        // Update unit speed if attacker has updated it
+        this.attacker.getUnitSpeed().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.equals(oldValue)) this.setUnitSpeed(newValue.intValue());
+        });
         // Distance on a torus surface
         double distance = Math.sqrt(
                 Math.pow(
@@ -89,7 +93,7 @@ public class Attack {
                         2)
         );
         // Baseline speed
-        double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getSpeed() / 60 / 60;
+        double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getArteSpeed() / 60 / 60;
         // Return if no TS
         if (distance <= 20 || this.attacker.getTs() == 0) return Math.round(distance / squaresPerSecond);
         // No-TS part of travel
@@ -99,6 +103,7 @@ public class Attack {
         // Calculate TS factor
         double factor = 1.0 + this.attacker.getTs() * 0.2;
         // Adjust speed
+        if (this.isWithHero()) squaresPerSecond *= 1 + this.attacker.getHeroBoots() / 100.0;
         squaresPerSecond *= factor;
         // Compute remaining time
         travelTime += distance / squaresPerSecond;
@@ -200,6 +205,6 @@ public class Attack {
 
     @Override
     public String toString() {
-        return attacker.toString() + " " + getSendingTime().format(App.TIME_ONLY);
+        return attacker.toString() + " " + this.getSendingTime().format(App.TIME_ONLY);
     }
 }

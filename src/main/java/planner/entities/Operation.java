@@ -166,7 +166,7 @@ public class Operation {
                             && v.getYCoord() == rs.getInt("yCoord")) {
                         AttackerVillage attacker = new AttackerVillage(v.getCoordId());
                         attacker.setTs(rs.getInt("ts"));
-                        attacker.setSpeed(rs.getDouble("speed"));
+                        attacker.setArteSpeed(rs.getDouble("speed"));
                         attacker.setOffString(rs.getString("offstring"));
                         attacker.setOffSize(rs.getInt("offsize"));
                         attacker.setCatas(rs.getInt("catas"));
@@ -219,7 +219,7 @@ public class Operation {
             Map<Integer, Attack> attackerAttacks = new HashMap<>();
             for (TargetVillage target : targets) {
                 // TODO make all magic numbers editable.
-                // TODO: unit speed, server speed, server size
+                // TODO: server speed, server size
                 // Waves needs to be 0 at this point to mark that the attack is not planned for now
                 Attack attack = new Attack(
                         target,
@@ -227,7 +227,7 @@ public class Operation {
                         0,
                         false,
                         false,
-                        3,
+                        attacker.getUnitSpeed().get(),
                         landTimes.get(target.getCoordId()),
                         0,
                         1,
@@ -345,7 +345,9 @@ public class Operation {
                 for (AttackerVillage attackerVillage : operation.getAttackers()) {
                     if (attackerVillage.getCoordId() == rs2.getInt("coordId")) {
                         attackerVillage.setTs(rs2.getInt("tsLvl"));
-                        attackerVillage.setSpeed(rs2.getDouble("arteSpeed"));
+                        attackerVillage.setArteSpeed(rs2.getDouble("arteSpeed"));
+                        attackerVillage.setHeroBoots(rs2.getInt("heroBoots"));
+                        attackerVillage.getUnitSpeed().set(rs2.getInt("unitSpeed"));
                         break;
                     }
                 }
@@ -420,7 +422,9 @@ public class Operation {
                 conn.prepareStatement("INSERT INTO attacker_info VALUES ("
                         + attacker.getCoordId() + ","
                         + attacker.getTs() + "," +
-                        attacker.getSpeed() + ")"
+                        attacker.getArteSpeed() + "," +
+                        attacker.getHeroBoots() + "," +
+                        attacker.getUnitSpeed().get() + ")"
                 ).execute();
                 for (Attack attack : attacker.getPlannedAttacks()) {
                     int a_coordId = attack.getAttacker().getCoordId();
