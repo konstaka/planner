@@ -233,6 +233,7 @@ public class Operation {
                         1,
                         200,
                         false,
+                        false,
                         new SimpleBooleanProperty(false));
                 attackerAttacks.put(target.getCoordId(), attack);
             }
@@ -357,6 +358,7 @@ public class Operation {
                 attack.setWaves(rs3.getInt("waves"));
                 attack.setReal(rs3.getInt("realTgt") == 1);
                 attack.setConq(rs3.getInt("conq") == 1);
+                attack.setWithHero(rs3.getInt("withHero") == 1);
                 attack.setLandingTimeShift(rs3.getInt("time_shift"));
                 attack.setUnitSpeed(rs3.getInt("unit_speed"));
                 attack.setServerSpeed(rs3.getInt("server_speed"));
@@ -411,7 +413,7 @@ public class Operation {
             // Save attack and attacker data
             conn.prepareStatement("DELETE FROM attacks").execute();
             conn.prepareStatement("DELETE FROM attacker_info").execute();
-            String attackInsert = "INSERT INTO attacks VALUES(?,?,?,?,?,?,?,?,?,?)";
+            String attackInsert = "INSERT INTO attacks VALUES(?,?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement attackInserts = conn.prepareStatement(attackInsert);
             for (AttackerVillage attacker : attackers) {
                 conn.prepareStatement("INSERT INTO attacker_info VALUES ("
@@ -431,6 +433,7 @@ public class Operation {
                     attackInserts.setInt(8, attack.getUnitSpeed());
                     attackInserts.setInt(9, attack.getServerSpeed());
                     attackInserts.setInt(10, attack.getServerSize());
+                    attackInserts.setInt(11, (attack.isWithHero() ? 1 : 0));
                     attackInserts.addBatch();
                 }
             }

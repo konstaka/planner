@@ -35,6 +35,7 @@ public class AttackTest {
     private static final int serverSpeed = 1;
     private static final int serverSize = 200;
     private static final boolean conflicting = false;
+    private static final boolean withHero = false;
     private static final BooleanProperty updated = new SimpleBooleanProperty(false);
 
     @Before
@@ -51,6 +52,7 @@ public class AttackTest {
                 serverSpeed,
                 serverSize,
                 conflicting,
+                withHero,
                 updated
         );
     }

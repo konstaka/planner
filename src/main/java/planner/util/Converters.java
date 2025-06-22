@@ -11,24 +11,32 @@ public class Converters {
      * @return attack type string, for example "Fake cata"
      */
     public static String attackType(Attack attack) {
+        String ret = "";
         switch (attack.getUnitSpeed()) {
             case 5:
-                return attack.isReal() ? "Conquer" : "Fake conquer";
+                ret += attack.isReal() ? "Conquer" : "Fake conquer";
+                break;
             case 4:
                 if (attack.isConq()) {
-                    return attack.isReal() ? "Conquer" : "Fake conquer";
+                    ret += attack.isReal() ? "Conquer" : "Fake conquer";
                 } else {
-                    return attack.isReal() ? "Ram" : "Fake ram";
+                    ret += attack.isReal() ? "Ram" : "Fake ram";
                 }
+                break;
             case 3:
                 if (attack.isConq()) {
-                    return attack.isReal() ? "Conquer" : "Fake conquer";
+                    ret += attack.isReal() ? "Conquer" : "Fake conquer";
                 } else {
-                    return attack.isReal() ? "Cata" : "Fake cata";
+                    ret += attack.isReal() ? "Cata" : "Fake cata";
                 }
+                break;
             default:
-                return attack.isReal() ? "Sweep" : "Fake sweep";
+                ret += attack.isReal() ? "Sweep" : "Fake sweep";
+                break;
         }
+        if (attack.isReal() && !attack.isWithHero()) ret += " NO HERO";
+        if (!attack.isReal() && attack.isWithHero()) ret += " HEROFAKE";
+        return ret;
     }
 
 
