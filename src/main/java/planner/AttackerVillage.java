@@ -1,6 +1,8 @@
 package planner;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.tools.Tool;
@@ -173,10 +175,19 @@ public class AttackerVillage extends Village {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         Label name = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
         name.getStyleClass().add("attacker-name");
-        Tooltip t2 = new Tooltip(
-                "Earliest send: " + getSendMin() + "\n"
-                + "Latest send: " + getSendMax() + "\n"
-                + "Comment: " + getComment());
+        StringBuilder tool2 = new StringBuilder("Earliest send: " + getSendMin() + "\n" +
+                "Latest send: " + getSendMax() + "\n" +
+                "Comment: " + getComment());
+        if (!plannedAttacks.isEmpty()) {
+            plannedAttacks.sort(Comparator.comparing(Attack::getSendingTime));
+            tool2.append("\nCurrent sends:");
+        }
+        for (Attack attack : plannedAttacks) {
+            tool2
+                    .append("\n")
+                    .append(attack.getSendingTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        }
+        Tooltip t2 = new Tooltip(tool2.toString());
         t2.setShowDelay(Duration.millis(0));
         t2.setHideDelay(Duration.millis(500));
         name.setTooltip(t2);
