@@ -27,16 +27,18 @@
                     onAction="#loadParticipants" />
             <Label  fx:id="noParticipants" />
         </HBox>
-        <Label      text="Paste here coordinates you want to mark as caps or offs and press the corresponding button." />
+        <Label      text="Paste here coordinates you want to mark as caps, offs, or WWs, and press the corresponding button." />
         <Label      text="One per line, format example: -74|99" />
         <TextArea   maxWidth="300"
                     maxHeight="100"
                     fx:id="villageInfo" />
         <HBox>
-            <Button text="Mark as capitals"
+            <Button text="Mark as caps"
                     onAction="#markCapitals" />
-            <Button text="Mark as offvillages"
+            <Button text="Mark as offs"
                     onAction="#markOffs" />
+            <Button text="Mark as WWs"
+                    onAction="#markWWs" />
         </HBox>
         <Label      text="Paste here the source code of your treasury page for small/large artefacts." />
         <Label      text="Press the corresponding button to import artefact data." />

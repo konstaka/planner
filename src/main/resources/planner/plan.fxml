@@ -36,8 +36,6 @@
                     </VBox>
                 </ScrollPane>
             </VBox>
-            <Button     text="Refresh target list"
-                        onAction="#refreshTargets" />
             <Region     HBox.hgrow="ALWAYS" />
             <HBox       fx:id="attackerCols"
                         alignment="TOP_RIGHT" />
