@@ -356,6 +356,7 @@ public class App extends Application {
                     break;
                 }
                 commandController.setAttackers(planSceneController.getOperation().getAttackers());
+                commandController.setDefaultHittingTime(planSceneController.getOperation().getDefaultLandingTime());
                 commandController.updateCommands();
                 stage.setScene(commandScene);
                 break;

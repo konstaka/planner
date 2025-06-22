@@ -243,8 +243,12 @@ public class MainController implements Initializable {
                 String sql = "INSERT INTO participants VALUES (null,?,?,?,?,?,?,?,?,?,?,?,?,?)";
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, off[1]);
-                ps.setInt(2, Integer.parseInt(off[2]));
-                ps.setInt(3, Integer.parseInt(off[3]));
+                ps.setInt(2, Integer.parseInt(
+                        off[2].replace("−", "-").replace("\u202D", ""))
+                );
+                ps.setInt(3, Integer.parseInt(
+                        off[3].replace("−", "-").replace("\u202D", ""))
+                );
                 ps.setInt(4, Integer.parseInt(off[4]));
                 ps.setDouble(5, Double.parseDouble(off[5].replace(',', '.')));
                 ps.setInt(6, Converters.tribeNumber(off[6]));

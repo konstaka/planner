@@ -12,7 +12,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -47,6 +49,11 @@ public class CommandController implements Initializable {
     @Setter
     private List<AttackerVillage> attackers;
 
+    @Setter
+    private LocalDateTime defaultHittingTime;
+
+    private Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
+
 
     /**
      * Called to initialize a controller after its root element has been
@@ -74,8 +81,17 @@ public class CommandController implements Initializable {
 
     public void updateCommands() {
         commands.getChildren().clear();
-        for (AttackerVillage a : attackers) {
-            commands.getChildren().add(this.toAttackerRow(a));
+        attacksPerPlayer.clear();
+        for (AttackerVillage av : attackers) {
+            if (!attacksPerPlayer.containsKey(av.getPlayerId())) {
+                attacksPerPlayer.put(av.getPlayerId(), new ArrayList<>());
+            }
+            for (Attack a : av.getPlannedAttacks()) {
+                attacksPerPlayer.get(a.getAttacker().getPlayerId()).add(a);
+            }
+        }
+        for (AttackerVillage av : attackers) {
+            commands.getChildren().add(this.toAttackerRow(av));
         }
     }
 
@@ -103,6 +119,46 @@ public class CommandController implements Initializable {
         TextArea attackerCommand = new TextArea();
         StringBuilder commandText = new StringBuilder();
         commandText.append(template1.getText());
+        commandText.append("\n");
+        commandText.append("------------------------------------------");
+        commandText.append("\n");
+        commandText.append("\n");
+        commandText
+                .append("Ops hits on ")
+                .append(defaultHittingTime.getDayOfWeek().toString())
+                .append(" ")
+                .append(defaultHittingTime.format(App.DAY_AND_MONTH))
+                .append(" around ")
+                .append(defaultHittingTime.format(App.TIME_ONLY))
+                .append("\n\n");
+        commandText.append("Summary:\n");
+        if (attacksPerPlayer.get(a.getPlayerId()).size() > targets.size()) {
+            // More than one sweep by this player
+            List<Attack> attacksForPlayer = attacksPerPlayer.get(a.getPlayerId());
+            attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
+            for (Attack attack : attacksForPlayer) {
+                commandText.append(attack.isReal() ? "[b]" : "")
+                        .append(attack.getSendingTime().format(App.TIME_ONLY))
+                        .append(attack.isReal() ? " real, " : " fake, ")
+                        .append(attack.getAttacker().getVillageName())
+                        .append(" (")
+                        .append(attack.getAttacker().getCoords())
+                        .append(")")
+                        .append(attack.isReal() ? "[/b]" : "")
+                        .append("\n");
+            }
+        } else {
+            for (Attack attack : targets) {
+                commandText.append(attack.isReal() ? "[b]" : "")
+                        .append(attack.getSendingTime().format(App.TIME_ONLY))
+                        .append(attack.isReal() ? " real[/b]" : " fake")
+                        .append("\n");
+            }
+        }
+        commandText.append("\n");
+        commandText.append("------------------------------------------");
+        commandText.append("\n");
+        commandText.append("\n");
         commandText
                 .append("Attacks from village [b]")
                 .append(a.getVillageName())
@@ -115,8 +171,8 @@ public class CommandController implements Initializable {
                 .append(", Speed multiplier: ")
                 .append(a.getArteSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
-        commandText.append("[b]Departure[/b]  // Travel time //  [b]Arrival[/b]  " +
-                "Target  Other  [b]Type[/b]  Attack order\n\n");
+        commandText.append("[b]Departure[/b] // Travel time // [b]Arrival[/b] " +
+                "Target\n[b]:: Type ::[/b]\n[ Other info ]\nLanding order\n");
         for (Attack attack : targets) {
             commandText.append(this.toAttackRow(attack));
         }
@@ -130,16 +186,14 @@ public class CommandController implements Initializable {
 
 
     /**
-     * Generates a target row for the command message. Example:
-     * [b]19:04:24 05.03[/b] // 14:21:18 // [b]9:25:42 06.03[/b] [x|y]-6|5[/x|y] Scout effect [b]Fake cata[/b]
-     * TODO add conditionals for adding landing orders
+     * Generates a target row for the command message.
      */
     private String toAttackRow(Attack attack) {
         String travelTime = LocalDateTime.of(LocalDate.now(), LocalTime.of(0, 0))
                 .plusSeconds(attack.travelSeconds()).format(App.TIME_ONLY);
         StringBuilder attackRow = new StringBuilder();
         attackRow
-                .append("[b]")
+                .append("\n[b]")
                 .append(attack.getSendingTime().format(App.TIME_ONLY))
                 .append(" ")
                 .append(attack.getSendingTime().format(App.DAY_AND_MONTH))
@@ -152,6 +206,18 @@ public class CommandController implements Initializable {
                 .append("[/b] [x|y]")
                 .append(attack.getTarget().getCoords())
                 .append("[/x|y] ");
+        attackRow
+                .append("\n[b]:: ")
+                .append(attack.getWaves())
+                .append("x ")
+                .append(Converters.attackType(attack))
+                .append(" ::[/b]");
+        attackRow.append("\n");
+        // List artefacts and their effects on target
+        if (!attack.getTarget().getArtefact().isEmpty()
+                || !attack.getTarget().getArteEffects().isEmpty()) {
+            attackRow.append("[ ");
+        }
         if (!attack.getTarget().getArtefact().isEmpty()) {
             attackRow.append(attack.getTarget().getArtefact());
             if (!attack.getTarget().getArteEffects().isEmpty()) {
@@ -165,12 +231,10 @@ public class CommandController implements Initializable {
                     .append(effect)
                     .append(" ");
         }
-        attackRow
-                .append("[b]")
-                .append(attack.getWaves())
-                .append("x ")
-                .append(Converters.attackType(attack))
-                .append("[/b] ");
+        if (!attack.getTarget().getArtefact().isEmpty()
+                || !attack.getTarget().getArteEffects().isEmpty()) {
+            attackRow.append("]\n");
+        }
         // List attacks in landing order
         List<Attack> targetAttacks = new ArrayList<>();
         for (AttackerVillage a : attackers) {
@@ -192,10 +256,10 @@ public class CommandController implements Initializable {
                 Attack a = targetAttacks.get(i);
                 attackRow
                         .append(a.getAttacker().getPlayerName())
-                        .append(" (")
-                        .append(a.getAttacker().getCoords())
-                        .append(") ")
-                        .append(a.getLandingTime().format(DateTimeFormatter.ofPattern(":ss")));
+                        //.append(" (")
+                        //.append(a.getAttacker().getCoords())
+                        //.append(") ")
+                        .append(a.getLandingTime().format(DateTimeFormatter.ofPattern(" :ss")));
                 if (i < targetAttacks.size()-1) attackRow.append(", ");
             }
         }
