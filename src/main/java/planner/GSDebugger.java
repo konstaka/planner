@@ -34,30 +34,32 @@ public class GSDebugger {
                 100000,
                 100,
                 0.8,
-                0.05,
+                0.2,
                 240.0,
                 0.4
         );
 
+        Map<Integer, Long> solution = null;
         try {
+            for (int i = operation.getRandomShiftWindow() / 60; i < 10; i++) {
+                System.out.println("Scheduling for a flex window of " + i + " minute(s)");
+                solution = geneticScheduler.schedule();
+                if (solution != null) break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (solution != null) {
             printSolution(
                     geneticScheduler,
-                    geneticScheduler.schedule(),
+                    solution,
                     targetsMap,
                     operation.getAttackers(),
                     operation.getDefaultLandingTime()
             );
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-
-    /**
-     * Prints the solution in the format "coords landingtime"
-     * Example: -15|8 6:29:21
-     * @param solution output of the scheduler
-     */
 
     /**
      * Prints the solution in the format "coords landingtime"
