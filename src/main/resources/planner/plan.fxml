@@ -37,8 +37,8 @@
                             maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
-                            minHeight="260"
-                            maxHeight="260"
+                            minHeight="295"
+                            maxHeight="295"
                             hbarPolicy="NEVER">
                     <VBox   fx:id="enemyTickboxes" />
                 </ScrollPane>
@@ -132,12 +132,18 @@
                 <CheckBox       fx:id="conquer"
                                 text="conquer" />
                 <CheckBox       fx:id="withHero"
-                                text="with hero" />
-                <HBox           alignment="BOTTOM_LEFT">
-                    <Label      text="unit speed: "
+                                text="with hero"
+                                onAction="#updateCycle" />
+                <Region     VBox.vgrow="ALWAYS"
+                            minHeight="1"
+                            maxHeight="1" />
+                <CheckBox       fx:id="specialSpeed"
+                                text="special speed" />
+                <HBox>
+                    <Label      text="set speed: "
                                 minHeight="30"
                                 maxHeight="30"
-                                alignment="BOTTOM_LEFT" />
+                                alignment="TOP_LEFT" />
                     <TextField  fx:id="unitSpeedField"
                                 onAction="#updateUnitSpeed"
                                 text="3"
