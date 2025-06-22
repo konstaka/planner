@@ -298,6 +298,13 @@ public class App extends Application {
                 planSceneController.updateCycle();
             }
         });
+        mainController.getAttackersAdded().addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.getAttackersAdded().set(false);
+                planSceneController.getOperation().addNewAttackers();
+                planSceneController.updateCycle();
+            }
+        });
     }
 
     private void initPlanController() throws IOException {
