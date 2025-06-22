@@ -124,8 +124,7 @@
                                 text="conquer" />
             </VBox>
             <Region     HBox.hgrow="ALWAYS" />
-            <ScrollPane minWidth="570"
-                        maxWidth="570"
+            <ScrollPane maxWidth="570"
                         minHeight="270"
                         maxHeight="270"
                         vbarPolicy="NEVER"

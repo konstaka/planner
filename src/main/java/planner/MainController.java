@@ -150,67 +150,65 @@ public class MainController implements Initializable {
      */
     public void loadParticipants(ActionEvent actionEvent) {
 
-        boolean error = false;
+        // New operation without new participants
+        if (participants.getText().isEmpty()) {
+            newOp.set(true);
+            return;
+        }
 
         String[] offs = participants.getText().split("\n");
 
-        OUTER:
         for (String o : offs) {
-            // New operation without participants
-            if (o.isEmpty()) {
-                newOp.set(true);
-                return;
-            }
+
             String[] off = o.split("\t");
             // Input validation: only last 3 can be empty, off size should include '+'-signs
             // We do not care about the timestamp
             if (off.length < 10) {
                 noParticipants.setText("Error parsing participant data: insufficient length");
-                error = true;
-                break;
+                return;
             }
             for (int i = 1; i < off.length; i++) {
                 if (off[i] == null
                         || (i < 10 && off[i].equals(""))
                         || (i == 7 && !off[i].contains("+"))) {
                     noParticipants.setText("Error parsing participant data: syntax");
-                    error = true;
-                    break OUTER;
+                    return;
                 }
             }
         }
 
         // Add participants to database
-        if (!error) {
-            try {
-                Connection conn = DriverManager.getConnection(App.DB);
-                conn.prepareStatement("DELETE FROM participants").execute();
-                for (String o : offs) {
-                    String[] off = o.split("\t");
-                    String sql = "INSERT INTO participants VALUES ("
-                            + null + ","
-                            + "'" + off[1] + "',"
-                            + Integer.parseInt(off[2]) + ","
-                            + Integer.parseInt(off[3]) + ","
-                            + Integer.parseInt(off[4]) + ","
-                            + Double.parseDouble(off[5].replace(',', '.')) + ","
-                            + this.tribeNumber(off[6]) + ","
-                            + "'" + off[7] + "',"
-                            + this.offSize(this.tribeNumber(off[6]), off[7]) + ","
-                            + Integer.parseInt(off[8]) + ","
-                            + Integer.parseInt(off[9]) + ","
-                            + "'" + (off.length > 10 ? off[10] : null) + "',"
-                            + "'" + (off.length > 11 ? off[11] : null) + "',"
-                            + "'" + (off.length > 12 ? off[12] : null) + "'"
-                            + ")";
-                    conn.prepareStatement(sql).execute();
-                }
-                noParticipants.setText("Current participants: " + offs.length);
-                newOp.set(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("Database error");
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            conn.prepareStatement("DELETE FROM participants").execute();
+            conn.prepareStatement("DELETE FROM attacker_info").execute();
+            conn.prepareStatement("DELETE FROM target_info").execute();
+            conn.prepareStatement("DELETE FROM attacks").execute();
+            for (String o : offs) {
+                String[] off = o.split("\t");
+                String sql = "INSERT INTO participants VALUES ("
+                        + null + ","
+                        + "'" + off[1] + "',"
+                        + Integer.parseInt(off[2]) + ","
+                        + Integer.parseInt(off[3]) + ","
+                        + Integer.parseInt(off[4]) + ","
+                        + Double.parseDouble(off[5].replace(',', '.')) + ","
+                        + this.tribeNumber(off[6]) + ","
+                        + "'" + off[7] + "',"
+                        + this.offSize(this.tribeNumber(off[6]), off[7]) + ","
+                        + Integer.parseInt(off[8]) + ","
+                        + Integer.parseInt(off[9]) + ","
+                        + "'" + (off.length > 10 ? off[10] : null) + "',"
+                        + "'" + (off.length > 11 ? off[11] : null) + "',"
+                        + "'" + (off.length > 12 ? off[12] : null) + "'"
+                        + ")";
+                conn.prepareStatement(sql).execute();
             }
+            noParticipants.setText("Current participants: " + offs.length);
+            newOp.set(true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Database error");
         }
     }
 
