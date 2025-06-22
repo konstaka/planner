@@ -31,8 +31,8 @@ public class GSDebugger {
 
         GeneticScheduler geneticScheduler = new GeneticScheduler(
                 operation,
-                200000,
-                30,
+                100000,
+                100,
                 0.8,
                 0.05,
                 240.0,
@@ -57,6 +57,20 @@ public class GSDebugger {
      * Prints the solution in the format "coords landingtime"
      * Example: -15|8 6:29:21
      * @param solution output of the scheduler
+     */
+
+    /**
+     * Prints the solution in the format "coords landingtime"
+     * and all send intervals and their values per player.
+     * Example:
+     * -15|8 6:29:21
+     * -6|4 6:30:26
+     * 65 240.0
+     * @param geneticScheduler scheduler
+     * @param solution solution
+     * @param targetsMap target id to target map
+     * @param attackers attacker list
+     * @param landingTime default landing time
      */
     private static void printSolution(GeneticScheduler geneticScheduler, Map<Integer, Long> solution,
                                       Map<Integer, TargetVillage> targetsMap, List<AttackerVillage> attackers,
