@@ -13,5 +13,6 @@
     <Button text="Choose map.sql"
             onAction="#loadMapsql"
             fx:id="mapsqlButton" />
+    <Label  fx:id="lastUpdated" />
 
 </AnchorPane>

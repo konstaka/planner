@@ -6,18 +6,25 @@ import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.stage.FileChooser;
 
 public class MainController implements Initializable {
 
     @FXML
     Button mapsqlButton;
+
+    @FXML
+    Label lastUpdated;
 
     /**
      * Called to initialize a controller after its root element has been
@@ -30,7 +37,19 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
 
-
+        try {
+            Connection conn = DriverManager.getConnection(App.getDB());
+            ResultSet rs = conn.prepareStatement("SELECT * FROM updated").executeQuery();
+            if (!rs.isClosed()) {
+                lastUpdated.setText(rs.getString("last"));
+            } else {
+                lastUpdated.setText("never");
+            }
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Could not connect to database");
+        }
 
     }
 
@@ -53,8 +72,17 @@ public class MainController implements Initializable {
                     }
                 }
 
+                // Update last updated field
+                conn.prepareStatement("DELETE FROM updated").execute();
+                String updateInfo = LocalDateTime.now().toString();
+                conn.prepareStatement("INSERT INTO updated VALUES ("
+                        + "'" + updateInfo + "'"
+                        + ")").execute();
+                lastUpdated.setText(updateInfo);
+
                 conn.close();
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println("Could not update map.sql");
             }
         }
