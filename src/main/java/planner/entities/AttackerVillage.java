@@ -143,7 +143,8 @@ public class AttackerVillage extends Village {
         // Offs
         HBox offIconRow = this.offIconRow();
         Tooltip offStringTooltip = new Tooltip(
-                offString + "\n" +
+                this.getPlayerName() + " " + this.getCoords() + "\n" +
+                        offString + "\n" +
                         "Earliest send: " + getSendMin() + "\n" +
                         "Latest send: " + getSendMax()+ "\n" +
                         "Comment: " + getComment());
