@@ -16,7 +16,7 @@
                     onAction="#loadMapsql" />
             <Label  fx:id="lastUpdated" />
         </HBox>
-        <Label      text="Paste participant rows from sheets, exactly in the following format, separated by tabs:" />
+        <Label      text="Paste participant rows from sheets, exactly in the following format:" />
         <Label      text="timestamp account x y ts speed tribe offsize catas chiefs sendmin sendmax comment" />
         <Label      text="Example: 3/26/2020 22:46:59	Haamu	-73	138	18	1	Gaul	100+0+0+109+106	106	3	13:00:00	00:00:00	No night sends																			" />
         <TextArea   maxWidth="300"
@@ -26,6 +26,17 @@
             <Button text="Update participants"
                     onAction="#loadParticipants" />
             <Label  fx:id="noParticipants" />
+        </HBox>
+        <Label      text="Paste here coordinates you want to mark as caps or offs and press the corresponding button." />
+        <Label      text="One per line, format example: -74|99" />
+        <TextArea   maxWidth="300"
+                    maxHeight="100"
+                    fx:id="villageInfo" />
+        <HBox>
+            <Button text="Mark as capitals"
+                    onAction="#markCapitals" />
+            <Button text="Mark as offvillages"
+                    onAction="#markOffs" />
         </HBox>
         <Button     text="Plan!"
                     onAction="#toPlanning" />

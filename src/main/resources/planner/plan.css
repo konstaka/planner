@@ -38,7 +38,7 @@
 .attacker-box-label {
     -fx-min-width: 45px;
     -fx-max-width: 45px;
-    -fx-alignment: CENTER;
+    -fx-alignment: center;
 }
 .attacker-name {
     -fx-min-height: 45px;
@@ -47,5 +47,5 @@
     -fx-max-width: 90px;
     -fx-rotate: -90;
     -fx-translate-x: -22.5px;
-    -fx-alignment: LEFT CENTER;
+    -fx-alignment: center-left;
 }

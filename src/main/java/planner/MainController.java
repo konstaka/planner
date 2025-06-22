@@ -8,6 +8,7 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 
@@ -31,6 +32,9 @@ public class MainController implements Initializable {
 
     @FXML
     Label noParticipants;
+
+    @FXML
+    TextArea villageInfo;
 
     Scene scene;
 
@@ -221,5 +225,36 @@ public class MainController implements Initializable {
         scene.setRoot(FXMLLoader.load(getClass().getResource("plan.fxml")));
         scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
         stage.show();
+    }
+
+    /**
+     * Updates the cap/off/etc data from the user input.
+     * @param column column to be updated
+     */
+    private void updateVillageData(String column) {
+        String[] villages = this.villageInfo.getText().split("\n");
+        for (String v : villages) {
+            String[] c = v.split("\\|");
+            try {
+                Connection conn = DriverManager.getConnection(App.getDB());
+                String sql = "INSERT INTO village_data (coordId, " + column + ") VALUES(" +
+                        "(SELECT coordId " +
+                        "FROM x_world " +
+                        "WHERE xCoord=" + c[0] + " AND yCoord=" + c[1] + "), 1) " +
+                        "ON CONFLICT(coordId) DO UPDATE SET " + column + "=1";
+                conn.prepareStatement(sql).execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public void markCapitals(ActionEvent actionEvent) {
+        this.updateVillageData("capital");
+    }
+
+    public void markOffs(ActionEvent actionEvent) {
+        this.updateVillageData("offvillage");
     }
 }
