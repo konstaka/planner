@@ -148,7 +148,7 @@ public class CommandController implements Initializable {
                 .append(" // [b]")
                 .append(attack.getLandingTime().format(App.TIME_ONLY))
                 .append(" ")
-                .append(attack.getLandingTime().format(App.TIME_ONLY))
+                .append(attack.getLandingTime().format(App.DAY_AND_MONTH))
                 .append("[/b] [x|y]")
                 .append(attack.getTarget().getCoords())
                 .append("[/x|y] ");
