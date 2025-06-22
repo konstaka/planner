@@ -92,7 +92,7 @@ public class MainController implements Initializable {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT COUNT(*) FROM participants").executeQuery();
             if (rs != null && !rs.isClosed()) {
-                noParticipants.setText("Current operation: " + rs.getInt(1) + " participants");
+                noParticipants.setText("Current participants: " + rs.getInt(1));
             }
             conn.close();
         } catch (Exception e) {
@@ -156,6 +156,11 @@ public class MainController implements Initializable {
 
         OUTER:
         for (String o : offs) {
+            // New operation without participants
+            if (o.isEmpty()) {
+                newOp.set(true);
+                return;
+            }
             String[] off = o.split("\t");
             // Input validation: only last 3 can be empty, off size should include '+'-signs
             // We do not care about the timestamp
@@ -200,7 +205,7 @@ public class MainController implements Initializable {
                             + ")";
                     conn.prepareStatement(sql).execute();
                 }
-                noParticipants.setText("Current operation: " + offs.length + " participants");
+                noParticipants.setText("Current participants: " + offs.length);
                 newOp.set(true);
             } catch (Exception e) {
                 e.printStackTrace();

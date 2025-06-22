@@ -82,7 +82,10 @@
     -fx-alignment: center-left;
     -fx-font-size: 0.8em;
 }
-.real-target, .alert {
+.real-target {
+    -fx-text-fill: purple;
+}
+.alert {
     -fx-text-fill: red;
 }
 .attack-box-button {
@@ -91,4 +94,8 @@
     -fx-alignment: center;
     -fx-padding: 0;
     -fx-font-size: 0.5em;
+}
+
+.green {
+    -fx-text-fill: green;
 }

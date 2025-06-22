@@ -6,10 +6,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +41,7 @@ public class PlanSceneController implements Initializable {
     private StringProperty toScene = new SimpleStringProperty("");
 
     @Getter
-    Operation operation;
+    private Operation operation;
 
     @FXML
     VBox enemyTickboxes;
@@ -71,7 +68,9 @@ public class PlanSceneController implements Initializable {
     TextField landingTime;
 
     @FXML
-    TextField flexMinutes;
+    TextField randomShiftMinsField;
+
+    int randomShiftMins = 0;
 
     @FXML
     RadioButton fakes;
@@ -83,13 +82,18 @@ public class PlanSceneController implements Initializable {
     CheckBox conquer;
 
     @FXML
-    TextField wavesBox;
+    TextField wavesField;
+
+    int waves = 4;
 
     @FXML
     HBox attackerCols;
 
     @FXML
     VBox targetRows;
+
+    @FXML
+    Label savedText;
 
 
     /**
@@ -154,6 +158,13 @@ public class PlanSceneController implements Initializable {
         ToggleGroup attackType = new ToggleGroup();
         fakes.setToggleGroup(attackType);
         reals.setToggleGroup(attackType);
+
+        // Listen to the waves field
+        wavesField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) {
+                wavesField.fireEvent(new ActionEvent());
+            }
+        });
     }
 
 
@@ -183,26 +194,47 @@ public class PlanSceneController implements Initializable {
      */
     private void initOperation() {
 
+        // Update operation and view
+        updateCycle();
+
         // Set landing time
         landingTime.setText(operation.getDefaultLandingTime().format(App.FULL_DATE_TIME));
+        // Listen to changes
+        landingTime.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) {
+                landingTime.fireEvent(new ActionEvent());
+            }
+        });
 
-        // Display participants
-        for (AttackerVillage a : operation.getAttackers()) {
-            VBox attackerBox = a.toDisplayBox();
-            attackerCols.getChildren().add(attackerBox);
+        // Set random minutes
+        randomShiftMinsField.setText(""+operation.getRandomShiftWindow() / 60);
+        // Listen to changes
+        randomShiftMinsField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) {
+                updateRandomMinutes();
+            }
+        });
+
+        // Listen to changes in attacks
+        for (Map<Integer, Attack> attackerAttacks : operation.getAttacks().values()) {
+            for (Attack attack : attackerAttacks.values()) {
+                attack.getUpdated().addListener((observable, oldValue, newValue) -> {
+                    if (newValue && !oldValue) {
+                        attack.getUpdated().set(false);
+                        this.updateCycle();
+                    }
+                });
+            }
         }
-
-        // Draw target rows
-        updateTargets();
-    }
-
-
-    /**
-     * Saves current operation to database.
-     */
-    private void saveOperation() {
-        boolean success = operation.save();
-        // TODO do something with the success information.
+        // Listen to changes in participants
+        for (AttackerVillage attackerVillage : operation.getAttackers()) {
+            attackerVillage.getUpdated().addListener((observable, oldValue, newValue) -> {
+                if (newValue && !oldValue) {
+                    attackerVillage.getUpdated().set(false);
+                    this.updateCycle();
+                }
+            });
+        }
     }
 
 
@@ -211,6 +243,7 @@ public class PlanSceneController implements Initializable {
      */
     private void updateCycle() {
 
+        savedText.setText("");
         operation.update();
         updateTargets();
         updateAttackers();
@@ -253,8 +286,8 @@ public class PlanSceneController implements Initializable {
         }
 
         // Create rows
-        for (TargetVillage t : shownVillages) {
-            targetRows.getChildren().add(this.targetRow(t));
+        for (TargetVillage targetVillage : shownVillages) {
+            targetRows.getChildren().add(this.targetRow(targetVillage));
         }
     }
 
@@ -268,38 +301,36 @@ public class PlanSceneController implements Initializable {
      */
     private void updateAttackers() {
 
-        // Redraw
         attackerCols.getChildren().clear();
-        for (AttackerVillage a : operation.getAttackers()) {
-            VBox attackerBox = a.toDisplayBox();
-            attackerCols.getChildren().add(attackerBox);
+        for (AttackerVillage attackerVillage : operation.getAttackers()) {
+            attackerCols.getChildren().add(attackerVillage.toDisplayBox());
         }
     }
 
 
     /**
      * Crafts a target row from the village identifier.
-     * @param village village object
-     * @return hbox
+     * @param target village object
+     * @return hbox the target row
      */
-    private HBox targetRow(TargetVillage village) {
+    private HBox targetRow(TargetVillage target) {
 
         HBox row = new HBox();
-        row.getChildren().add(new Label(village.getAllyName()));
-        row.getChildren().add(new Label(village.getVillageName()));
-        row.getChildren().add(new Label(village.getCoords()));
-        row.getChildren().add(new Label(village.getPlayerName()));
-        row.getChildren().add(new Label(Converters.toTribe(village.getTribe())));
-        row.getChildren().add(new Label(""+village.getPopulation()));
+        row.getChildren().add(new Label(target.getAllyName()));
+        row.getChildren().add(new Label(target.getVillageName()));
+        row.getChildren().add(new Label(target.getCoords()));
+        row.getChildren().add(new Label(target.getPlayerName()));
+        row.getChildren().add(new Label(Converters.toTribe(target.getTribe())));
+        row.getChildren().add(new Label(""+target.getPopulation()));
 
         String arteData = "";
-        if (village.isCapital()) arteData += "cap ";
-        if (village.isOffvillage()) arteData += "off ";
-        if (village.isWwvillage()) arteData += "WW";
-        arteData += village.getArtefact();
+        if (target.isCapital()) arteData += "cap ";
+        if (target.isOffvillage()) arteData += "off ";
+        if (target.isWwvillage()) arteData += "WW";
+        arteData += target.getArtefact();
         row.getChildren().add(new Label(arteData));
         StringBuilder effectData = new StringBuilder();
-        for (String s : village.getArteEffects()) {
+        for (String s : target.getArteEffects()) {
             if (!effectData.toString().equals("")) effectData.append(", ");
             effectData.append(s, 0, 3);
         }
@@ -307,30 +338,33 @@ public class PlanSceneController implements Initializable {
 
         // Get landing time
         row.getChildren().add(new Label(
-                landTimes
-                        .get(village.getCoordId())
-                        .format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+                operation.getLandTimes()
+                        .get(target.getCoordId())
+                        .format(App.TIME_ONLY)
         ));
 
         // Dropdown for adding an attack
         ComboBox<Attack> attackerPicker = new ComboBox<>();
-        for (AttackerVillage a : attackers) {
-            attackerPicker.getItems().add(attacks.get(a.getCoordId()).get(village.getCoordId()));
+        for (AttackerVillage attackerVillage : operation.getAttackers()) {
+            attackerPicker
+                    .getItems()
+                    .add(operation.getAttacks().get(attackerVillage.getCoordId()).get(target.getCoordId()));
         }
         attackerPicker.setPromptText("Add attacker...");
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
-            Attack a = attackerPicker.getSelectionModel().getSelectedItem();
-            if (a != null) {
-                if (!a.getAttacker().getPlannedAttacks().contains(a)) {
-                    a.getAttacker().getPlannedAttacks().add(a);
+            Attack attack = attackerPicker.getSelectionModel().getSelectedItem();
+            if (attack != null) {
+                if (!attack.getAttacker().getPlannedAttacks().contains(attack)) {
+                    attack.getAttacker().getPlannedAttacks().add(attack);
                 }
-                a.getWaves().set(waves);
-                if (reals.isSelected()) a.getReal().set(true);
-                else a.getReal().set(false);
-                if (conquer.isSelected()) a.getConq().set(true);
-                else a.getConq().set(false);
+                attack.setWaves(waves);
+                if (reals.isSelected()) attack.setReal(true);
+                else attack.setReal(false);
+                if (conquer.isSelected()) attack.setConq(true);
+                else attack.setConq(false);
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
+                attack.getUpdated().set(true);
             }
         });
         row.getChildren().add(attackerPicker);
@@ -344,19 +378,19 @@ public class PlanSceneController implements Initializable {
 
         // List attacks in landing order
         List<Attack> rowAttacks = new ArrayList<>();
-        for (Map<Integer, Attack> attackMap: attacks.values()) {
-            Attack a = attackMap.get(village.getCoordId());
-            if (a.getWaves().getValue() > 0) rowAttacks.add(a);
+        for (Map<Integer, Attack> attackMap: operation.getAttacks().values()) {
+            Attack attack = attackMap.get(target.getCoordId());
+            if (attack.getWaves() > 0) rowAttacks.add(attack);
         }
-        rowAttacks.sort((o1, o2) -> {
-            if (o1.getLandingTime().equals(o2.getLandingTime())) {
-                return o1.getSendingTime().compareTo(o2.getSendingTime());
+        rowAttacks.sort((attack1, attack2) -> {
+            if (attack1.getLandingTime().equals(attack2.getLandingTime())) {
+                return attack1.getSendingTime().compareTo(attack2.getSendingTime());
             } else {
-                return o1.getLandingTime().compareTo(o2.getLandingTime());
+                return attack1.getLandingTime().compareTo(attack2.getLandingTime());
             }
         });
-        for (Attack a : rowAttacks) {
-            row.getChildren().add(a.toDisplayBox());
+        for (Attack attack : rowAttacks) {
+            row.getChildren().add(attack.toDisplayBox());
         }
 
         return row;
@@ -364,78 +398,71 @@ public class PlanSceneController implements Initializable {
 
 
     /**
-     * Saves the current plan to database. Overwrites anything that was there.
+     * Shifts all landing times without re-randomising.
+     * @param actionEvent focus leave or enter keypress
      */
-    public void save() {
-        try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            conn.prepareStatement("DELETE FROM operation_meta").execute();
-            String sql = "INSERT INTO operation_meta VALUES ("
-                    + flexSeconds.get() + ",'"
-                    + landingTime.getText() + "')";
-            conn.prepareStatement(sql).execute();
-            conn.prepareStatement("DELETE FROM attacks").execute();
-            for (AttackerVillage attacker : attackers) {
-                for (Attack a : attacker.getPlannedAttacks()) {
-                    conn.prepareStatement("INSERT INTO attacks VALUES ("
-                            + a.getAttacker().getCoordId() + ","
-                            + a.getTarget().getCoordId() + ",'"
-                            + landTimes.get(a.getTarget().getCoordId()).format(App.FULL_DATE_TIME) + "',"
-                            + a.getWaves().get() + ","
-                            + (a.getReal().get() ? 1 : 0) + ","
-                            + (a.getConq().get() ? 1 : 0) + ","
-                            + a.getLandingTimeShift().get() + ","
-                            + a.getUnitSpeed() + ","
-                            + a.getServerSpeed() + ","
-                            + a.getServerSize() + ")"
-                    )
-                            .execute();
-                }
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public void updateTimes(ActionEvent actionEvent) {
+        LocalDateTime newDefaultTime = LocalDateTime.parse(landingTime.getText(), App.FULL_DATE_TIME);
+        operation.setDefaultLandingTime(newDefaultTime);
+        operation.computeLandingTimes(false);
+        updateCycle();
+    }
+
+
+    /**
+     * Re-randomises the landing times.
+     * @param actionEvent button press
+     */
+    public void randomiseTimes(ActionEvent actionEvent) {
+        if (operation != null) {
+            operation.computeLandingTimes(true);
+            updateCycle();
         }
     }
 
 
     /**
-     * Loads saved operation from database on top of all information that currently is in planning.
+     * Updates the number of waves to be added.
+     * @param actionEvent focus leave or enter keypress
      */
-    public void load() {
+    public void updateWaves(ActionEvent actionEvent) {
         try {
-            Connection conn = DriverManager.getConnection(App.DB);
-            ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
-            String time = rs1.getString("defaultLandingTime");
-            landingTime.setText(time);
-            defaultLandingTime = LocalDateTime.parse(time, App.FULL_DATE_TIME);
-            int seconds = rs1.getInt("flex_seconds");
-            flexMinutes.setText(""+seconds / 60);
-            flexSeconds.set(seconds);
-            ResultSet rs3 = conn.prepareStatement("SELECT * FROM attacks").executeQuery();
-            while (rs3.next()) {
-                int a_coordId = rs3.getInt("a_coordId");
-                int t_coordId = rs3.getInt("t_coordId");
-                Attack a = attacks.get(a_coordId).get(t_coordId);
-                a.setLandingTime(LocalDateTime.parse(rs3.getString("landing_time"), App.FULL_DATE_TIME));
-                a.getWaves().set(rs3.getInt("waves"));
-                a.getReal().set(rs3.getInt("realTgt") == 1);
-                a.getConq().set(rs3.getInt("conq") == 1);
-                a.getLandingTimeShift().set(rs3.getInt("time_shift"));
-                a.setUnitSpeed(rs3.getInt("unit_speed"));
-                a.setServerSpeed(rs3.getInt("server_speed"));
-                a.setServerSize(rs3.getInt("server_size"));
-                if (a.getWaves().get() > 0) {
-                    for (AttackerVillage attackerVillage : attackers) {
-                        if (attackerVillage.getCoordId() == a_coordId) {
-                            attackerVillage.getPlannedAttacks().add(a);
-                        }
-                    }
-                }
-            }
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            waves = Integer.parseInt(wavesField.getText());
+            if (waves < 1 || waves > 8) waves = 4;
+        } catch (NumberFormatException e) {
+            waves = 4;
+        }
+        wavesField.setText(""+waves);
+    }
+
+
+    /**
+     * Updates the number of minutes to randomise the hitting times.
+     * Triggered by focus leave
+     */
+    public void updateRandomMinutes() {
+        try {
+            randomShiftMins = Integer.parseInt(randomShiftMinsField.getText());
+            if (randomShiftMins < 0) randomShiftMins = 0;
+        } catch (NumberFormatException e) {
+            randomShiftMins = 0;
+        }
+        randomShiftMinsField.setText(""+randomShiftMins);
+        if (operation != null) {
+            operation.setRandomShiftWindow(randomShiftMins * 60);
+        }
+    }
+
+
+    /**
+     * Saves the current plan to database. Overwrites anything that was there.
+     */
+    public void save() {
+        boolean success = operation.save();
+        if (success) {
+            savedText.setText("Saved to DB");
+        } else {
+            savedText.setText("ERROR");
         }
     }
 

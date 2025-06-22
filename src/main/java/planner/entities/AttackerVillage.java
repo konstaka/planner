@@ -5,9 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -23,65 +21,57 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import planner.App;
 
 public class AttackerVillage extends Village {
 
-    @Getter
-    @Setter
-    private IntegerProperty ts = new SimpleIntegerProperty();
+    @Getter @Setter
+    private int ts;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private double speed;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private String offString;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int offSize;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int catas;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private int chiefs;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private String sendMin;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private String sendMax;
 
-    @Getter
-    @Setter
+    @Getter @Setter
     private String comment;
 
-    @Getter
-    @Setter
-    private BooleanProperty alert = new SimpleBooleanProperty(false);
+    @Getter @Setter
+    private boolean alert = false;
 
     @Getter
-    @Setter
+    private BooleanProperty updated = new SimpleBooleanProperty(false);
+
+    @Getter
     private List<Attack> plannedAttacks = new ArrayList<>();
 
     private Image tribeTroops = null;
 
 
+    @Builder
     public AttackerVillage(int coordId) {
+
         super(coordId);
-    }
 
-
-    public VBox toDisplayBox() {
         switch(this.getTribe()) {
             case 1:
                 tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
@@ -93,6 +83,14 @@ public class AttackerVillage extends Village {
                 tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
                 break;
         }
+    }
+
+
+    /**
+     * Crafts a displayable column for the planning view.
+     * @return VBox representing this participant
+     */
+    public VBox toDisplayBox() {
 
         VBox box = new VBox();
         box.getStyleClass().add("attacker-box");
@@ -162,12 +160,27 @@ public class AttackerVillage extends Village {
         tsRow.getChildren().add(r5);
         // TS level selector
         TextField tsLvl = new TextField();
-        tsLvl.setText(""+this.getTs().getValue());
+        tsLvl.setText(""+this.getTs());
         tsLvl.setPrefWidth(22);
         tsLvl.setAlignment(Pos.BASELINE_CENTER);
         tsLvl.setPadding(new Insets(0, 1, 0, 1));
         // Update TS level
-        tsLvl.setOnAction(this::updateTs);
+        tsLvl.setOnAction(actionEvent -> {
+            try {
+                int lvl = Integer.parseInt(tsLvl.getText());
+                if (lvl < 0) {
+                    tsLvl.setText("0");
+                    this.setTs(0);
+                } else if (lvl > 20) {
+                    tsLvl.setText("20");
+                    this.setTs(20);
+                }
+                this.setTs(lvl);
+                this.getUpdated().set(true);
+            } catch (NumberFormatException ex) {
+                tsLvl.setText("0");
+            }
+        });
         // Update also on focus change
         tsLvl.focusedProperty().addListener((ov, oldV, newV) -> {
             if (!newV) tsLvl.fireEvent(new ActionEvent());
@@ -188,20 +201,28 @@ public class AttackerVillage extends Village {
         // Player name and amount of sends from this village
         Label playerNameVillageSends = new Label(this.getPlayerName() + " (" + plannedAttacks.size() + ")");
         // Tooltip contains relevant information of the attacker
-        StringBuilder attackerInfo = new StringBuilder("Earliest send: " + getSendMin() + "\n" +
-                "Latest send: " + getSendMax() + "\n" +
-                "Comment: " + getComment());
+        VBox attackerInfo = new VBox();
+        attackerInfo.getChildren().add(new Label("Earliest send: " + getSendMin()));
+        attackerInfo.getChildren().add(new Label("Latest send: " + getSendMax()));
+        Label comment = new Label("Comment: " + getComment());
+        comment.setWrapText(true);
+        attackerInfo.getChildren().add(comment);
         if (!plannedAttacks.isEmpty()) {
             plannedAttacks.sort(Comparator.comparing(Attack::getSendingTime));
-            attackerInfo.append("\nCurrent sends:");
+            attackerInfo.getChildren().add(new Label("Current sends:"));
         }
         for (Attack attack : plannedAttacks) {
-            attackerInfo.append("\n")
-                    .append(attack.getSendingTime().format(App.TIME_ONLY))
-                    .append(" ")
-                    .append(attack.getTarget().getCoords());
+            Label attackLabel = new Label(
+                    attack.getSendingTime().format(App.TIME_ONLY) +
+                            " " +
+                            attack.getTarget().getCoords());
+            if (attack.isConflicting()) {
+                attackLabel.getStyleClass().add("alert");
+            }
+            attackerInfo.getChildren().add(attackLabel);
         }
-        Tooltip attackerInfoTooltip = new Tooltip(attackerInfo.toString());
+        Tooltip attackerInfoTooltip = new Tooltip();
+        attackerInfoTooltip.setGraphic(attackerInfo);
         attackerInfoTooltip.setShowDelay(Duration.millis(0));
         attackerInfoTooltip.setHideDelay(Duration.millis(500));
         attackerInfoTooltip.setShowDuration(Duration.INDEFINITE);
@@ -209,13 +230,14 @@ public class AttackerVillage extends Village {
         attackerInfoTooltip.setWrapText(true);
         playerNameVillageSends.setTooltip(attackerInfoTooltip);
         playerNameVillageSends.getStyleClass().add("attacker-name");
-        if (alert.get()) playerNameVillageSends.getStyleClass().add("alert");
+        if (alert) playerNameVillageSends.getStyleClass().add("alert");
         box.getChildren().add(playerNameVillageSends);
         return box;
     }
 
 
     public HBox offIconRow() {
+        assert tribeTroops != null;
         HBox offRow = new HBox();
         int[] offUnitCoords = this.getOffUnitCoords();
         ImageView off1 = new ImageView(tribeTroops);
@@ -244,29 +266,6 @@ public class AttackerVillage extends Village {
     @Override
     public java.lang.String toString() {
         return getPlayerName() + " " + getCoords() + ", " + offSizeRounded();
-    }
-
-
-    /**
-     * Updates the attacks associated with this attacker.
-     */
-    private void updateTs(ActionEvent e) {
-        if (e.getSource() instanceof TextField) {
-            TextField f = (TextField) e.getSource();
-            try {
-                int lvl = Integer.parseInt(f.getText());
-                if (lvl < 0) {
-                    f.setText("0");
-                    this.getTs().set(0);
-                } else if (lvl > 20) {
-                    f.setText("20");
-                    this.getTs().set(20);
-                }
-                this.getTs().set(lvl);
-            } catch (NumberFormatException ex) {
-                f.setText("0");
-            }
-        }
     }
 
 

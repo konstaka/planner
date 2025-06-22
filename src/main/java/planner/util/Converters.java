@@ -1,6 +1,35 @@
 package planner.util;
 
+import planner.entities.Attack;
+
 public class Converters {
+
+
+    /**
+     * Creates string representations for different attack types.
+     * @param attack the attack to be interpreted
+     * @return attack type string, for example "Fake cata"
+     */
+    public static String attackType(Attack attack) {
+        switch (attack.getUnitSpeed()) {
+            case 5:
+                return attack.isReal() ? "Conquer" : "Fake conquer";
+            case 4:
+                if (attack.isConq()) {
+                    return attack.isReal() ? "Conquer" : "Fake conquer";
+                } else {
+                    return attack.isReal() ? "Ram" : "Fake ram";
+                }
+            case 3:
+                if (attack.isConq()) {
+                    return attack.isReal() ? "Conquer" : "Fake conquer";
+                } else {
+                    return attack.isReal() ? "Cata" : "Fake cata";
+                }
+            default:
+                return attack.isReal() ? "Sweep" : "Fake sweep";
+        }
+    }
 
 
     /**

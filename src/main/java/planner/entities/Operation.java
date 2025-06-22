@@ -2,6 +2,7 @@ package planner.entities;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -16,26 +17,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import planner.App;
 import planner.util.Converters;
 
 /**
- * This class represents a whole planned operation in memory and offers load and save methods for long-term storage.
+ * This class represents a whole planned operation in memory.
+ * Offers load and save methods for long-term storage.
  */
 public class Operation {
 
-    @Getter
+    @Getter @Setter
     LocalDateTime defaultLandingTime = LocalDateTime.of(
             LocalDate.now().plusDays(2),
             LocalTime.of(8, 0));
 
-    @Getter
-    IntegerProperty flexSeconds = new SimpleIntegerProperty(0);
+    @Getter @Setter
+    int randomShiftWindow = 0;
 
     @Getter
     List<TargetVillage> targets = new ArrayList<>();
@@ -45,9 +46,6 @@ public class Operation {
 
     @Getter
     Map<Integer, Map<Integer, Attack>> attacks = new HashMap<>();
-
-    @Getter
-    Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
 
     @Getter
     Map<Integer, LocalDateTime> landTimes = new HashMap<>();
@@ -75,7 +73,7 @@ public class Operation {
         this.loadVillageData();
         this.assembleArteEffects();
         this.assembleAttackers();
-        this.computeLandingTimes(true);
+        this.computeLandingTimes(false);
         this.createAttacks();
     }
 
@@ -83,6 +81,7 @@ public class Operation {
     /**
      * Load village data from DB to memory.
      * Join with cap/off/artefact/etc information.
+     * TODO move database queries to the Database class.
      */
     private void loadVillageData() {
         try {
@@ -134,18 +133,18 @@ public class Operation {
      * Checks the village artefact and possible account-wide effects.
      */
     private void assembleArteEffects() {
-        for (TargetVillage t : targets) {
-            if (t.getArtefact().contains("Eyes") || scoutAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Scout effect");
+        for (TargetVillage target : targets) {
+            if (target.getArtefact().contains("Eyes") || scoutAccounts.contains(target.getPlayerId())) {
+                target.getArteEffects().add("Scout effect");
             }
-            if (t.getArtefact().contains("Fool") || foolAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Fool effect");
+            if (target.getArtefact().contains("Fool") || foolAccounts.contains(target.getPlayerId())) {
+                target.getArteEffects().add("Fool effect");
             }
-            if (t.getArtefact().contains("Confuser") || confuserAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Confuser effect");
+            if (target.getArtefact().contains("Confuser") || confuserAccounts.contains(target.getPlayerId())) {
+                target.getArteEffects().add("Confuser effect");
             }
-            if (t.getArtefact().contains("Architect") || architectAccounts.contains(t.getPlayerId())) {
-                t.getArteEffects().add("Architect effect");
+            if (target.getArtefact().contains("Architect") || architectAccounts.contains(target.getPlayerId())) {
+                target.getArteEffects().add("Architect effect");
             }
         }
     }
@@ -155,7 +154,9 @@ public class Operation {
      * Join participant info with world data.
      */
     private void assembleAttackers() {
+
         // Assemble attacking villages
+        // TODO Notify somewhere if the village is not found, this could mean wrong coordinates or deleted account.
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM participants").executeQuery();
@@ -164,7 +165,7 @@ public class Operation {
                     if (v.getXCoord() == rs.getInt("xCoord")
                             && v.getYCoord() == rs.getInt("yCoord")) {
                         AttackerVillage attacker = new AttackerVillage(v.getCoordId());
-                        attacker.getTs().set(rs.getInt("ts"));
+                        attacker.setTs(rs.getInt("ts"));
                         attacker.setSpeed(rs.getDouble("speed"));
                         attacker.setOffString(rs.getString("offstring"));
                         attacker.setOffSize(rs.getInt("offsize"));
@@ -189,16 +190,22 @@ public class Operation {
      * Updates the default hitting time for every target based on default time and flex seconds.
      * @param randomise True if the times should be re-randomised
      */
-    private void computeLandingTimes(boolean randomise) {
+    public void computeLandingTimes(boolean randomise) {
+
         for (TargetVillage target : targets) {
-            long flexSec = target.getFlexSec();
+            long randomShiftSeconds = target.getRandomShiftSeconds();
             if (randomise) {
                 // Randomise landing times:
-                flexSec = Math.round(flexSeconds.get() * (Math.random() * 2 - 1));
+                randomShiftSeconds = Math.round(randomShiftWindow * (Math.random() * 2 - 1));
             }
-            target.setFlexSec(flexSec);
-            LocalDateTime thisHit = defaultLandingTime.plusSeconds(flexSec);
+            target.setRandomShiftSeconds(randomShiftSeconds);
+            LocalDateTime thisHit = defaultLandingTime.plusSeconds(randomShiftSeconds);
             landTimes.put(target.getCoordId(), thisHit);
+        }
+        for (Map<Integer, Attack> attackMap : attacks.values()) {
+            for (Attack attack : attackMap.values()) {
+                attack.setLandingTime(landTimes.get(attack.getTarget().getCoordId()));
+            }
         }
     }
 
@@ -209,26 +216,27 @@ public class Operation {
     private void createAttacks() {
         // Create the attack matrix
         for (AttackerVillage attacker : attackers) {
-            Map<Integer, Attack> toAdd = new HashMap<>();
+            Map<Integer, Attack> attackerAttacks = new HashMap<>();
             for (TargetVillage target : targets) {
                 // TODO make all magic numbers editable.
-                // Currently: unit speed, server speed, server size
+                // TODO: unit speed, server speed, server size
                 // Waves needs to be 0 at this point to mark that the attack is not planned for now
-                Attack a = new Attack(
+                Attack attack = new Attack(
                         target,
                         attacker,
-                        new SimpleIntegerProperty(0),
-                        new SimpleBooleanProperty(false),
-                        new SimpleBooleanProperty(false),
+                        0,
+                        false,
+                        false,
                         3,
                         landTimes.get(target.getCoordId()),
-                        new SimpleIntegerProperty(0),
+                        0,
                         1,
-                        200);
-                // TODO Somehow listen to changes that mark planned fake/real attacks.
-                toAdd.put(target.getCoordId(), a);
+                        200,
+                        false,
+                        new SimpleBooleanProperty(false));
+                attackerAttacks.put(target.getCoordId(), attack);
             }
-            attacks.put(attacker.getCoordId(), toAdd);
+            attacks.put(attacker.getCoordId(), attackerAttacks);
         }
     }
 
@@ -248,15 +256,14 @@ public class Operation {
 
         // Reset alerts, prune planned attacks
         for (AttackerVillage attackerVillage : attackers) {
-            attackerVillage.getPlannedAttacks().removeIf(attack -> attack.getWaves().get() == 0);
-            attackerVillage.getAlert().set(false);
+            attackerVillage.getPlannedAttacks().removeIf(attack -> attack.getWaves() == 0);
+            attackerVillage.getPlannedAttacks().forEach(attack -> attack.setConflicting(false));
+            attackerVillage.setAlert(false);
         }
 
         // Alert if there are sending times too close to each other
-        // TODO set fastest possible send interval individually per attacker
-        // TODO highlight problematic rows and make their landing times individually adjustable
-        // Clear attacks per player
-        attacksPerPlayer = new HashMap<>();
+        // TODO set fastest possible send interval individually per player
+        Map<Integer, List<Attack>> attacksPerPlayer = new HashMap<>();
         // Assemble attack lists player-wise
         for (AttackerVillage attackerVillage : attackers) {
             if (!attacksPerPlayer.containsKey(attackerVillage.getPlayerId())) {
@@ -271,8 +278,10 @@ public class Operation {
                 LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
                 LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
                 if (ChronoUnit.SECONDS.between(send1, send2) < 50) {
-                    attacksForPlayer.get(i).getAttacker().getAlert().set(true);
-                    attacksForPlayer.get(i+1).getAttacker().getAlert().set(true);
+                    attacksForPlayer.get(i).setConflicting(true);
+                    attacksForPlayer.get(i+1).setConflicting(true);
+                    attacksForPlayer.get(i).getAttacker().setAlert(true);
+                    attacksForPlayer.get(i+1).getAttacker().setAlert(true);
                 }
             }
         }
@@ -293,20 +302,127 @@ public class Operation {
 
     /**
      * Loads last saved operation from the database.
-     * @return Operation object
+     * @return Operation object or null if there was a problem.
+     * TODO move DB operations to the Database class
      */
     public static Operation load() {
-        // TODO implementation
-        return new Operation();
+        Operation operation = new Operation();
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            // Get landing time and flex seconds
+            ResultSet rs1 = conn.prepareStatement("SELECT * FROM operation_meta").executeQuery();
+            operation.defaultLandingTime = LocalDateTime.parse(
+                    rs1.getString("defaultLandingTime"), App.FULL_DATE_TIME);
+            operation.randomShiftWindow = rs1.getInt("flex_seconds");
+            // Get attacker info
+            ResultSet rs2 = conn.prepareStatement("SELECT * FROM attacker_info").executeQuery();
+            while (rs2.next()) {
+                for (AttackerVillage attackerVillage : operation.getAttackers()) {
+                    if (attackerVillage.getCoordId() == rs2.getInt("coordId")) {
+                        attackerVillage.setTs(rs2.getInt("tsLvl"));
+                        break;
+                    }
+                }
+            }
+            // Get attack data. Setting landing time here is redundant.
+            ResultSet rs3 = conn.prepareStatement("SELECT * FROM attacks").executeQuery();
+            while (rs3.next()) {
+                int a_coordId = rs3.getInt("a_coordId");
+                int t_coordId = rs3.getInt("t_coordId");
+                Attack attack = operation.getAttacks().get(a_coordId).get(t_coordId);
+                attack.setWaves(rs3.getInt("waves"));
+                attack.setReal(rs3.getInt("realTgt") == 1);
+                attack.setConq(rs3.getInt("conq") == 1);
+                attack.setLandingTimeShift(rs3.getInt("time_shift"));
+                attack.setUnitSpeed(rs3.getInt("unit_speed"));
+                attack.setServerSpeed(rs3.getInt("server_speed"));
+                attack.setServerSize(rs3.getInt("server_size"));
+                if (attack.getWaves() > 0) {
+                    for (AttackerVillage attackerVillage : operation.getAttackers()) {
+                        if (attackerVillage.getCoordId() == a_coordId) {
+                            attackerVillage.getPlannedAttacks().add(attack);
+                        }
+                    }
+                }
+            }
+            // Get target specific landing time shifts
+            Map<Integer, Long> landingTimeShifts = new HashMap<>();
+            ResultSet rs4 = conn.prepareStatement("SELECT * FROM target_info").executeQuery();
+            while (rs4.next()) {
+                landingTimeShifts.put(
+                        rs4.getInt("coordId"),
+                        rs4.getLong("randomShiftSeconds"));
+            }
+            for (TargetVillage targetVillage : operation.getTargets()) {
+                targetVillage.setRandomShiftSeconds(landingTimeShifts.get(targetVillage.getCoordId()));
+            }
+            // Compute landing times for all attacks
+            operation.computeLandingTimes(false);
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return operation;
     }
 
 
     /**
      * Saves this operation to the database. Overwrites anything that was there already.
      * @return True if the save was successful
+     * TODO move DB operations to the Database class
      */
     public boolean save() {
-        // TODO implementation
-        return false;
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            // Save metadata; landing time, flex seconds
+            conn.prepareStatement("DELETE FROM operation_meta").execute();
+            String sql = "INSERT INTO operation_meta VALUES ("
+                    + randomShiftWindow + ",'"
+                    + defaultLandingTime.format(App.FULL_DATE_TIME) + "')";
+            conn.prepareStatement(sql).execute();
+            // Save attack and attacker data
+            conn.prepareStatement("DELETE FROM attacks").execute();
+            conn.prepareStatement("DELETE FROM attacker_info").execute();
+            String attackInsert = "INSERT INTO attacks VALUES(?,?,?,?,?,?,?,?,?,?)";
+            PreparedStatement attackInserts = conn.prepareStatement(attackInsert);
+            for (AttackerVillage attacker : attackers) {
+                conn.prepareStatement("INSERT INTO attacker_info VALUES ("
+                        + attacker.getCoordId() + ","
+                        + attacker.getTs() + ")"
+                ).execute();
+                for (Attack attack : attacker.getPlannedAttacks()) {
+                    int a_coordId = attack.getAttacker().getCoordId();
+                    int t_coordId = attack.getTarget().getCoordId();
+                    attackInserts.setInt(1, a_coordId);
+                    attackInserts.setInt(2, t_coordId);
+                    attackInserts.setString(3, landTimes.get(t_coordId).format(App.FULL_DATE_TIME));
+                    attackInserts.setInt(4, attack.getWaves());
+                    attackInserts.setInt(5, (attack.isReal() ? 1 : 0));
+                    attackInserts.setInt(6, (attack.isConq() ? 1 : 0));
+                    attackInserts.setInt(7, attack.getLandingTimeShift());
+                    attackInserts.setInt(8, attack.getUnitSpeed());
+                    attackInserts.setInt(9, attack.getServerSpeed());
+                    attackInserts.setInt(10, attack.getServerSize());
+                    attackInserts.addBatch();
+                }
+            }
+            attackInserts.executeBatch();
+            // Save target specific landing time shifts
+            conn.prepareStatement("DELETE FROM target_info").execute();
+            String targetInsert = "INSERT INTO target_info VALUES(?,?)";
+            PreparedStatement targetInserts = conn.prepareStatement(targetInsert);
+            for (TargetVillage targetVillage : targets) {
+                targetInserts.setInt(1, targetVillage.getCoordId());
+                targetInserts.setLong(2, targetVillage.getRandomShiftSeconds());
+                targetInserts.addBatch();
+            }
+            targetInserts.executeBatch();
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 }
