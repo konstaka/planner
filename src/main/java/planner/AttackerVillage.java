@@ -168,6 +168,12 @@ public class AttackerVillage extends Village {
     }
 
 
+    @Override
+    public java.lang.String toString() {
+        return getPlayerName() + " " + getCoords() + ", " + offSizeRounded();
+    }
+
+
     /**
      * Updates the attacks associated with this attacker.
      */

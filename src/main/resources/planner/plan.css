@@ -4,8 +4,8 @@
     -fx-border-style: solid;
     -fx-border-color: grey;
     -fx-font-size: 0.8em;
-    -fx-min-height: 24px;
-    -fx-max-height: 24px;
+    -fx-min-height: 28px;
+    -fx-max-height: 28px;
 }
 .target-col-0 {
     -fx-min-width: 50px;
@@ -38,6 +38,14 @@
 .target-col-7 {
     -fx-min-width: 110px;
     -fx-max-width: 110px;
+}
+.target-col-8 {
+    -fx-min-width: 55px;
+    -fx-max-width: 55px;
+}
+.target-col-9 {
+    -fx-min-width: 170px;
+    -fx-max-width: 170px;
 }
 .attacker-box {
     -fx-min-width: 45px;
