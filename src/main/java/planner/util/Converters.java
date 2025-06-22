@@ -6,6 +6,42 @@ public class Converters {
 
 
     /**
+     * Computes the size of this off from submitted tribe and off size string.
+     * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
+     * @param offString off size in the format (example) 1000+0+500+100+100
+     * @return off consumption (romans computed without drinking trough)
+     */
+    public static int offSize(int tribe, String offString) {
+        String[] offs = offString.split("\\+");
+        int[] ints = new int[offs.length];
+        for (int i = 0; i < offs.length; i++) {
+            ints[i] = Integer.parseInt(offs[i].trim());
+        }
+        switch (tribe) {
+            case 1: return ints[0] + 3*ints[1] + 4*ints[2];
+            case 2: return ints[0] + ints[1] + 3*ints[2];
+            case 3: return ints[0] + 2*ints[1] + 3*ints[2];
+        }
+        return 0;
+    }
+
+
+    /**
+     * Converts tribe name to number.
+     * @param tribe tribe
+     * @return 1 = Roman, 2 = Teuton, 3 = Gaul, -1 = Unknown
+     */
+    public static int tribeNumber(String tribe) {
+        switch (tribe) {
+            case "Roman": return 1;
+            case "Teuton": return 2;
+            case "Gaul": return 3;
+        }
+        return -1;
+    }
+
+
+    /**
      * Creates string representations for different attack types.
      * @param attack the attack to be interpreted
      * @return attack type string, for example "Fake cata"

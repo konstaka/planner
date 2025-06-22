@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import planner.util.Converters;
 
 /**
  * Handles data updates.
@@ -186,66 +188,29 @@ public class MainController implements Initializable {
             conn.prepareStatement("DELETE FROM attacks").execute();
             for (String o : offs) {
                 String[] off = o.split("\t");
-                String sql = "INSERT INTO participants VALUES ("
-                        + null + ","
-                        + "'" + off[1] + "',"
-                        + Integer.parseInt(off[2]) + ","
-                        + Integer.parseInt(off[3]) + ","
-                        + Integer.parseInt(off[4]) + ","
-                        + Double.parseDouble(off[5].replace(',', '.')) + ","
-                        + this.tribeNumber(off[6]) + ","
-                        + "'" + off[7] + "',"
-                        + this.offSize(this.tribeNumber(off[6]), off[7]) + ","
-                        + Integer.parseInt(off[8]) + ","
-                        + Integer.parseInt(off[9]) + ","
-                        + "'" + (off.length > 10 ? off[10] : null) + "',"
-                        + "'" + (off.length > 11 ? off[11] : null) + "',"
-                        + "'" + (off.length > 12 ? off[12] : null) + "'"
-                        + ")";
-                conn.prepareStatement(sql).execute();
+                String sql = "INSERT INTO participants VALUES (null,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setString(1, off[1]);
+                ps.setInt(2, Integer.parseInt(off[2]));
+                ps.setInt(3, Integer.parseInt(off[3]));
+                ps.setInt(4, Integer.parseInt(off[4]));
+                ps.setDouble(5, Double.parseDouble(off[5].replace(',', '.')));
+                ps.setInt(6, Converters.tribeNumber(off[6]));
+                ps.setString(7, off[7]);
+                ps.setInt(8, Converters.offSize(Converters.tribeNumber(off[6]), off[7]));
+                ps.setInt(9, Integer.parseInt(off[8]));
+                ps.setInt(10, Integer.parseInt(off[9]));
+                ps.setString(11, (off.length > 10 ? off[10] : null));
+                ps.setString(12, (off.length > 11 ? off[11] : null));
+                ps.setString(13, (off.length > 12 ? off[12] : null));
+                ps.execute();
             }
-            noParticipants.setText("Current participants: " + offs.length);
+            noParticipants.setText(" Current participants: " + offs.length);
             newOp.set(true);
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Database error");
         }
-    }
-
-
-    /**
-     * Computes the size of this off from submitted tribe and off size string.
-     * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
-     * @param offString off size in the format (example) 1000+0+500+100+100
-     * @return off consumption (romans computed without drinking trough)
-     */
-    private int offSize(int tribe, String offString) {
-        String[] offs = offString.split("\\+");
-        int[] ints = new int[offs.length];
-        for (int i = 0; i < offs.length; i++) {
-            ints[i] = Integer.parseInt(offs[i].trim());
-        }
-        switch (tribe) {
-            case 1: return ints[0] + 3*ints[1] + 4*ints[2];
-            case 2: return ints[0] + ints[1] + 3*ints[2];
-            case 3: return ints[0] + 2*ints[1] + 3*ints[2];
-        }
-        return 0;
-    }
-
-
-    /**
-     * Converts tribe name to number.
-     * @param tribe tribe
-     * @return 1 = Roman, 2 = Teuton, 3 = Gaul
-     */
-    private int tribeNumber(String tribe) {
-        switch (tribe) {
-            case "Roman": return 1;
-            case "Teuton": return 2;
-            case "Gaul": return 3;
-        }
-        return -1;
     }
 
 
