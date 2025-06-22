@@ -32,7 +32,7 @@ public class GeneticScheduler {
     private Operation operation;
 
     private static final int POPULATION_SIZE = 100000;
-    private static final int GENERATIONS = 100;
+    private static final int GENERATIONS = 20;
     private static final double PROB_CROSSOVER = 0.7;
     private static final double PROB_MUTATION = 0.2;
     private static final double RATIO_SPATIAL = 0.2;
@@ -50,14 +50,12 @@ public class GeneticScheduler {
     /**
      * Initialises a genetic attack scheduler.
      * Parameters determine the fitness function
-     * and can be used to weight long send intervals to taste.
+     * and can be used to weigh long send intervals to taste.
      * The higher the bestValue, the slower the value of the interval
      * drops when it gets longer.
      * baseValueRatio of 0.0 means that long intervals are highly penalised,
      * baseValueRatio of 1.0 means that long intervals are as good as the
      * optimal ones.
-     * baseValueRatio of over 0.5 means that a long send interval is
-     * considered better than a very small one. This is generally preferred.
      * @param operation operation to be scheduled
      * @param bestValue value for an optimal interval
      * @param baseValueRatio proportion of the best value
@@ -190,6 +188,7 @@ public class GeneticScheduler {
 
         Set<Integer> targetIds = new HashSet<>();
         // Assemble attack lists player-wise
+        attacksPerPlayer.clear();
         for (AttackerVillage attackerVillage : operation.getAttackers()) {
             if (!attacksPerPlayer.containsKey(attackerVillage.getPlayerId())) {
                 attacksPerPlayer.put(attackerVillage.getPlayerId(), new ArrayList<>());

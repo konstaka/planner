@@ -29,13 +29,15 @@ public class GSDebugger {
             }
         }
 
+
+
         GeneticScheduler geneticScheduler = new GeneticScheduler(
                 operation,
                 240.0,
                 0.8
         );
-
         Map<Integer, Long> solution = null;
+
         try {
             for (int i = operation.getRandomShiftWindow() / 60; i < 10; i++) {
                 operation.setRandomShiftWindow(i*60);
@@ -61,10 +63,6 @@ public class GSDebugger {
     /**
      * Prints the solution in the format "coords landingtime"
      * and all send intervals and their values per player.
-     * Example:
-     * -15|8 6:29:21
-     * -6|4 6:30:26
-     * 65 240.0
      * @param geneticScheduler scheduler
      * @param solution solution
      * @param targetsMap target id to target map
