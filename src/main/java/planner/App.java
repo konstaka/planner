@@ -32,6 +32,8 @@ public class App extends Application {
 
     public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    public static final DateTimeFormatter SHEET_TIME = DateTimeFormatter.ofPattern("HH.mm.ss");
+
     public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM.");
 
     public static String DB = "";

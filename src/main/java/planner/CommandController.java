@@ -117,6 +117,17 @@ public class CommandController implements Initializable {
     }
 
 
+    // TODO: get server size from settings
+    private String getSheetDistanceFormulaForRow(int rowId) {
+        return "=(IF((ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5))<=20;ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24);20/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24)+(ROUND(SQRT(min((abs($C" + rowId + "-M$4));401-abs($C" + rowId + "-M$4))^2+min((abs($D" + rowId + "-N$4));401-abs($D" + rowId + "-N$4))^2);5)-20)/(IF(P" + rowId + "<>\"\";P" + rowId + ";N$5)*24*(((IF(O" + rowId + "<>\"\";O" + rowId + ";M$5)/5+1))))))";
+    }
+
+
+    private String getSheetSendingTimeFormulaForRow(int rowId) {
+        return "=$E" + rowId + "-VALUE(M" + rowId + ")+VALUE(G" + rowId + ")";
+    }
+
+
     private HBox toSheetPasteableAttackerRow(AttackerVillage a) {
         HBox attackerRow = new HBox();
         List<Attack> targets = a.getPlannedAttacks();
@@ -167,10 +178,16 @@ public class CommandController implements Initializable {
             commandText.append(arteData + "\t");
             commandText.append(x + "\t");
             commandText.append(y + "\t");
-            commandText.append(attack.getLandingTime().format(App.TIME_ONLY) + "\t");
+            commandText.append(attack.getLandingTime().format(App.SHEET_TIME) + "\t");
             commandText.append(target.getArtefact() + "\t");
             commandText.append("\t");
             commandText.append("\t");
+            if (attack.isReal() && !attack.isWithHero()) {
+                commandText.append("NO HERO");
+            }
+            if (!attack.isReal() && attack.isWithHero()) {
+                commandText.append("HERO FAKE");
+            }
             commandText.append("\t");
             commandText.append((attack.isReal() ? "REAL" : "FAKE") + "\t");
             // List attacks in landing order
@@ -208,13 +225,9 @@ public class CommandController implements Initializable {
                 }
             }
             commandText.append("\t");
-            String travelTime = LocalDateTime.of(
-                    LocalDate.now(), 
-                    LocalTime.of(0, 0)
-                )
-                .plusSeconds(attack.travelSeconds()).format(App.TIME_ONLY);
-            commandText.append(travelTime + "\t");
-            commandText.append(attack.getSendingTime().format(App.TIME_ONLY));
+            // 7 header rows before the first attack row
+            commandText.append(getSheetDistanceFormulaForRow(i + 7) + "\t");
+            commandText.append(getSheetSendingTimeFormulaForRow(i + 7));
 
             commandText.append("\n");
         }
