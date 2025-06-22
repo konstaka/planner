@@ -118,7 +118,7 @@ public class Attack {
         r4.setMaxHeight(2);
         r4.setMinHeight(2);
         offs.getChildren().add(r4);
-        offs.getChildren().add(attacker.toOffRow());
+        offs.getChildren().add(attacker.offIconRow());
         offs.getChildren().add(new Label(attacker.offSizeRounded()));
         for (Node n : offs.getChildren()) n.getStyleClass().add("attack-box-off-column");
         box.getChildren().add(offs);

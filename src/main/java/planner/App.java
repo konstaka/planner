@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -21,8 +22,13 @@ public class App extends Application {
     @Getter
     private static final String GREETING = "Welcome";
 
-    @Getter
-    private static final String DB = "jdbc:sqlite:planner.db";
+    public static final String DB = "jdbc:sqlite:planner.db";
+
+    public static final DateTimeFormatter FULL_DATE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+
+    public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM");
 
     private Stage stage;
 
@@ -76,7 +82,7 @@ public class App extends Application {
 
     private void readyDb() {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("create table if not exists artefacts\n" +
                     "(\n" +
                     "    coordId int not null\n" +

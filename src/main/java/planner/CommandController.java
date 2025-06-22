@@ -56,7 +56,7 @@ public class CommandController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             ResultSet rs = conn.prepareStatement("SELECT * FROM templates").executeQuery();
             while (rs.next()) {
                 template1.setText(rs.getString("template1"));
@@ -224,7 +224,7 @@ public class CommandController implements Initializable {
 
     public void saveTemplates(ActionEvent actionEvent) {
         try {
-            Connection conn = DriverManager.getConnection(App.getDB());
+            Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("DELETE FROM templates").execute();
             PreparedStatement ps = conn.prepareStatement("INSERT INTO templates VALUES(?, ?)");
             ps.setString(1, template1.getText());
