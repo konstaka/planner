@@ -11,7 +11,7 @@
                 maxWidth="1280">
             <Region         minWidth="4"
                             maxWidth="4" />
-            <VBox>
+            <VBox           spacing="4" >
                 <Label      text="Tools"
                             minHeight="20"
                             maxHeight="20" />
@@ -75,8 +75,8 @@
                             alignment="BASELINE_RIGHT"
                             onAction="#updateTimes" />
                 <Region     VBox.vgrow="ALWAYS"
-                            minHeight="5"
-                            maxHeight="5" />
+                            minHeight="4"
+                            maxHeight="4" />
                 <HBox       minWidth="160"
                             maxWidth="160" >
                     <Button     text="Randomise"
@@ -95,6 +95,9 @@
                                 maxHeight="30"
                                 alignment="TOP_RIGHT" />
                 </HBox>
+                <Region     VBox.vgrow="ALWAYS"
+                            minHeight="1"
+                            maxHeight="1" />
                 <Button     fx:id="optimiseButton"
                             minWidth="140"
                             maxWidth="140"

@@ -175,9 +175,14 @@ public class PlanSceneController implements Initializable {
      * Loads last saved operation from database.
      */
     public void loadOperation() {
-
-        this.operation = Operation.load();
-        initOperation();
+        try {
+            this.operation = Operation.load();
+            if (this.operation != null) {
+                initOperation();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

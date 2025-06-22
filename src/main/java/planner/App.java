@@ -10,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -21,6 +22,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 
@@ -52,7 +54,7 @@ public class App extends Application {
         this.stage = stage;
 
         this.readyDb();
-        this.downloadMapSql();
+        this.checkMapSql();
 
         this.initMainController();
         this.initPlanController();
@@ -191,7 +193,10 @@ public class App extends Application {
     }
 
 
-    private void downloadMapSql() {
+    /**
+     * Checks map.sql age and downloads a new one if necessary.
+     */
+    private void checkMapSql() {
         try {
             // Conditions: server details set, map.sql last updated at least one day ago
             LocalDateTime updatedAt = LocalDateTime.now().minusDays(1);
@@ -205,14 +210,30 @@ public class App extends Application {
             }
             Duration sinceUpdated = Duration.between(updatedAt, LocalDateTime.now());
             Duration threshold = Duration.ofHours(24);
-            ResultSet rs2 = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
-            if (rs2.next() && sinceUpdated.compareTo(threshold) > 0) {
+            conn.close();
+            if (sinceUpdated.compareTo(threshold) > 0) {
+                String updateInfo = downloadMapSql();
+                if (!updateInfo.equals("[error]")) {
+                    App.displayInfoAlert("Map.sql updated", "Reload operation to see the changes.");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public static String downloadMapSql() {
+        try {
+            Connection conn = DriverManager.getConnection(App.DB);
+            ResultSet rs = conn.prepareStatement("SELECT * FROM world_meta").executeQuery();
+            if (rs != null && !rs.isClosed()) {
                 System.out.println("Updating map.sql");
                 // Get newest map.sql from server
-                String url = rs2.getString("serverurl");
+                String url = rs.getString("serverurl");
                 if (!url.endsWith("/")) url += "/";
                 HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(url + "map.sql"))
+                        .uri(URI.create("https://" + url + "map.sql"))
                         .header("Accept", "application/octet-stream")
                         .build();
                 HttpResponse<String> res = HttpClient.newHttpClient()
@@ -230,14 +251,25 @@ public class App extends Application {
                 // Update last updated field
                 conn.prepareStatement("DELETE FROM updated").execute();
                 String updateInfo = LocalDateTime.now().format(App.FULL_DATE_TIME);
-                conn.prepareStatement("INSERT INTO updated VALUES ("
-                        + "'" + updateInfo + "'"
-                        + ")").execute();
+                PreparedStatement updated = conn.prepareStatement("INSERT INTO updated VALUES (?)");
+                updated.setString(1, updateInfo);
+                updated.execute();
+                conn.close();
+                return updateInfo;
             }
-            conn.close();
-        } catch (SQLException | IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        return "[error]";
+    }
+
+
+    public static void displayInfoAlert(String text1, String text2) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Information");
+        alert.setHeaderText(text1);
+        alert.setContentText(text2);
+        alert.showAndWait();
     }
 
 
@@ -263,6 +295,7 @@ public class App extends Application {
             if (observable.getValue()) {
                 mainController.getLoadOp().set(false);
                 planSceneController.loadOperation();
+                planSceneController.updateCycle();
             }
         });
     }
