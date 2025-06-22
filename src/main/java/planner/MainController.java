@@ -25,7 +25,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.StringUtils;
 
 public class MainController implements Initializable {
 
@@ -47,6 +46,7 @@ public class MainController implements Initializable {
     Scene scene;
 
     Stage stage;
+
 
     /**
      * Called to initialize a controller after its root element has been
@@ -84,6 +84,7 @@ public class MainController implements Initializable {
             System.out.println("Could not connect to database 2");
         }
     }
+
 
     /**
      * Asks user for the map.sql file and inserts the contents into internal DB.
@@ -123,6 +124,7 @@ public class MainController implements Initializable {
             }
         }
     }
+
 
     /**
      * Loads the participant data into internal DB.
@@ -189,6 +191,7 @@ public class MainController implements Initializable {
         }
     }
 
+
     /**
      * Computes the size of this off from submitted tribe and off size string.
      * @param tribe 1 = Roman, 2 = Teuton, 3 = Gaul
@@ -209,6 +212,7 @@ public class MainController implements Initializable {
         return 0;
     }
 
+
     /**
      * Converts tribe name to number.
      * @param tribe tribe
@@ -223,17 +227,6 @@ public class MainController implements Initializable {
         return -1;
     }
 
-    /**
-     * Changes to the planning view.
-     * @throws IOException if the fxml file is not found
-     */
-    public void toPlanning() throws IOException {
-        scene = lastUpdated.getScene();
-        stage = (Stage) lastUpdated.getScene().getWindow();
-        scene.setRoot(FXMLLoader.load(getClass().getResource("plan.fxml")));
-        scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
-        stage.show();
-    }
 
     /**
      * Updates the cap/off/etc data from the user input.
@@ -261,13 +254,16 @@ public class MainController implements Initializable {
         }
     }
 
+
     public void markCapitals(ActionEvent actionEvent) {
         this.updateVillageData("capital");
     }
 
+
     public void markOffs(ActionEvent actionEvent) {
         this.updateVillageData("offvillage");
     }
+
 
     private void parseArtefacts(String size) {
         Map<Integer, Integer> artefacts = new HashMap<>();
@@ -364,14 +360,23 @@ public class MainController implements Initializable {
         this.updateArtefacts(size, artefacts, uniques);
     }
 
+
     public void parseSmall(ActionEvent actionEvent) {
         this.parseArtefacts("small_arte");
     }
+
 
     public void parseLarge(ActionEvent actionEvent) {
         this.parseArtefacts("large_arte");
     }
 
+
+    /**
+     * Updates artefacts in database.
+     * @param size which artefact page is being updated, small_arte/large_arte
+     * @param artefacts coordId -> artefact type map
+     * @param uniques coordId:s that have unique artefacts
+     */
     private void updateArtefacts(String size, Map<Integer, Integer> artefacts, Set<Integer> uniques) {
         try {
             Connection conn = DriverManager.getConnection(App.getDB());
@@ -385,7 +390,6 @@ public class MainController implements Initializable {
                 String sql = "INSERT INTO artefacts (coordId, " + col + ") " +
                         "VALUES (" + coordId + ", " + artefacts.get(coordId) + ") " +
                         "ON CONFLICT(coordId) DO UPDATE SET " + col + "=" + artefacts.get(coordId);
-                System.out.println(sql);
                 conn.prepareStatement(sql).execute();
             }
             conn.close();
@@ -393,5 +397,18 @@ public class MainController implements Initializable {
             e.printStackTrace();
         }
 
+    }
+
+
+    /**
+     * Changes to the planning view.
+     * @throws IOException if the fxml file is not found
+     */
+    public void toPlanning() throws IOException {
+        scene = lastUpdated.getScene();
+        stage = (Stage) lastUpdated.getScene().getWindow();
+        scene.setRoot(FXMLLoader.load(getClass().getResource("plan.fxml")));
+        scene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
+        stage.show();
     }
 }

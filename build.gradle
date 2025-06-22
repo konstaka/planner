@@ -42,9 +42,8 @@ dependencies {
     // SQLite for database
     compile group:'org.xerial', name:'sqlite-jdbc', version:'3.30.1'
 
-    // For StringUtils, helps with parsing.
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
-    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+    // Mockito for testing
+    testCompile "org.mockito:mockito-core:1.+"
 }
 
 application {
