@@ -140,8 +140,6 @@ public class Attack {
         VBox wavesBox = new VBox();
         Label wavesLabel = new Label(this.waves.get()+"x :"
                 + this.getLandingTime().format(DateTimeFormatter.ofPattern("ss")));
-        System.out.println(wavesLabel.getText());
-        System.out.println(this.getLandingTime());
         if (real.get()) wavesLabel.getStyleClass().add("real-target");
         wavesBox.getChildren().add(wavesLabel);
         Button minus = new Button("-");

@@ -1,6 +1,5 @@
 package planner;
 
-import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -348,13 +347,77 @@ public class PlanSceneController implements Initializable {
                         1,
                         200);
                 // Listen to changes that mark planned fake/real attacks
-                a.getWaves().addListener(observable -> this.updateTargets());
-                a.getReal().addListener(observable -> this.updateTargets());
-                a.getConq().addListener(observable -> this.updateTargets());
-                a.getLandingTimeShift().addListener(observable -> this.updateTargets());
+                a.getWaves().addListener(observable -> {
+                    this.updateTargets();
+                    this.updateAttackers();
+                });
+                a.getReal().addListener(observable -> {
+                    this.updateTargets();
+                    this.updateAttackers();
+                });
+                a.getConq().addListener(observable -> {
+                    this.updateTargets();
+                    this.updateAttackers();
+                });
+                a.getLandingTimeShift().addListener(observable -> {
+                    this.updateTargets();
+                    this.updateAttackers();
+                });
                 toAdd.put(target.getCoordId(), a);
             }
             attacks.put(attacker.getCoordId(), toAdd);
+        }
+    }
+
+
+    private void updateAttackers() {
+        // Reset alerts
+        for (AttackerVillage a : attackers) {
+            a.getAlert().set(false);
+        }
+//        // Alert if there are sending times too close to each other
+//        // WARNING: Time complexity O(m * n^2) where m is #attackers and n is amount of villages on server.
+//        // TODO make this a background task
+//        // TODO set fastest possible send interval individually per attacker
+//        for (Map<Integer, Attack> attackMap : attacks.values()) {
+//            for (Attack a1 : attackMap.values()) {
+//                for (Attack a2 : attackMap.values()) {
+//                    if (!a1.equals(a2)
+//                            && a1.getWaves().get() > 0 && a2.getWaves().get() > 0
+//                            && ChronoUnit.SECONDS.between(a1.getSendingTime(), a2.getSendingTime()) < 60) {
+//                        a1.getAttacker().getAlert().set(true);
+//                        a2.getAttacker().getAlert().set(true);
+//                    }
+//                }
+//            }
+//        }
+        for (AttackerVillage a : attackers) {
+//            // Alert if two sending times are equal for the same target village (unlikely, but yeah)
+//            // TODO fix this, doesn't work for now. Sorting lambda probably doesn't even check all pairs.
+//            System.out.println(o1.getSendingTime() + " " + o1.getAttacker().getCoords());
+//            System.out.println(o2.getSendingTime() + " " + o2.getAttacker().getCoords());
+//            if (o1.getSendingTime().format(DateTimeFormatter.ofPattern("dd HH:mm:ss"))
+//                    .equals(o2.getSendingTime().format(DateTimeFormatter.ofPattern("dd HH:mm:ss")))
+//                    && o1.getWaves().get() > 0 && o2.getWaves().get() > 0) {
+//                o1.getAttacker().getAlert().set(true);
+//                o2.getAttacker().getAlert().set(true);
+//            }
+        }
+
+        // Alert if too many sends
+        for (AttackerVillage a : attackers) {
+            a.getPlannedAttacks().removeIf(attack -> attack.getWaves().get() == 0);
+            if (a.getPlannedAttacks().size() > 14) {
+                a.getAlert().set(true);
+                // TODO add a tooltip
+            }
+        }
+
+        // Redraw
+        attackerCols.getChildren().clear();
+        for (AttackerVillage a : attackers) {
+            VBox attackerBox = a.toDisplayBox();
+            attackerCols.getChildren().add(attackerBox);
         }
     }
 
@@ -520,11 +583,13 @@ public class PlanSceneController implements Initializable {
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
             AttackerVillage a = attackerPicker.getSelectionModel().getSelectedItem();
             if (a != null) {
-                attacks.get(a.getCoordId()).get(village.getCoordId()).getWaves().set(waves);
-                if (reals.isSelected()) attacks.get(a.getCoordId()).get(village.getCoordId()).getReal().set(true);
-                else attacks.get(a.getCoordId()).get(village.getCoordId()).getReal().set(false);
-                if (conquer.isSelected()) attacks.get(a.getCoordId()).get(village.getCoordId()).getConq().set(true);
-                else attacks.get(a.getCoordId()).get(village.getCoordId()).getConq().set(false);
+                Attack attack = attacks.get(a.getCoordId()).get(village.getCoordId());
+                a.getPlannedAttacks().add(attack);
+                attack.getWaves().set(waves);
+                if (reals.isSelected()) attack.getReal().set(true);
+                else attack.getReal().set(false);
+                if (conquer.isSelected()) attack.getConq().set(true);
+                else attack.getConq().set(false);
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
             }
@@ -576,9 +641,8 @@ public class PlanSceneController implements Initializable {
 
     /**
      * Changes to the updating view.
-     * @throws IOException if the fxml file is not found
      */
-    public void toUpdating(ActionEvent actionEvent) throws IOException {
+    public void toUpdating(ActionEvent actionEvent) {
         this.toScene.set("updating");
     }
 }

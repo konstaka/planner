@@ -106,7 +106,7 @@
                         alignment="TOP_RIGHT" />
         </HBox>
         <ScrollPane minWidth="1280"
-                    fitToWidth="true"
+                    maxWidth="1280"
                     minHeight="580"
                     maxHeight="580" >
             <VBox   fx:id="targetRows" />
