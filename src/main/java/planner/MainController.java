@@ -31,6 +31,10 @@ import javafx.scene.control.TextArea;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+/**
+ * Handles data updates.
+ * TODO move DB operations to the Database class
+ */
 public class MainController implements Initializable {
 
     StringProperty toScene = new SimpleStringProperty("");
