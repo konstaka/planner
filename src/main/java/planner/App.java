@@ -18,13 +18,13 @@ import javafx.stage.Stage;
 
 public class App extends Application {
 
-    public static final String DB = "jdbc:sqlite:planner.db";
-
     public static final DateTimeFormatter FULL_DATE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
     public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM");
+
+    public static String DB = "";
 
     private Stage stage;
 
@@ -49,13 +49,20 @@ public class App extends Application {
         this.initPlanController();
         this.initCommandController();
 
-        stage.setTitle("Planner 1.02-dev");
+        stage.setTitle("Planner 1.02");
         stage.setScene(mainScene);
         stage.show();
     }
 
 
     private void readyDb() {
+
+        String userHome = System.getProperty("user.home");
+        if (!userHome.endsWith("/")) {
+            userHome += "/";
+        }
+        DB = "jdbc:sqlite:" + userHome + "planner.db";
+
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("create table if not exists artefacts\n" +
