@@ -49,7 +49,7 @@ public class App extends Application {
         this.initPlanController();
         this.initCommandController();
 
-        stage.setTitle("Planner 1.01-dev");
+        stage.setTitle("Planner 1.01");
         stage.setScene(mainScene);
         stage.show();
     }
