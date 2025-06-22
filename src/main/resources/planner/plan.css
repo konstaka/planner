@@ -44,8 +44,8 @@
     -fx-max-width: 55px;
 }
 .target-col-9 {
-    -fx-min-width: 170px;
-    -fx-max-width: 170px;
+    -fx-min-width: 130px;
+    -fx-max-width: 130px;
 }
 .attacker-box {
     -fx-min-width: 45px;

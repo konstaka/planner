@@ -35,8 +35,6 @@ public class CommandController implements Initializable {
 
     List<AttackerVillage> attackers;
 
-    List<HBox> attackerRows;
-
     DateTimeFormatter time = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     DateTimeFormatter day = DateTimeFormatter.ofPattern("dd.MM");
@@ -52,33 +50,34 @@ public class CommandController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        attackerRows = new ArrayList<>();
     }
 
 
     public void updateCommands() {
-        attackerRows.clear();
+        commands.getChildren().clear();
         for (AttackerVillage a : attackers) {
-            attackerRows.add(this.toAttackerRow(a));
+            commands.getChildren().add(this.toAttackerRow(a));
         }
     }
 
 
     private HBox toAttackerRow(AttackerVillage a) {
-        List<Attack> targets = a.getPlannedAttacks();
-        targets.sort(Comparator.comparing(Attack::getSendingTime));
-
         HBox attackerRow = new HBox();
+        List<Attack> targets = a.getPlannedAttacks();
+        if (targets.isEmpty()) return attackerRow;
+        attackerRow.setSpacing(8);
+        targets.sort(Comparator.comparing(Attack::getSendingTime));
 
         VBox attackerDetails = new VBox();
         Label name = new Label(a.getPlayerName());
         Label village = new Label(a.getVillageName() + " (" + a.getCoords() + ")");
         Label sendWindow = new Label("Send window: " + a.getSendMin() + " - " + a.getSendMax());
+        Label comment = new Label("Comment: " + a.getComment());
         Label sendInfo = new Label("Sends between " +
                 targets.get(0).getSendingTime().format(time) +
                 " - " +
                 targets.get(targets.size()-1).getSendingTime().format(time));
-        attackerDetails.getChildren().addAll(name, village, sendWindow, sendInfo);
+        attackerDetails.getChildren().addAll(name, village, sendWindow, comment, sendInfo);
         attackerDetails.getStyleClass().add("attacker-details");
         attackerRow.getChildren().add(attackerDetails);
 
@@ -93,7 +92,7 @@ public class CommandController implements Initializable {
                 .append(")[/b]\n");
         commandText
                 .append("TS")
-                .append(a.getTs())
+                .append(a.getTs().get())
                 .append(", Speed multiplier: ")
                 .append(a.getSpeed()).append("\n\n");
         commandText.append("Targets are in form:\n");
@@ -138,15 +137,34 @@ public class CommandController implements Initializable {
         }
         attackRow
                 .append("[b]")
-                .append(attack.getWaves())
+                .append(attack.getWaves().get())
                 .append("x ")
                 .append(this.attackType(attack))
                 .append("[/b] ");
+        // List attacks in landing order
+        List<Attack> targetAttacks = new ArrayList<>();
         for (AttackerVillage a : attackers) {
-
+            for (Attack plannedAttack : a.getPlannedAttacks()) {
+                if (plannedAttack.getTarget().getCoordId() == attack.getTarget().getCoordId()) {
+                    targetAttacks.add(plannedAttack);
+                }
+            }
         }
-
-
+        targetAttacks.sort((o1, o2) -> {
+            if (o1.getLandingTime().equals(o2.getLandingTime())) {
+                return o1.getSendingTime().compareTo(o2.getSendingTime());
+            } else {
+                return o1.getLandingTime().compareTo(o2.getLandingTime());
+            }
+        });
+        for (int i = 0; i < targetAttacks.size(); i++) {
+            Attack a = targetAttacks.get(i);
+            attackRow
+                    .append(a.getAttacker().getPlayerName())
+                    .append(" ")
+                    .append(a.getAttacker().getCoords());
+            if (i < targetAttacks.size()-1) attackRow.append(", ");
+        }
         attackRow.append("\n");
         return attackRow.toString();
     }
