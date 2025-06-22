@@ -117,7 +117,6 @@ public class GeneticScheduler {
                 currentBestFitness = fitness(currentBest);
                 smallestInterval = smallestInterval(currentBest);
             }
-            // Update best values
             // Report scores
             System.out.println(
                     "*** Generation " + i +
@@ -278,7 +277,7 @@ public class GeneticScheduler {
      * TODO make all parameters changeable settings
      * @param interval interval to be evaluated
      * @param waves waves to be set for the next send
-     * @return value of this interval, between 0 and 1 (both inclusive)
+     * @return value of this interval, between 0 and bestValue (both inclusive)
      */
     public double value(long interval, int waves) {
         // Cutoff
@@ -389,7 +388,6 @@ public class GeneticScheduler {
 
     /**
      * Introduces small random tweaks to a chromosome to discover possible nearby improvements.
-     * Focuses on moving badly conflicting targets.
      * @param original map from target coordId to landing time shift
      */
     private Map<Integer, Long> tweak(Map<Integer, Long> original) {
