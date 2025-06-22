@@ -1,5 +1,6 @@
 package planner;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -19,7 +20,12 @@ public class GSDebugger {
 
     public static void main(String[] args) {
 
-        Operation operation = Operation.load();
+        Operation operation = null;
+        try {
+            operation = Operation.load();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         if (operation == null) return;
 
         Map<Integer, TargetVillage> targetsMap = new HashMap<>();

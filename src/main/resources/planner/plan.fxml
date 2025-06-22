@@ -11,13 +11,34 @@
                 maxWidth="1280">
             <Region         minWidth="4"
                             maxWidth="4" />
+            <VBox           spacing="4" >
+                <Label      text="Tools"
+                            minHeight="20"
+                            maxHeight="20" />
+                <Button     text="Data updates"
+                            minWidth="110"
+                            maxWidth="110"
+                            onAction="#toUpdating" />
+                <Button     text="Commands"
+                            minWidth="110"
+                            maxWidth="110"
+                            onAction="#toCommands" />
+                <Button     text="Save"
+                            minWidth="110"
+                            maxWidth="110"
+                            onAction="#save" />
+                <Label      fx:id="savedText" />
+            </VBox>
+            <Region         minWidth="8"
+                            maxWidth="8" />
             <VBox>
                 <Label      text="Pick enemies"
                             minHeight="20"
                             maxHeight="20" />
                 <ScrollPane minWidth="130"
                             maxWidth="130"
-                            maxHeight="280"
+                            minHeight="260"
+                            maxHeight="260"
                             hbarPolicy="NEVER">
                     <VBox   fx:id="enemyTickboxes" />
                 </ScrollPane>
@@ -35,10 +56,11 @@
                     <VBox   fx:id="targetTickboxes" >
                         <CheckBox   fx:id="caps" text="Capitals" />
                         <CheckBox   fx:id="offs" text="Off villages" />
+                        <CheckBox   fx:id="deffs" text="Def villages" />
                         <CheckBox   fx:id="small_artes" text="Small artefacts" />
                         <CheckBox   fx:id="large_artes" text="Large artefacts" />
                         <CheckBox   fx:id="bps_wws" text="BP/WW" />
-                        <CheckBox   fx:id="planned_attacks" text="Planned attacks" />
+                        <CheckBox   fx:id="planned_attacks" text="Planned attacks" selected="true" />
                     </VBox>
                 </ScrollPane>
             </VBox>
@@ -54,8 +76,8 @@
                             alignment="BASELINE_RIGHT"
                             onAction="#updateTimes" />
                 <Region     VBox.vgrow="ALWAYS"
-                            minHeight="5"
-                            maxHeight="5" />
+                            minHeight="4"
+                            maxHeight="4" />
                 <HBox       minWidth="160"
                             maxWidth="160" >
                     <Button     text="Randomise"
@@ -74,30 +96,13 @@
                                 maxHeight="30"
                                 alignment="TOP_RIGHT" />
                 </HBox>
+                <Region     VBox.vgrow="ALWAYS"
+                            minHeight="1"
+                            maxHeight="1" />
                 <Button     fx:id="optimiseButton"
                             minWidth="140"
                             maxWidth="140"
                             onAction="#optimiseTimes" />
-            </VBox>
-            <Region         minWidth="8"
-                            maxWidth="8" />
-            <VBox>
-                <Label      text="Tools"
-                            minHeight="20"
-                            maxHeight="20" />
-                <Button     text="Data updates"
-                            minWidth="110"
-                            maxWidth="110"
-                            onAction="#toUpdating" />
-                <Button     text="Commands"
-                            minWidth="110"
-                            maxWidth="110"
-                            onAction="#toCommands" />
-                <Button     text="Save"
-                            minWidth="110"
-                            maxWidth="110"
-                            onAction="#save" />
-                <Label      fx:id="savedText" />
             </VBox>
             <Region         minWidth="8"
                             maxWidth="8" />
