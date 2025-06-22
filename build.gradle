@@ -48,6 +48,11 @@ dependencies {
 
     // Mockito for testing
     testCompile "org.mockito:mockito-core:1.+"
+
+    // Apache math3 for sampling chromosomes in the GeneticScheduler
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-math3
+    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.6'
+
 }
 
 application {

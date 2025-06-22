@@ -47,7 +47,7 @@ public class Operation {
     @Getter
     Map<Integer, Map<Integer, Attack>> attacks = new HashMap<>();
 
-    @Getter
+    @Getter @Setter
     Map<Integer, LocalDateTime> landTimes = new HashMap<>();
 
     @Getter
@@ -235,6 +235,10 @@ public class Operation {
                         false,
                         false,
                         new SimpleBooleanProperty(false));
+                // Listen to updates in unit speeds
+                attack.getAttacker().getUnitSpeed().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.equals(oldValue)) attack.setUnitSpeed(newValue.intValue());
+                });
                 attackerAttacks.put(target.getCoordId(), attack);
             }
             attacks.put(attacker.getCoordId(), attackerAttacks);
@@ -273,12 +277,13 @@ public class Operation {
             attacksPerPlayer.get(attackerVillage.getPlayerId()).addAll(attackerVillage.getPlannedAttacks());
         }
         // Sort lists and see if there are too close sends
+        // TODO make the shortest possible interval a changeable setting
         for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
             attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
             for (int i = 0; i < attacksForPlayer.size()-1; i++) {
                 LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
                 LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
-                if (ChronoUnit.SECONDS.between(send1, send2) < 50) {
+                if (ChronoUnit.SECONDS.between(send1, send2) < 30) {
                     attacksForPlayer.get(i).setConflicting(true);
                     attacksForPlayer.get(i+1).setConflicting(true);
                     attacksForPlayer.get(i).getAttacker().setAlert(true);

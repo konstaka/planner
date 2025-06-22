@@ -18,13 +18,13 @@ import javafx.stage.Stage;
 
 public class App extends Application {
 
-    public static final String DB = "jdbc:sqlite:planner.db";
-
     public static final DateTimeFormatter FULL_DATE_TIME = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
     public static final DateTimeFormatter TIME_ONLY = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public static final DateTimeFormatter DAY_AND_MONTH = DateTimeFormatter.ofPattern("dd.MM");
+
+    public static String DB = "";
 
     private Stage stage;
 
@@ -49,13 +49,20 @@ public class App extends Application {
         this.initPlanController();
         this.initCommandController();
 
-        stage.setTitle("Planner 1.01");
+        stage.setTitle("Planner 1.02");
         stage.setScene(mainScene);
         stage.show();
     }
 
 
     private void readyDb() {
+
+        String userHome = System.getProperty("user.home");
+        if (!userHome.endsWith("/")) {
+            userHome += "/";
+        }
+        DB = "jdbc:sqlite:" + userHome + "planner.db";
+
         try {
             Connection conn = DriverManager.getConnection(App.DB);
             conn.prepareStatement("create table if not exists artefacts\n" +
@@ -171,21 +178,21 @@ public class App extends Application {
         mainController = mainLoader.getController();
         mainScene = new Scene(mainRoot);
         mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
-        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+        mainController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                mainController.toScene.set("");
+                mainController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });
-        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+        mainController.getNewOp().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue()) {
-                mainController.newOp.set(false);
+                mainController.getNewOp().set(false);
                 planSceneController.newOperation();
             }
         });
-        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+        mainController.getLoadOp().addListener((observable, oldValue, newValue) -> {
             if (observable.getValue()) {
-                mainController.loadOp.set(false);
+                mainController.getLoadOp().set(false);
                 planSceneController.loadOperation();
             }
         });
@@ -210,12 +217,11 @@ public class App extends Application {
         FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
         Parent commandRoot = commandLoader.load();
         commandController = commandLoader.getController();
-        assert commandRoot != null;
         commandScene = new Scene(commandRoot);
         commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
         commandController.getToScene().addListener((observable, oldValue, newValue) -> {
             if (!oldValue.equals(newValue)) {
-                planSceneController.getToScene().set("");
+                commandController.getToScene().set("");
                 this.switchTo(newValue);
             }
         });

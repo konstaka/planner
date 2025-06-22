@@ -66,12 +66,13 @@ public class AttackerVillage extends Village {
     @Getter @Setter
     private boolean alert = false;
 
-    @Getter
+    @Getter @Setter
     private BooleanProperty updated = new SimpleBooleanProperty(false);
 
-    @Getter
+    @Getter @Setter
     private List<Attack> plannedAttacks = new ArrayList<>();
 
+    @Getter @Setter
     private Image tribeTroops = null;
 
 
@@ -79,18 +80,6 @@ public class AttackerVillage extends Village {
     public AttackerVillage(int coordId) {
 
         super(coordId);
-
-        switch(this.getTribe()) {
-            case 1:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
-                break;
-            case 2:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
-                break;
-            case 3:
-                tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
-                break;
-        }
     }
 
 
@@ -102,6 +91,20 @@ public class AttackerVillage extends Village {
 
         VBox box = new VBox();
         box.getStyleClass().add("attacker-box");
+
+        if (tribeTroops == null) {
+            switch(this.getTribe()) {
+                case 1:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/romans.gif")));
+                    break;
+                case 2:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/teutons.gif")));
+                    break;
+                case 3:
+                    tribeTroops = new Image(String.valueOf(getClass().getResource("images/gauls.gif")));
+                    break;
+            }
+        }
         assert tribeTroops != null;
 
         // Spacer
@@ -242,7 +245,7 @@ public class AttackerVillage extends Village {
                 else if (Math.abs(newArteSpeed - 0.5) < eps) this.setArteSpeed(0.5);
                 else if (Math.abs(newArteSpeed - 0.33) < eps) this.setArteSpeed(0.33);
                 this.getUpdated().set(true);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
             arteSpd.setText(""+this.getArteSpeed());
         });
