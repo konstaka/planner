@@ -29,6 +29,9 @@ public class App extends Application {
     private PlanSceneController planSceneController;
     private Scene planScene;
 
+    private CommandController commandController;
+    private Scene commandScene;
+
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -86,6 +89,28 @@ public class App extends Application {
         });
     }
 
+    private void generateCommands() {
+        FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
+        Parent commandRoot = null;
+        try {
+            commandRoot = commandLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        commandController = commandLoader.getController();
+        assert commandRoot != null;
+        commandScene = new Scene(commandRoot);
+        commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
+        commandController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                planSceneController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+        commandController.attackers = planSceneController.attackers;
+        commandController.updateCommands();
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -97,6 +122,10 @@ public class App extends Application {
                 break;
             case "planning":
                 stage.setScene(planScene);
+                break;
+            case "commands":
+                this.generateCommands();
+                stage.setScene(commandScene);
                 break;
         }
         stage.show();

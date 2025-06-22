@@ -720,7 +720,7 @@ public class PlanSceneController implements Initializable {
      * Changes to the command editor view.
      * @param actionEvent event
      */
-    public void toMessages(ActionEvent actionEvent) {
+    public void toCommands(ActionEvent actionEvent) {
         this.toScene.set("commands");
     }
 }

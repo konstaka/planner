@@ -84,7 +84,7 @@
                 <Button     text="Commands"
                             minWidth="110"
                             maxWidth="110"
-                            onAction="#toMessages" />
+                            onAction="#toCommands" />
                 <Button     text="Save"
                             minWidth="110"
                             maxWidth="110"
