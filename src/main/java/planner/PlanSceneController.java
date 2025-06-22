@@ -574,19 +574,20 @@ public class PlanSceneController implements Initializable {
         ));
 
         // Dropdown for adding an attack
-        ComboBox<AttackerVillage> attackerPicker = new ComboBox<>();
-        attackerPicker.getItems().addAll(attackers);
+        ComboBox<Attack> attackerPicker = new ComboBox<>();
+        for (AttackerVillage a : attackers) {
+            attackerPicker.getItems().add(attacks.get(a.getCoordId()).get(village.getCoordId()));
+        }
         attackerPicker.setPromptText("Add attacker...");
         attackerPicker.getSelectionModel().selectedItemProperty().addListener(observable -> {
-            AttackerVillage a = attackerPicker.getSelectionModel().getSelectedItem();
+            Attack a = attackerPicker.getSelectionModel().getSelectedItem();
             if (a != null) {
-                Attack attack = attacks.get(a.getCoordId()).get(village.getCoordId());
-                a.getPlannedAttacks().add(attack);
-                attack.getWaves().set(waves);
-                if (reals.isSelected()) attack.getReal().set(true);
-                else attack.getReal().set(false);
-                if (conquer.isSelected()) attack.getConq().set(true);
-                else attack.getConq().set(false);
+                a.getAttacker().getPlannedAttacks().add(a);
+                a.getWaves().set(waves);
+                if (reals.isSelected()) a.getReal().set(true);
+                else a.getReal().set(false);
+                if (conquer.isSelected()) a.getConq().set(true);
+                else a.getConq().set(false);
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
             }
@@ -650,7 +651,6 @@ public class PlanSceneController implements Initializable {
             conn.prepareStatement("DELETE FROM attacks").execute();
             for (AttackerVillage attacker : attackers) {
                 for (Attack a : attacker.getPlannedAttacks()) {
-                    System.out.println("saving attack " + a.getAttacker().getCoordId() + " " + a.getTarget().getCoordId());
                     conn.prepareStatement("INSERT INTO attacks VALUES ("
                             + a.getAttacker().getCoordId() + ","
                             + a.getTarget().getCoordId() + ",'"
@@ -709,8 +709,18 @@ public class PlanSceneController implements Initializable {
 
     /**
      * Changes to the updating view.
+     * @param actionEvent event
      */
     public void toUpdating(ActionEvent actionEvent) {
         this.toScene.set("updating");
+    }
+
+
+    /**
+     * Changes to the command editor view.
+     * @param actionEvent event
+     */
+    public void toMessages(ActionEvent actionEvent) {
+        this.toScene.set("commands");
     }
 }

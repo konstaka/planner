@@ -170,4 +170,10 @@ public class Attack {
 
         return box;
     }
+
+
+    @Override
+    public String toString() {
+        return attacker.toString() + " " + getSendingTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
 }
