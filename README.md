@@ -5,8 +5,6 @@ The program computes sending times for all participants and supports hitting tim
 easy hitting order adjusting, cross-faking, and chief/hero faking.
 When you're ready, you can just grab the templated operation commands and send away!
 
-![planViewScreenshot](planViewScreenshot.png)
-
 ## Installation
 Some releases will include installers for Windows and macOS. 
 If these are not available, you are running some other OS, or you're experiencing trouble with the installers: 
@@ -20,19 +18,6 @@ Double click the .exe and follow the instructions.
 Open the .dmg and drag the app to your Applications folder.
 
 ## Usage
-
-### Data update view
-The first screen you see. The first button lets you select a map.sql file. 
-This is a file that is available for download from the Travian server (add /map.sql to the server URL) and contains information about the map.
-
-Three text fields follow; the first is for marking enemy villages as capitals or offensive villages for planning purposes. 
-
-The second is for updating the artefacts on the server. This is done by pasting the source code of the treasury pages.
-
-The last box is for updating the operations participant list. Tip: assemble the participants in a spreadsheet first. 
-If you pasted something in the field and click "New operation", the current participants will be replaced by the new ones.
-If there was nothing in the text field, a blank operation will be created with the previous participants from the database.
-"Load operation" loads the last saved operation from the database - if participants have changed, some attacks may not load.
 
 ### Planning view
 Tool highlights:
@@ -53,6 +38,22 @@ If a hero or chiefs should be sent in this attack, they are displayed.
 Click the red cross to remove the attack from the plan.
 - Participant controls - freely play with tournament square levels, artefact effects, hero boots, and default unit speed to adjust hitting orders.
 - Save - saves the current operation to the database. All planned attacks and all hitting times are saved. This will take a few seconds.
+
+![planViewScreenshot](planViewScreenshot.png)
+
+
+### Data update view
+Here you update all the settings and base data your operation needs.
+- Server details: Size, speed, url
+- Map.sql: Fetch automatically or use your own file
+- Target marking: Caps, offs, defs, WWs
+- Artefact updates
+- New operation: Create an empty operation from a new participant list or the previous roster
+- Load operation: Load the last saved operation
+- Add participants: Add attackers to the current operation
+
+![dataUpdateViewScreenshot](dataUpdateViewScreenshot.png)
+
 
 ### Commands view
 On the left, there are two text fields to edit the command template. Targets are rendered between these texts.
