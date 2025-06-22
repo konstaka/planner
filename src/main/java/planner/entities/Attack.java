@@ -90,6 +90,8 @@ public class Attack {
                                 this.serverSize*2+1 - Math.abs(this.attacker.getYCoord() - this.target.getYCoord())),
                         2)
         );
+        // Round to 5 decimal places as per Travian implementation
+        distance = Math.round(distance * 100000) / 100000.0;
         // Baseline speed
         double squaresPerSecond = unitSpeed * serverSpeed * this.attacker.getArteSpeed() / 60 / 60;
         // Return if distance is under 20
