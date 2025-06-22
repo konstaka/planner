@@ -3,6 +3,8 @@
  */
 package planner;
 
+import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -19,20 +21,114 @@ public class App extends Application {
     @Getter
     private static final String DB = "jdbc:sqlite:mapsql.db";
 
+    private Stage stage;
+
+    private MainController mainController;
+    private Scene mainScene;
+
+    private PlanSceneController planSceneController;
+    private Scene planScene;
+
+    private CommandController commandController;
+    private Scene commandScene;
+
+
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
 
-        Scene scene = new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        this.stage = stage;
 
-        stage.setTitle("Planner 0.1");
-        stage.setScene(scene);
+        FXMLLoader mainLoader = new FXMLLoader(getClass().getResource("main.fxml"));
+        Parent mainRoot = mainLoader.load();
+        mainController = mainLoader.getController();
+        mainScene = new Scene(mainRoot);
+        mainScene.getStylesheets().add(getClass().getResource("main.css").toExternalForm());
+        mainController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                mainController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+        mainController.newOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.newOp.set(false);
+                this.newPlan();
+            }
+        });
+        mainController.loadOp.addListener((observable, oldValue, newValue) -> {
+            if (observable.getValue()) {
+                mainController.loadOp.set(false);
+                planSceneController.load();
+            }
+        });
+
+        this.newPlan();
+
+        stage.setTitle("Planner 1.0 by GoNu");
+        stage.setScene(mainScene);
         stage.show();
+    }
+
+    private void newPlan() {
+        FXMLLoader planLoader = new FXMLLoader(getClass().getResource("plan.fxml"));
+        Parent planRoot = null;
+        try {
+            planRoot = planLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        planSceneController = planLoader.getController();
+        assert planRoot != null;
+        planScene = new Scene(planRoot);
+        planScene.getStylesheets().add(getClass().getResource("plan.css").toExternalForm());
+        planSceneController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                planSceneController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+    }
+
+    private void generateCommands() {
+        FXMLLoader commandLoader = new FXMLLoader(getClass().getResource("commands.fxml"));
+        Parent commandRoot = null;
+        try {
+            commandRoot = commandLoader.load();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        commandController = commandLoader.getController();
+        assert commandRoot != null;
+        commandScene = new Scene(commandRoot);
+        commandScene.getStylesheets().add(getClass().getResource("commands.css").toExternalForm());
+        commandController.toScene.addListener((observable, oldValue, newValue) -> {
+            if (!oldValue.equals(newValue)) {
+                planSceneController.toScene.set("");
+                this.switchTo(newValue);
+            }
+        });
+        commandController.attackers = planSceneController.attackers;
+        commandController.updateCommands();
     }
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private void switchTo(String scene) {
+        switch (scene) {
+            case "updating":
+                stage.setScene(mainScene);
+                break;
+            case "planning":
+                stage.setScene(planScene);
+                break;
+            case "commands":
+                this.generateCommands();
+                stage.setScene(commandScene);
+                break;
+        }
+        stage.show();
     }
 
 }
