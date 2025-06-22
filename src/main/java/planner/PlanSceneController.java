@@ -95,6 +95,11 @@ public class PlanSceneController implements Initializable {
     CheckBox withHero;
 
     @FXML
+    TextField unitSpeedField;
+
+    int unitSpeed = 3;
+
+    @FXML
     HBox attackerCols;
 
     @FXML
@@ -175,6 +180,13 @@ public class PlanSceneController implements Initializable {
         wavesField.focusedProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue && oldValue) {
                 wavesField.fireEvent(new ActionEvent());
+            }
+        });
+
+        // Listen to the unit speed field
+        unitSpeedField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && oldValue) {
+                unitSpeedField.fireEvent(new ActionEvent());
             }
         });
     }
@@ -437,12 +449,11 @@ public class PlanSceneController implements Initializable {
                     attack.getAttacker().getPlannedAttacks().add(attack);
                 }
                 attack.setWaves(waves);
-                if (reals.isSelected()) attack.setReal(true);
-                else attack.setReal(false);
-                if (conquer.isSelected()) attack.setConq(true);
-                else attack.setConq(false);
-                if (withHero.isSelected()) attack.setWithHero(true);
-                else attack.setWithHero(false);
+                attack.setUnitSpeed(unitSpeed);
+                attack.setReal(reals.isSelected());
+                attack.setConq(conquer.isSelected());
+                attack.setWithHero(withHero.isSelected());
+                this.updateHeroCheckBox(new ActionEvent());
                 attackerPicker.getSelectionModel().clearSelection();
                 attackerPicker.setPromptText("Add attacker...");
                 attack.getUpdated().set(true);
@@ -541,6 +552,21 @@ public class PlanSceneController implements Initializable {
         if (operation != null) {
             operation.setRandomShiftWindow(randomShiftMins * 60);
         }
+    }
+
+
+    /**
+     * Updates the unit speed used for added attacks.
+     * @param actionEvent focus leave on enter keypress
+     */
+    public void updateUnitSpeed(ActionEvent actionEvent) {
+        try {
+            unitSpeed = Integer.parseInt(unitSpeedField.getText());
+            if (unitSpeed < 3 || unitSpeed > 99) unitSpeed = 3;
+        } catch (NumberFormatException e) {
+            unitSpeed = 3;
+        }
+        unitSpeedField.setText(""+unitSpeed);
     }
 
 
