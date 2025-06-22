@@ -544,7 +544,7 @@ public class AttackerVillage extends Village {
      * @see Cloneable
      */
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    public Object clone() throws CloneNotSupportedException {
         AttackerVillage clone = (AttackerVillage) super.clone();
         clone.setUnitSpeed(new SimpleIntegerProperty(unitSpeed.get()));
         clone.setUpdated(new SimpleBooleanProperty(updated.get()));

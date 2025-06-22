@@ -27,8 +27,8 @@ import planner.entities.Operation;
  */
 public class GeneticScheduler {
 
-    private static final int POPULATION_SIZE = 2000;
-    private static final int GENERATIONS = 30;
+    private static final int POPULATION_SIZE = 200;
+    private static final int GENERATIONS = 15;
     private static final double PROB_CROSSOVER = 0.6;
     private static final double PROB_MUTATION = 0.04;
 
@@ -55,17 +55,22 @@ public class GeneticScheduler {
     /**
      * Runs the algorithm on a given operation with the fixed parameters.
      * @return map from target coordId to landing time shift.
+     * @throws IllegalStateException if the attacks could not be read
+     * (for instance, if there are no attacks to schedule).
      */
-    public Map<Integer, Long> schedule() {
+    public Map<Integer, Long> schedule() throws IllegalStateException {
 
         @SuppressWarnings("unchecked")
         Map<Integer, Long>[] population = new HashMap[POPULATION_SIZE];
         Map<Integer, Long> currentBest = new HashMap<>();
         double currentBestFitness = 0.0;
 
-
-        // Update attacks in case they have changed in the operation
+        // Read attacks
         assembleAttackLists();
+        // Stop if there are no attacks to schedule
+        if (targetList.isEmpty()) throw new IllegalStateException("Could not read attacks");
+        // Stop if the flex window is zero
+        if (operation.getRandomShiftWindow() == 0) throw new IllegalStateException("No flex window set");
 
         // Initial population
         for (int i = 0; i < POPULATION_SIZE; i++) {
@@ -74,6 +79,7 @@ public class GeneticScheduler {
 
         for (int i = 0; i < GENERATIONS; i++) {
 
+            System.out.println("Compute fitnesses...");
             // Compute the fitness values of this generation
             double[] fitnessValues = new double[POPULATION_SIZE];
             double totalFitness = 0;
@@ -86,10 +92,10 @@ public class GeneticScheduler {
             int bestInThisIdx = findBest(fitnessValues);
             // Report scores
             System.out.println("*** Generation " + i +
-                    ", total score: " + totalFitness +
-                    ", best score: " + fitnessValues[bestInThisIdx] +
-                    " (" + (fitnessValues[bestInThisIdx] - currentBestFitness) + ")" +
-                    ", ratio: " + (fitnessValues[bestInThisIdx] / totalFitness));
+                    ",\tbest score: " + fitnessValues[bestInThisIdx] +
+                    " (" + ((fitnessValues[bestInThisIdx] - currentBestFitness) >= 0 ? "+" : "") +
+                    Math.round((fitnessValues[bestInThisIdx] - currentBestFitness)*1000)/1000.0 + ")" +
+                    ",\taverage score: " + (totalFitness / POPULATION_SIZE));
             // Compare the best from this generation to the best of all chromosomes
             if (currentBest.isEmpty() || fitnessValues[bestInThisIdx] > currentBestFitness) {
                 currentBest = population[bestInThisIdx];
@@ -106,6 +112,7 @@ public class GeneticScheduler {
             if (totalFitness == 0) {
                 newPop = population;
             } else {
+                System.out.println("Compute fitness ratios...");
                 // Compute fitness ratios
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     fitnessValues[j] = fitnessValues[j] / totalFitness * 100;
@@ -116,6 +123,7 @@ public class GeneticScheduler {
                     itemsWeights.add(new Pair<>(population[j], fitnessValues[j]));
                 }
                 EnumeratedDistribution<Map<Integer, Long>> dist = new EnumeratedDistribution<>(itemsWeights);
+                System.out.println("Pick parents...");
                 // Fill up new population by crossovers or old candidates
                 for (int j = 0; j < POPULATION_SIZE; j++) {
                     if (random.nextDouble() < PROB_CROSSOVER) {
@@ -129,6 +137,7 @@ public class GeneticScheduler {
                 }
             }
 
+            System.out.println("Mutate...");
             // Mutate
             if (random.nextDouble() < PROB_MUTATION) {
                 int randomIdx = random.nextInt(POPULATION_SIZE);
@@ -143,6 +152,7 @@ public class GeneticScheduler {
             // Switch to the new generation
             population = newPop;
         }
+        System.out.println("*** Best in all generations: " + currentBestFitness);
         return currentBest;
     }
 
@@ -151,6 +161,7 @@ public class GeneticScheduler {
      * Clones planned attacks from the operation to player-wise attack lists for evaluation.
      */
     private void assembleAttackLists() {
+
         Set<Integer> targetIds = new HashSet<>();
         // Assemble attack lists player-wise
         for (AttackerVillage attackerVillage : operation.getAttackers()) {
@@ -170,7 +181,7 @@ public class GeneticScheduler {
         }
         // Initialise target list for chromosome building
         targetList = new ArrayList<>(targetIds);
-        System.out.println("Genetic scheduler started with chromosomes of length " + targetList.size());
+        System.out.println("--- Genetic scheduler started with chromosomes of length " + targetList.size());
     }
 
 
@@ -182,7 +193,7 @@ public class GeneticScheduler {
         Map<Integer, Long> chromosome = new HashMap<>();
         for (Integer t_coordId : targetList) {
             chromosome.put(t_coordId,
-                    (long) random.nextInt(operation.getRandomShiftWindow() * 2)
+                    (long) random.nextInt(operation.getRandomShiftWindow() * 60 * 2)
                             - operation.getRandomShiftWindow()
             );
         }
@@ -200,9 +211,6 @@ public class GeneticScheduler {
         // Insert candidate values
         for (List<Attack> attackList : attacksPerPlayer.values()) {
             for (Attack attack : attackList) {
-                attack.getTarget().setRandomShiftSeconds(
-                        candidate.get(attack.getTarget().getCoordId())
-                );
                 attack.setLandingTime(
                         operation.getDefaultLandingTime()
                                 .plusSeconds(candidate.get(attack.getTarget().getCoordId()))
@@ -211,8 +219,11 @@ public class GeneticScheduler {
         }
         double candidateFitness = 0;
         // Sort by new sending times and sum interval values
+        // TODO make sorting more efficient, this eats up all memory.
         for (List<Attack> attacksForPlayer : attacksPerPlayer.values()) {
+            System.out.println("Sorting list of size: " + attacksForPlayer.size());
             attacksForPlayer.sort(Comparator.comparing(Attack::getSendingTime));
+            System.out.println("Maybe.");
             for (int i = 0; i < attacksForPlayer.size()-1; i++) {
                 LocalDateTime send1 = attacksForPlayer.get(i).getSendingTime();
                 LocalDateTime send2 = attacksForPlayer.get(i+1).getSendingTime();
@@ -278,10 +289,10 @@ public class GeneticScheduler {
         Map<Integer, Long> offspring = new HashMap<>();
         int crosspoint = random.nextInt(targetList.size());
         for (int i = 0; i < crosspoint; i++) {
-            offspring.put(targetList.get(i), parent1.get(i));
+            offspring.put(targetList.get(i), parent1.get(targetList.get(i)));
         }
         for (int i = crosspoint; i < targetList.size(); i++) {
-            offspring.put(targetList.get(i), parent2.get(i));
+            offspring.put(targetList.get(i), parent2.get(targetList.get(i)));
         }
         return offspring;
     }

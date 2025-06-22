@@ -235,6 +235,10 @@ public class Operation {
                         false,
                         false,
                         new SimpleBooleanProperty(false));
+                // Listen to updates in unit speeds
+                attack.getAttacker().getUnitSpeed().addListener((observable, oldValue, newValue) -> {
+                    if (!newValue.equals(oldValue)) attack.setUnitSpeed(newValue.intValue());
+                });
                 attackerAttacks.put(target.getCoordId(), attack);
             }
             attacks.put(attacker.getCoordId(), attackerAttacks);
