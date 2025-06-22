@@ -4,8 +4,8 @@
     -fx-border-style: solid;
     -fx-border-color: grey;
     -fx-font-size: 0.8em;
-    -fx-min-height: 30px;
-    -fx-max-height: 30px;
+    -fx-min-height: 32px;
+    -fx-max-height: 32px;
 }
 .target-col-0 {
     -fx-min-width: 50px;
@@ -84,6 +84,15 @@
 }
 .real-target, .alert {
     -fx-text-fill: red;
+}
+.attack-attacker-name {
+    -fx-font-size: 0.45em;
+    -fx-font-style: italic;
+    -fx-alignment: center;
+}
+.attack-box-waves-label {
+    -fx-font-size: 0.7em;
+    -fx-alignment: center;
 }
 .attack-box-button {
     -fx-max-height: 5px;
