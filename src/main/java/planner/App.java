@@ -60,7 +60,7 @@ public class App extends Application {
         this.initPlanController();
         this.initCommandController();
 
-        stage.setTitle("Planner 1.05-dev");
+        stage.setTitle("Planner 2.0-dev");
         stage.setScene(planScene);
         stage.show();
 
@@ -186,7 +186,11 @@ public class App extends Application {
                     "    allyId int not null,\n" +
                     "    allyName String not null,\n" +
                     "    population int not null,\n" +
-                    "    undefined String\n" +
+                    "    unused1 String,\n" +
+                    "    capital String not null,\n" +
+                    "    unused2 String,\n" +
+                    "    unused3 String,\n" +
+                    "    unused4 String\n" +
                     ")").execute();
             conn.close();
         } catch (SQLException e) {

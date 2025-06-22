@@ -12,9 +12,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.math3.util.Pair;
